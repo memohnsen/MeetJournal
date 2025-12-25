@@ -1,0 +1,30 @@
+//
+//  ContentView.swift
+//  MeetJournal
+//
+//  Created by Maddisen Mohnsen on 12/25/25.
+//
+
+import SwiftUI
+
+struct ContentView: View {
+    @State private var selectedTab: String = "Home"
+    
+    var body: some View {
+        TabView(selection: $selectedTab){
+            Tab("Home", systemImage: "house", value: "Home") {
+                HomeView()
+            }
+            Tab("Trends", systemImage: "chart.bar", value: "Trends") {
+                TrendsView()
+            }
+            Tab("Profile", systemImage: "person", value: "Profile") {
+                ProfileView()
+            }
+        }
+    }
+}
+
+#Preview {
+    ContentView()
+}
