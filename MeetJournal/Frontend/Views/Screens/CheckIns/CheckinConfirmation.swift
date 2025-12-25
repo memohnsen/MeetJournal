@@ -9,8 +9,9 @@ import SwiftUI
 import ConfettiSwiftUI
 
 struct CheckinConfirmation: View {
-    @Binding var checkInScore: CheckInScore
+    @Bindable var checkInScore: CheckInScore
     @State private var confettiCannon: Int = 0
+    @State private var checkInViewModel = CheckInViewModel()
     
     @Binding var selectedLift: String
     @Binding var selectedIntensity: String
@@ -52,6 +53,14 @@ struct CheckinConfirmation: View {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                     confettiCannon += 1
                 }
+                
+                Task {
+                    await checkInViewModel.submitCheckIn(
+                        checkInScore: checkInScore,
+                        selectedLift: selectedLift,
+                        selectedIntensity: selectedIntensity
+                    )
+                }
             }
             .navigationTitle("Check-In Submitted!")
             .navigationBarTitleDisplayMode(.inline)
@@ -81,7 +90,6 @@ struct ResultsSection: View {
         VStack(spacing: 24) {
             Text("Your Readiness")
                 .font(.title.bold())
-                .foregroundStyle(.secondary)
                 .padding(.top, 8)
             
             VStack(spacing: 12) {
@@ -207,7 +215,7 @@ struct ResultsSection: View {
         
         var body: some View {
             CheckinConfirmation(
-                checkInScore: $checkInScore,
+                checkInScore: checkInScore,
                 selectedLift: $selectedLift,
                 selectedIntensity: $selectedIntensity
             )

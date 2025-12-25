@@ -17,6 +17,7 @@ struct Users: Codable, Identifiable, Hashable {
     var meets_per_year: Int
     var goal: String
     var biggest_struggle: String
+    var training_days: [String: String]
 }
 
 @MainActor @Observable

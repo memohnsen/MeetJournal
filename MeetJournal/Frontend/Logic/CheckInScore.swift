@@ -49,4 +49,12 @@ class CheckInScore {
         let percentScore = Int(max(0.0, min(100.0, percent)).rounded())
         return percentScore
     }
+    
+    var hasCompletedForm: Bool {
+        if goal.isEmpty {
+            return false
+        }
+        
+        return true
+    }
 }

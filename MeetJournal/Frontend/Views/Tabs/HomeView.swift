@@ -19,7 +19,7 @@ struct HomeView: View {
                 
                 ScrollView {
                     VStack {
-                        DailyCheckInSection(checkInScore: $checkInScore)
+                        DailyCheckInSection(checkInScore: checkInScore)
                         
                         ReflectionSection()
                         
@@ -57,7 +57,7 @@ struct HomeView: View {
 }
 
 struct DailyCheckInSection: View {
-    @Binding var checkInScore: CheckInScore
+    @Bindable var checkInScore: CheckInScore
     
     var body: some View {
         VStack{
@@ -66,7 +66,6 @@ struct DailyCheckInSection: View {
                     Text("Today's Focus")
                         .padding(6)
                         .background(blueEnergy.opacity(0.1))
-                        .padding(.bottom, 4)
                         .foregroundStyle(blueEnergy)
                         .bold()
                         .clipShape(.rect(cornerRadius: 12))
@@ -91,7 +90,7 @@ struct DailyCheckInSection: View {
                 .padding(.top, 4)
                 .padding(.bottom)
             
-            NavigationLink(destination: CheckInView(checkInScore: $checkInScore)){
+            NavigationLink(destination: CheckInView(checkInScore: checkInScore)){
                 Text("Start Check-In")
             }
             .padding()
