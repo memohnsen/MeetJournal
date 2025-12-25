@@ -8,6 +8,10 @@
 import SwiftUI
 
 struct HomeView: View {
+    @State private var viewModel = UsersViewModel()
+    var users: [Users] { viewModel.users }
+    @State private var checkInScore = CheckInScore()
+    
     var body: some View {
         NavigationStack {
             ZStack(alignment: .top) {
@@ -15,7 +19,7 @@ struct HomeView: View {
                 
                 ScrollView {
                     VStack {
-                        DailyCheckInSection()
+                        DailyCheckInSection(checkInScore: $checkInScore)
                         
                         ReflectionSection()
                         
@@ -28,14 +32,17 @@ struct HomeView: View {
                     VStack(alignment: .leading) {
                         Text("Wednesday, Oct 25")
                             .foregroundStyle(.secondary)
-                        Text("Ready to train, Maddisen?")
+                        Text("Ready to train, \(users.first?.first_name ?? "")?")
                             .font(.headline.bold())
                     }
                     
                     Spacer()
                     
-                    Circle()
-                        .frame(width: 60)
+                    NavigationLink(destination: ProfileView()) {
+                        Circle()
+                            .frame(width: 60)
+                            .foregroundStyle(.gray)
+                    }
                 }
                 .padding([.horizontal, .bottom])
                 .padding(.top, 70)
@@ -43,10 +50,15 @@ struct HomeView: View {
                 .padding(.top, -70)
             }
         }
+        .task {
+            await viewModel.fetchUsers()
+        }
     }
 }
 
 struct DailyCheckInSection: View {
+    @Binding var checkInScore: CheckInScore
+    
     var body: some View {
         VStack{
             HStack{
@@ -79,9 +91,7 @@ struct DailyCheckInSection: View {
                 .padding(.top, 4)
                 .padding(.bottom)
             
-            Button{
-                
-            } label: {
+            NavigationLink(destination: CheckInView(checkInScore: $checkInScore)){
                 Text("Start Check-In")
             }
             .padding()
@@ -95,6 +105,8 @@ struct DailyCheckInSection: View {
 }
 
 struct ReflectionSection: View {
+    @Environment(\.colorScheme) var colorScheme
+
     var body: some View {
         VStack(alignment: .leading){
             Text("LOG SESSION")
@@ -103,9 +115,7 @@ struct ReflectionSection: View {
                 .padding(.horizontal)
             
             HStack {
-                Button {
-                    
-                } label: {
+                NavigationLink(destination: WorkoutReflectionView()) {
                     VStack{
                         Image(systemName: "figure.strengthtraining.traditional")
                             .resizable()
@@ -132,22 +142,20 @@ struct ReflectionSection: View {
                     .frame(maxWidth: .infinity)
                     .frame(height: 120)
                     .padding()
-                    .foregroundStyle(.black)
+                    .foregroundStyle(colorScheme == .light ? .black : .white)
                     .background(
                         RoundedRectangle(cornerRadius: 16)
-                            .fill(.white)
+                            .fill(colorScheme == .light ? .white : .black.opacity(0.5))
                             .overlay(
                                 RoundedRectangle(cornerRadius: 16)
-                                    .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                                    .stroke(colorScheme == .light ? Color.white.opacity(0.1) : Color.black.opacity(0.1), lineWidth: 1)
                             )
                     )
                     .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
                     .padding(.bottom, 12)
                 }
                 
-                Button {
-                    
-                } label: {
+                NavigationLink(destination: CompReflectionView()) {
                     VStack{
                         Image(systemName: "trophy")
                             .resizable()
@@ -171,13 +179,13 @@ struct ReflectionSection: View {
                     .frame(maxWidth: .infinity)
                     .frame(height: 120)
                     .padding()
-                    .foregroundStyle(.black)
+                    .foregroundStyle(colorScheme == .light ? .black : .white)
                     .background(
                         RoundedRectangle(cornerRadius: 16)
-                            .fill(.white)
+                            .fill(colorScheme == .light ? .white : .black.opacity(0.5))
                             .overlay(
                                 RoundedRectangle(cornerRadius: 16)
-                                    .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                                    .stroke(colorScheme == .light ? Color.white.opacity(0.1) : Color.black.opacity(0.1), lineWidth: 1)
                             )
                     )
                     .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
@@ -190,6 +198,8 @@ struct ReflectionSection: View {
 }
 
 struct HistorySection: View {
+    @Environment(\.colorScheme) var colorScheme
+
     var body: some View {
         VStack(alignment: .leading){
             HStack {
@@ -200,7 +210,7 @@ struct HistorySection: View {
                 
                 Spacer()
                 
-                NavigationLink(destination: HistoryView()) {
+                NavigationLink(destination: AllHistoryView()) {
                     Text("View All")
                         .bold()
                         .foregroundStyle(blueEnergy)
@@ -229,7 +239,7 @@ struct HistorySection: View {
                                 Text("Heavy Snatch")
                                     .bold()
                                 
-                                Text("Training * Feeling Strong")
+                                Text("Training • Feeling Strong")
                                     .foregroundStyle(.secondary)
                                     .font(.caption)
                             }
@@ -248,10 +258,10 @@ struct HistorySection: View {
                     .frame(maxWidth: .infinity)
                     .frame(height: 50)
                     .padding()
-                    .foregroundStyle(.black)
+                    .foregroundStyle(colorScheme == .light ? .black : .white)
                     .background(
                         RoundedRectangle(cornerRadius: 16)
-                            .fill(.white)
+                            .fill(colorScheme == .light ? .white : .black.opacity(0.5))
                             .overlay(
                                 RoundedRectangle(cornerRadius: 16)
                                     .stroke(Color.white.opacity(0.1), lineWidth: 1)

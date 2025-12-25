@@ -6,13 +6,33 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		714CD1BC2EFDC22200FE4D9A /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 714CD1BB2EFDC22200FE4D9A /* Supabase */; };
+		714CD1C72EFDD62500FE4D9A /* ConfettiSwiftUI in Frameworks */ = {isa = PBXBuildFile; productRef = 714CD1C62EFDD62500FE4D9A /* ConfettiSwiftUI */; };
+		719E07CD2EFDB84C00ACB70A /* Config.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 719E07CC2EFDB84C00ACB70A /* Config.xcconfig */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		719E07932EFD868200ACB70A /* MeetJournal.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MeetJournal.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		719E07CC2EFDB84C00ACB70A /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		719E07CF2EFDB8A300ACB70A /* Exceptions for "MeetJournal" folder in "MeetJournal" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 719E07922EFD868200ACB70A /* MeetJournal */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		719E07952EFD868200ACB70A /* MeetJournal */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				719E07CF2EFDB8A300ACB70A /* Exceptions for "MeetJournal" folder in "MeetJournal" target */,
+			);
 			path = MeetJournal;
 			sourceTree = "<group>";
 		};
@@ -23,6 +43,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				714CD1C72EFDD62500FE4D9A /* ConfettiSwiftUI in Frameworks */,
+				714CD1BC2EFDC22200FE4D9A /* Supabase in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -32,6 +54,7 @@
 		719E078A2EFD868200ACB70A = {
 			isa = PBXGroup;
 			children = (
+				719E07CC2EFDB84C00ACB70A /* Config.xcconfig */,
 				719E07952EFD868200ACB70A /* MeetJournal */,
 				719E07942EFD868200ACB70A /* Products */,
 			);
@@ -65,6 +88,8 @@
 			);
 			name = MeetJournal;
 			packageProductDependencies = (
+				714CD1BB2EFDC22200FE4D9A /* Supabase */,
+				714CD1C62EFDD62500FE4D9A /* ConfettiSwiftUI */,
 			);
 			productName = MeetJournal;
 			productReference = 719E07932EFD868200ACB70A /* MeetJournal.app */;
@@ -94,6 +119,10 @@
 			);
 			mainGroup = 719E078A2EFD868200ACB70A;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				714CD1BA2EFDC22200FE4D9A /* XCRemoteSwiftPackageReference "supabase-swift" */,
+				714CD1C52EFDD62500FE4D9A /* XCRemoteSwiftPackageReference "ConfettiSwiftUI" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 719E07942EFD868200ACB70A /* Products */;
 			projectDirPath = "";
@@ -109,6 +138,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				719E07CD2EFDB84C00ACB70A /* Config.xcconfig in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -256,6 +286,7 @@
 				DEVELOPMENT_TEAM = HCK9FFW6UX;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = MeetJournal/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -288,6 +319,7 @@
 				DEVELOPMENT_TEAM = HCK9FFW6UX;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = MeetJournal/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -332,6 +364,38 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		714CD1BA2EFDC22200FE4D9A /* XCRemoteSwiftPackageReference "supabase-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/supabase/supabase-swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.5.1;
+			};
+		};
+		714CD1C52EFDD62500FE4D9A /* XCRemoteSwiftPackageReference "ConfettiSwiftUI" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/simibac/ConfettiSwiftUI";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.0.3;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		714CD1BB2EFDC22200FE4D9A /* Supabase */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 714CD1BA2EFDC22200FE4D9A /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Supabase;
+		};
+		714CD1C62EFDD62500FE4D9A /* ConfettiSwiftUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 714CD1C52EFDD62500FE4D9A /* XCRemoteSwiftPackageReference "ConfettiSwiftUI" */;
+			productName = ConfettiSwiftUI;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 719E078B2EFD868200ACB70A /* Project object */;
 }

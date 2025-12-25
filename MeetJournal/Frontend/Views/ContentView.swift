@@ -18,9 +18,6 @@ struct ContentView: View {
             Tab("Trends", systemImage: "chart.bar", value: "Trends") {
                 TrendsView()
             }
-            Tab("Profile", systemImage: "person", value: "Profile") {
-                ProfileView()
-            }
         }
     }
 }
