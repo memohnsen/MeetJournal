@@ -9,6 +9,7 @@ import SwiftUI
 
 struct WorkoutReflectionView: View {
     @Environment(\.colorScheme) var colorScheme
+    @Environment(\.dismiss) var dismiss
     @State private var viewModel = SessionReportModel()
     
     @State private var sessionRPE: Int = 3
@@ -17,6 +18,15 @@ struct WorkoutReflectionView: View {
     @State private var misses: String = "0"
     @State private var cues: String = ""
     @State private var feeling: String = "Good"
+    
+    @State private var selectedLift: String = "Snatch"
+    @State private var selectedIntensity: String = "Moderate"
+    
+    let liftOptions: [String] = [
+        "Snatch", "Clean", "Jerk", "C & J", "Total", "Squats", "Accessories", "Other"
+    ]
+    
+    let intensityOptions: [String] = ["Maxing Out", "Heavy", "Moderate", "Light"]
     
     let missQuantity: [String] = ["0", "1", "2", "3", "4", "5+"]
     let feelingType: [String] = ["Beat Up", "Not too bad", "Good", "Great", "Amazing"]
@@ -29,12 +39,28 @@ struct WorkoutReflectionView: View {
         return true
     }
     
+    let iso8601String = Date.now.formatted(.iso8601)
+    
     var body: some View {
         NavigationStack {
             ZStack{
                 BackgroundColor()
                 
                 ScrollView {
+                    MultipleChoiceSection(
+                        colorScheme: colorScheme,
+                        title: "What's the main focus?",
+                        arrayOptions: liftOptions,
+                        selected: $selectedLift
+                    )
+                    
+                    MultipleChoiceSection(
+                        colorScheme: colorScheme,
+                        title: "What's the intensity?",
+                        arrayOptions: intensityOptions,
+                        selected: $selectedIntensity
+                    )
+                    
                     SliderSection(colorScheme: colorScheme, title: "How hard was this session?", value: $sessionRPE, minString: "Easy", maxString: "Almost Died")
                     
                     SliderSection(colorScheme: colorScheme, title: "How was your movement quality?", value: $movementQuality, minString: "Poor", maxString: "Excellent")
@@ -48,7 +74,7 @@ struct WorkoutReflectionView: View {
                     MultipleChoiceSection(colorScheme: colorScheme, title: "How is your body feeling?", arrayOptions: feelingType, selected: $feeling)
                     
                     Button {
-                        let report: SessionReport = SessionReport(user_id: 1, session_rpe: sessionRPE, movement_quality: movementQuality, focus: focus, misses: misses, cues: cues, feeling: feeling)
+                        let report: SessionReport = SessionReport(user_id: 1, session_rpe: sessionRPE, movement_quality: movementQuality, focus: focus, misses: misses, cues: cues, feeling: feeling, selected_lift: selectedLift, selected_intensity: selectedIntensity, created_at: iso8601String)
                         
                         Task {
                             await viewModel.submitSessionReport(sessionReport: report)
@@ -79,7 +105,11 @@ struct WorkoutReflectionView: View {
             }
             .navigationTitle("Session Reflection")
             .navigationBarTitleDisplayMode(.inline)
-            .alert(viewModel.alertTitle, isPresented: $viewModel.alertShown) {} message: {
+            .alert(viewModel.alertTitle, isPresented: $viewModel.alertShown) {
+                Button("OK") {
+                    dismiss()
+                }
+            } message: {
                 Text(viewModel.alertMessage)
             }
         }

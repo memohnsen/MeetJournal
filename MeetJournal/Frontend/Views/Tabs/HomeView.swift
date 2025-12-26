@@ -209,7 +209,7 @@ struct HistorySection: View {
                 
                 Spacer()
                 
-                NavigationLink(destination: AllHistoryView()) {
+                NavigationLink(destination: HistoryView()) {
                     Text("View All")
                         .bold()
                         .foregroundStyle(blueEnergy)
@@ -218,7 +218,7 @@ struct HistorySection: View {
             }
             
             HStack {
-                NavigationLink(destination: HistoryView()) {
+                NavigationLink(destination: HistoryDetailsView()) {
                     VStack{
                         HStack{
                             VStack{

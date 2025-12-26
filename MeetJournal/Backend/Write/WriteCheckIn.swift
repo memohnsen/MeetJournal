@@ -8,24 +8,6 @@
 import Foundation
 import Supabase
 
-struct DailyCheckIn: Codable {
-    var user_id: Int
-    var selected_lift: String
-    var selected_intensity: String
-    var goal: String
-    var physical_strength: Int
-    var mental_strength: Int
-    var recovered: Int
-    var confidence: Int
-    var sleep: Int
-    var energy: Int
-    var stress: Int
-    var soreness: Int
-    var physical_score: Int
-    var mental_score: Int
-    var overall_score: Int
-}
-
 @MainActor @Observable
 class CheckInViewModel {
     var isLoading: Bool = false
@@ -39,6 +21,8 @@ class CheckInViewModel {
     ) async {
         isLoading = true
         error = nil
+        
+        let iso8601String = Date.now.formatted(.iso8601)
         
         let checkIn = DailyCheckIn(
             user_id: userId,
@@ -55,7 +39,8 @@ class CheckInViewModel {
             soreness: checkInScore.soreness,
             physical_score: checkInScore.physicalScore,
             mental_score: checkInScore.mentalScore,
-            overall_score: checkInScore.overallScore
+            overall_score: checkInScore.overallScore,
+            created_at: iso8601String
         )
         
         do {
@@ -63,9 +48,21 @@ class CheckInViewModel {
                 .from("journal_daily_checkins")
                 .insert(checkIn)
                 .execute()
+        } catch let DecodingError.keyNotFound(key, context) {
+            print("Key '\(key.stringValue)' not found:", context.debugDescription)
+            print("codingPath:", context.codingPath)
+        } catch let DecodingError.typeMismatch(type, context) {
+            print("Type '\(type)' mismatch:", context.debugDescription)
+            print("codingPath:", context.codingPath)
+        } catch let DecodingError.valueNotFound(value, context) {
+            print("Value '\(value)' not found:", context.debugDescription)
+            print("codingPath:", context.codingPath)
+        } catch let DecodingError.dataCorrupted(context) {
+            print("Data corrupted:", context.debugDescription)
+            print("codingPath:", context.codingPath)
         } catch {
-            self.error = error
-            print("Error submitting check-in: \(error.localizedDescription)")
+            print("Error: \(error.localizedDescription)")
+            print("Full error: \(error)")
         }
         
         isLoading = false
