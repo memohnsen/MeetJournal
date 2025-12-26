@@ -13,24 +13,7 @@ struct HistoryView: View {
     var checkins: [DailyCheckIn] { viewModel.checkIns }
     var sessionReports: [SessionReport] { viewModel.sessionReport }
     
-    @State private var selected = "Meets"
-    let options: [String] = ["Meets", "Workouts", "Check-Ins"]
-    
-    func selectedButton(_ input: String) -> Color {
-        if selected == input {
-            return blueEnergy
-        } else {
-            return blueEnergy.opacity(0.2)
-        }
-    }
-    
-    func selectedButtonText(_ input: String) -> Color {
-        if selected == input {
-            return .white
-        } else {
-            return .blue
-        }
-    }
+    @State private var selected = "Check-Ins"
 
     var body: some View {
         NavigationStack{
@@ -39,22 +22,7 @@ struct HistoryView: View {
                 
                 ScrollView{
                     VStack{
-                        HStack{
-                            ForEach(options, id: \.self) { option in
-                                Button{
-                                    selected = option
-                                } label: {
-                                    Text(option)
-                                        .padding()
-                                        .background(selectedButton(option))
-                                        .clipShape(.capsule)
-                                        .foregroundStyle(selectedButtonText(option))
-                                        .bold()
-                                }
-                            }
-                            Spacer()
-                        }
-                        .padding([.vertical, .horizontal])
+                        Filter(selected: $selected)
                         
                         HistoryCardSection(compReports: compReports, checkins: checkins, sessionReports: sessionReports, selection: selected)
                     }

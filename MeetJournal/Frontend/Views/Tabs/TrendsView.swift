@@ -6,10 +6,1623 @@
 //
 
 import SwiftUI
+import Charts
 
 struct TrendsView: View {
+    @State private var viewModel = HistoryModel()
+    var checkins: [DailyCheckIn] { viewModel.checkIns }
+    var workouts: [SessionReport] { viewModel.sessionReport }
+    var meets: [CompReport] { viewModel.compReport }
+    
+    @State private var selectedFilter: String = "Check-Ins"
+    @State private var selectedTimeFrame: String = "Last 30 Days"
+        
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        NavigationStack{
+            ZStack{
+                BackgroundColor()
+                
+                ScrollView{
+                    Filter(selected: $selectedFilter)
+                    
+                    if selectedFilter == "Check-Ins" {
+                        CheckInGraphView(checkins: checkins, selectedTimeFrame: selectedTimeFrame)
+                    } else if selectedFilter == "Workouts" {
+                        WorkoutsGraphView(workouts: workouts, selectedTimeFrame: selectedTimeFrame)
+                    } else {
+                        MeetsGraphView(meets: meets, selectedTimeFrame: selectedTimeFrame)
+                    }
+                }
+            }
+            .navigationTitle("Trends")
+            .toolbar{
+                ToolbarItem{
+                    Menu{
+                        Button("Last 30 Days"){
+                            selectedTimeFrame = "Last 30 Days"
+                        }
+                        
+                        Button("Last 90 Days"){
+                            selectedTimeFrame = "Last 90 Days"
+                        }
+                        
+                        Button("Last 6 Months"){
+                            selectedTimeFrame = "Last 6 Months"
+                        }
+                        
+                        Button("Last 1 Year"){
+                            selectedTimeFrame = "Last 1 Year"
+                        }
+                        
+                        Button("All Time"){
+                            selectedTimeFrame = "All Time"
+                        }
+                    } label: {
+                        Image(systemName: "line.3.horizontal.decrease")
+                    }
+                }
+            }
+            .task {
+                await viewModel.fetchCheckins(id: 1)
+                await viewModel.fetchCompReports(id: 1)
+                await viewModel.fetchSessionReport(id: 1)
+            }
+        }
+    }
+}
+
+struct CheckInGraphView: View {
+    @Environment(\.colorScheme) var colorScheme
+    var checkins: [DailyCheckIn]
+    var selectedTimeFrame: String
+    
+    struct AggregatedDataPoint: Identifiable {
+        let id = UUID()
+        let date: Date
+        let averageScore: Double
+    }
+    
+    // Filter and aggregate checkins based on selected time frame
+    var overallChartData: [AggregatedDataPoint] {
+        let calendar = Calendar.current
+        let now = Date()
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        
+        // First, filter by time frame
+        let cutoffDate: Date
+        switch selectedTimeFrame {
+        case "Last 30 Days":
+            cutoffDate = calendar.date(byAdding: .day, value: -30, to: now) ?? now
+        case "Last 90 Days":
+            cutoffDate = calendar.date(byAdding: .day, value: -90, to: now) ?? now
+        case "Last 6 Months":
+            cutoffDate = calendar.date(byAdding: .month, value: -6, to: now) ?? now
+        case "Last 1 Year":
+            cutoffDate = calendar.date(byAdding: .year, value: -1, to: now) ?? now
+        case "All Time":
+            cutoffDate = Date.distantPast
+        default:
+            cutoffDate = calendar.date(byAdding: .day, value: -30, to: now) ?? now
+        }
+        
+        let filteredCheckins = checkins.filter { checkin in
+            if let checkinDate = dateFormatter.date(from: checkin.check_in_date) {
+                return checkinDate >= cutoffDate
+            }
+            return false
+        }
+        
+        // Determine if we need to aggregate
+        let shouldAggregate: Bool
+        let groupingComponent: Calendar.Component
+        
+        switch selectedTimeFrame {
+        case "Last 30 Days":
+            shouldAggregate = false
+            groupingComponent = .day
+        case "Last 90 Days":
+            shouldAggregate = true
+            groupingComponent = .weekOfYear
+        case "Last 6 Months", "Last 1 Year", "All Time":
+            shouldAggregate = true
+            groupingComponent = .month
+        default:
+            shouldAggregate = false
+            groupingComponent = .day
+        }
+        
+        if !shouldAggregate {
+            // Return individual data points for short time frames
+            return filteredCheckins.compactMap { checkin in
+                if let date = dateFormatter.date(from: checkin.check_in_date) {
+                    return AggregatedDataPoint(date: date, averageScore: Double(checkin.overall_score))
+                }
+                return nil
+            }
+        } else {
+            // Group and average for longer time frames
+            var groupedData: [DateComponents: [Int]] = [:]
+            
+            for checkin in filteredCheckins {
+                if let date = dateFormatter.date(from: checkin.check_in_date) {
+                    let components: DateComponents
+                    if groupingComponent == .weekOfYear {
+                        components = calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: date)
+                    } else {
+                        components = calendar.dateComponents([.year, .month], from: date)
+                    }
+                    
+                    if groupedData[components] == nil {
+                        groupedData[components] = []
+                    }
+                    groupedData[components]?.append(checkin.overall_score)
+                }
+            }
+            
+            // Calculate averages and create data points
+            return groupedData.compactMap { (components, scores) in
+                let average = Double(scores.reduce(0, +)) / Double(scores.count)
+                
+                // Create a representative date for this group
+                var representativeDate: Date?
+                if groupingComponent == .weekOfYear {
+                    representativeDate = calendar.date(from: components)
+                } else {
+                    // For months, use the first day of the month
+                    var monthComponents = components
+                    monthComponents.day = 1
+                    representativeDate = calendar.date(from: monthComponents)
+                }
+                
+                if let date = representativeDate {
+                    return AggregatedDataPoint(date: date, averageScore: average)
+                }
+                return nil
+            }.sorted { $0.date < $1.date }
+        }
+    }
+    
+    var physicalChartData: [AggregatedDataPoint] {
+        let calendar = Calendar.current
+        let now = Date()
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        
+        let cutoffDate: Date
+        switch selectedTimeFrame {
+        case "Last 30 Days":
+            cutoffDate = calendar.date(byAdding: .day, value: -30, to: now) ?? now
+        case "Last 90 Days":
+            cutoffDate = calendar.date(byAdding: .day, value: -90, to: now) ?? now
+        case "Last 6 Months":
+            cutoffDate = calendar.date(byAdding: .month, value: -6, to: now) ?? now
+        case "Last 1 Year":
+            cutoffDate = calendar.date(byAdding: .year, value: -1, to: now) ?? now
+        case "All Time":
+            cutoffDate = Date.distantPast
+        default:
+            cutoffDate = calendar.date(byAdding: .day, value: -30, to: now) ?? now
+        }
+        
+        let filteredCheckins = checkins.filter { checkin in
+            if let checkinDate = dateFormatter.date(from: checkin.check_in_date) {
+                return checkinDate >= cutoffDate
+            }
+            return false
+        }
+
+        let shouldAggregate: Bool
+        let groupingComponent: Calendar.Component
+        
+        switch selectedTimeFrame {
+        case "Last 30 Days":
+            shouldAggregate = false
+            groupingComponent = .day
+        case "Last 90 Days":
+            shouldAggregate = true
+            groupingComponent = .weekOfYear
+        case "Last 6 Months", "Last 1 Year", "All Time":
+            shouldAggregate = true
+            groupingComponent = .month
+        default:
+            shouldAggregate = false
+            groupingComponent = .day
+        }
+        
+        if !shouldAggregate {
+            return filteredCheckins.compactMap { checkin in
+                if let date = dateFormatter.date(from: checkin.check_in_date) {
+                    return AggregatedDataPoint(date: date, averageScore: Double(checkin.physical_score))
+                }
+                return nil
+            }
+        } else {
+            var groupedData: [DateComponents: [Int]] = [:]
+            
+            for checkin in filteredCheckins {
+                if let date = dateFormatter.date(from: checkin.check_in_date) {
+                    let components: DateComponents
+                    if groupingComponent == .weekOfYear {
+                        components = calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: date)
+                    } else {
+                        components = calendar.dateComponents([.year, .month], from: date)
+                    }
+                    
+                    if groupedData[components] == nil {
+                        groupedData[components] = []
+                    }
+                    groupedData[components]?.append(checkin.physical_score)
+                }
+            }
+            
+            return groupedData.compactMap { (components, scores) in
+                let average = Double(scores.reduce(0, +)) / Double(scores.count)
+                
+                var representativeDate: Date?
+                if groupingComponent == .weekOfYear {
+                    representativeDate = calendar.date(from: components)
+                } else {
+                    var monthComponents = components
+                    monthComponents.day = 1
+                    representativeDate = calendar.date(from: monthComponents)
+                }
+                
+                if let date = representativeDate {
+                    return AggregatedDataPoint(date: date, averageScore: average)
+                }
+                return nil
+            }.sorted { $0.date < $1.date }
+        }
+    }
+    
+    var mentalChartData: [AggregatedDataPoint] {
+        let calendar = Calendar.current
+        let now = Date()
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        
+        let cutoffDate: Date
+        switch selectedTimeFrame {
+        case "Last 30 Days":
+            cutoffDate = calendar.date(byAdding: .day, value: -30, to: now) ?? now
+        case "Last 90 Days":
+            cutoffDate = calendar.date(byAdding: .day, value: -90, to: now) ?? now
+        case "Last 6 Months":
+            cutoffDate = calendar.date(byAdding: .month, value: -6, to: now) ?? now
+        case "Last 1 Year":
+            cutoffDate = calendar.date(byAdding: .year, value: -1, to: now) ?? now
+        case "All Time":
+            cutoffDate = Date.distantPast
+        default:
+            cutoffDate = calendar.date(byAdding: .day, value: -30, to: now) ?? now
+        }
+        
+        let filteredCheckins = checkins.filter { checkin in
+            if let checkinDate = dateFormatter.date(from: checkin.check_in_date) {
+                return checkinDate >= cutoffDate
+            }
+            return false
+        }
+
+        let shouldAggregate: Bool
+        let groupingComponent: Calendar.Component
+        
+        switch selectedTimeFrame {
+        case "Last 30 Days":
+            shouldAggregate = false
+            groupingComponent = .day
+        case "Last 90 Days":
+            shouldAggregate = true
+            groupingComponent = .weekOfYear
+        case "Last 6 Months", "Last 1 Year", "All Time":
+            shouldAggregate = true
+            groupingComponent = .month
+        default:
+            shouldAggregate = false
+            groupingComponent = .day
+        }
+        
+        if !shouldAggregate {
+            return filteredCheckins.compactMap { checkin in
+                if let date = dateFormatter.date(from: checkin.check_in_date) {
+                    return AggregatedDataPoint(date: date, averageScore: Double(checkin.mental_score))
+                }
+                return nil
+            }
+        } else {
+            var groupedData: [DateComponents: [Int]] = [:]
+            
+            for checkin in filteredCheckins {
+                if let date = dateFormatter.date(from: checkin.check_in_date) {
+                    let components: DateComponents
+                    if groupingComponent == .weekOfYear {
+                        components = calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: date)
+                    } else {
+                        components = calendar.dateComponents([.year, .month], from: date)
+                    }
+                     
+                    if groupedData[components] == nil {
+                        groupedData[components] = []
+                    }
+                    groupedData[components]?.append(checkin.mental_score)
+                }
+            }
+            
+            return groupedData.compactMap { (components, scores) in
+                let average = Double(scores.reduce(0, +)) / Double(scores.count)
+                
+                var representativeDate: Date?
+                if groupingComponent == .weekOfYear {
+                    representativeDate = calendar.date(from: components)
+                } else {
+                    var monthComponents = components
+                    monthComponents.day = 1
+                    representativeDate = calendar.date(from: monthComponents)
+                }
+                
+                if let date = representativeDate {
+                    return AggregatedDataPoint(date: date, averageScore: average)
+                }
+                return nil
+            }.sorted { $0.date < $1.date }
+        }
+    }
+    
+    var xAxisStride: Calendar.Component {
+        switch selectedTimeFrame {
+        case "Last 30 Days":
+            return .day
+        case "Last 90 Days":
+            return .weekOfYear
+        case "Last 6 Months":
+            return .month
+        case "Last 1 Year":
+            return .month
+        case "All Time":
+            return .month
+        default:
+            return .day
+        }
+    }
+    
+    var xAxisFormat: Date.FormatStyle {
+        switch selectedTimeFrame {
+        case "Last 30 Days":
+            return .dateTime.day().month(.abbreviated)
+        case "Last 90 Days":
+            return .dateTime.day().month(.abbreviated)
+        case "Last 6 Months", "Last 1 Year", "All Time":
+            return .dateTime.month(.abbreviated).year()
+        default:
+            return .dateTime.day().month(.abbreviated)
+        }
+    }
+    
+    var needsDiagonalLabels: Bool {
+        switch selectedTimeFrame {
+        case "Last 6 Months", "Last 1 Year", "All Time":
+            return true
+        default:
+            return false
+        }
+    }
+    
+    var body: some View {
+        Text("AI Review Section")
+            .cardStyling()
+        
+        VStack{
+            Text("Overall Readiness")
+                .font(.headline.bold())
+                .padding(.bottom)
+            Chart {
+                ForEach(overallChartData) { dataPoint in
+                    LineMark(x: .value("Date", dataPoint.date), y: .value("Readiness", dataPoint.averageScore))
+                        .foregroundStyle(blueEnergy)
+                        .interpolationMethod(.catmullRom)
+                        .lineStyle(.init(lineWidth: 2))
+                        .symbol {
+                            Circle()
+                                .fill(blueEnergy)
+                                .frame(width: 12, height: 12)
+                        }
+                }
+            }
+            .chartXAxis {
+                AxisMarks(preset: .extended, values: .stride(by: xAxisStride)) { value in
+                    AxisValueLabel {
+                        if needsDiagonalLabels {
+                            if let date = value.as(Date.self) {
+                                Text(date.formatted(xAxisFormat))
+                                    .font(.caption2)
+                                    .rotationEffect(.degrees(-45))
+                                    .offset(y: 10)
+                                    .padding(.vertical)
+                            }
+                        } else {
+                            if let date = value.as(Date.self) {
+                                Text(date.formatted(xAxisFormat))
+                                    .font(.caption2)
+                            }
+                        }
+                    }
+                }
+            }
+            .chartYAxis {
+                AxisMarks(preset: .extended, position: .trailing, values: .stride(by: 25))
+            }
+        }
+        .frame(height: needsDiagonalLabels ? 250 : 200)
+        .cardStyling()
+        
+        VStack{
+            Text("Physical Readiness")
+                .font(.headline.bold())
+                .padding(.bottom)
+            Chart {
+                ForEach(physicalChartData) { dataPoint in
+                    LineMark(x: .value("Date", dataPoint.date), y: .value("Readiness", dataPoint.averageScore))
+                        .foregroundStyle(blueEnergy)
+                        .interpolationMethod(.catmullRom)
+                        .lineStyle(.init(lineWidth: 2))
+                        .symbol {
+                            Circle()
+                                .fill(blueEnergy)
+                                .frame(width: 12, height: 12)
+                        }
+                }
+            }
+            .chartXAxis {
+                AxisMarks(preset: .extended, values: .stride(by: xAxisStride)) { value in
+                    AxisValueLabel {
+                        if needsDiagonalLabels {
+                            if let date = value.as(Date.self) {
+                                Text(date.formatted(xAxisFormat))
+                                    .font(.caption2)
+                                    .rotationEffect(.degrees(-45))
+                                    .offset(y: 10)
+                                    .padding(.vertical)
+                            }
+                        } else {
+                            if let date = value.as(Date.self) {
+                                Text(date.formatted(xAxisFormat))
+                                    .font(.caption2)
+                            }
+                        }
+                    }
+                }
+            }
+            .chartYAxis {
+                AxisMarks(preset: .extended, position: .trailing, values: .stride(by: 25))
+            }
+        }
+        .frame(height: needsDiagonalLabels ? 250 : 200)
+        .cardStyling()
+        
+        VStack{
+            Text("Mental Readiness")
+                .font(.headline.bold())
+                .padding(.bottom)
+            Chart {
+                ForEach(mentalChartData) { dataPoint in
+                    LineMark(x: .value("Date", dataPoint.date), y: .value("Readiness", dataPoint.averageScore))
+                        .foregroundStyle(blueEnergy)
+                        .interpolationMethod(.catmullRom)
+                        .lineStyle(.init(lineWidth: 2))
+                        .symbol {
+                            Circle()
+                                .fill(blueEnergy)
+                                .frame(width: 12, height: 12)
+                        }
+                }
+            }
+            .chartXAxis {
+                AxisMarks(preset: .extended, values: .stride(by: xAxisStride)) { value in
+                    AxisValueLabel {
+                        if needsDiagonalLabels {
+                            if let date = value.as(Date.self) {
+                                Text(date.formatted(xAxisFormat))
+                                    .font(.caption2)
+                                    .rotationEffect(.degrees(-45))
+                                    .offset(y: 10)
+                                    .padding(.vertical)
+                            }
+                        } else {
+                            if let date = value.as(Date.self) {
+                                Text(date.formatted(xAxisFormat))
+                                    .font(.caption2)
+                            }
+                        }
+                    }
+                }
+            }
+            .chartYAxis {
+                AxisMarks(preset: .extended, position: .trailing, values: .stride(by: 25))
+            }
+        }
+        .frame(height: needsDiagonalLabels ? 250 : 200)
+        .cardStyling()
+        .padding(.bottom, 30)
+    }
+}
+
+struct WorkoutsGraphView: View {
+    @Environment(\.colorScheme) var colorScheme
+    var workouts: [SessionReport]
+    var selectedTimeFrame: String
+    
+    struct AggregatedDataPoint: Identifiable {
+        let id = UUID()
+        let date: Date
+        let averageScore: Double
+    }
+    
+    var rpeChartData: [AggregatedDataPoint] {
+        let calendar = Calendar.current
+        let now = Date()
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        
+        let cutoffDate: Date
+        switch selectedTimeFrame {
+        case "Last 30 Days":
+            cutoffDate = calendar.date(byAdding: .day, value: -30, to: now) ?? now
+        case "Last 90 Days":
+            cutoffDate = calendar.date(byAdding: .day, value: -90, to: now) ?? now
+        case "Last 6 Months":
+            cutoffDate = calendar.date(byAdding: .month, value: -6, to: now) ?? now
+        case "Last 1 Year":
+            cutoffDate = calendar.date(byAdding: .year, value: -1, to: now) ?? now
+        case "All Time":
+            cutoffDate = Date.distantPast
+        default:
+            cutoffDate = calendar.date(byAdding: .day, value: -30, to: now) ?? now
+        }
+        
+        let filteredWorkouts = workouts.filter { workout in
+            if let sessionDate = dateFormatter.date(from: workout.session_date) {
+                return sessionDate >= cutoffDate
+            }
+            return false
+        }
+        
+        let shouldAggregate: Bool
+        let groupingComponent: Calendar.Component
+        
+        switch selectedTimeFrame {
+        case "Last 30 Days":
+            shouldAggregate = false
+            groupingComponent = .day
+        case "Last 90 Days":
+            shouldAggregate = true
+            groupingComponent = .weekOfYear
+        case "Last 6 Months", "Last 1 Year", "All Time":
+            shouldAggregate = true
+            groupingComponent = .month
+        default:
+            shouldAggregate = false
+            groupingComponent = .day
+        }
+        
+        if !shouldAggregate {
+            return filteredWorkouts.compactMap { workout in
+                if let date = dateFormatter.date(from: workout.session_date) {
+                    return AggregatedDataPoint(date: date, averageScore: Double(workout.session_rpe))
+                }
+                return nil
+            }
+        } else {
+            var groupedData: [DateComponents: [Int]] = [:]
+            
+            for workout in filteredWorkouts {
+                if let date = dateFormatter.date(from: workout.session_date) {
+                    let components: DateComponents
+                    if groupingComponent == .weekOfYear {
+                        components = calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: date)
+                    } else {
+                        components = calendar.dateComponents([.year, .month], from: date)
+                    }
+                    
+                    if groupedData[components] == nil {
+                        groupedData[components] = []
+                    }
+                    groupedData[components]?.append(workout.session_rpe)
+                }
+            }
+            
+            return groupedData.compactMap { (components, scores) in
+                let average = Double(scores.reduce(0, +)) / Double(scores.count)
+                
+                var representativeDate: Date?
+                if groupingComponent == .weekOfYear {
+                    representativeDate = calendar.date(from: components)
+                } else {
+                    var monthComponents = components
+                    monthComponents.day = 1
+                    representativeDate = calendar.date(from: monthComponents)
+                }
+                
+                if let date = representativeDate {
+                    return AggregatedDataPoint(date: date, averageScore: average)
+                }
+                return nil
+            }.sorted { $0.date < $1.date }
+        }
+    }
+    
+    var movementChartData: [AggregatedDataPoint] {
+        let calendar = Calendar.current
+        let now = Date()
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        
+        let cutoffDate: Date
+        switch selectedTimeFrame {
+        case "Last 30 Days":
+            cutoffDate = calendar.date(byAdding: .day, value: -30, to: now) ?? now
+        case "Last 90 Days":
+            cutoffDate = calendar.date(byAdding: .day, value: -90, to: now) ?? now
+        case "Last 6 Months":
+            cutoffDate = calendar.date(byAdding: .month, value: -6, to: now) ?? now
+        case "Last 1 Year":
+            cutoffDate = calendar.date(byAdding: .year, value: -1, to: now) ?? now
+        case "All Time":
+            cutoffDate = Date.distantPast
+        default:
+            cutoffDate = calendar.date(byAdding: .day, value: -30, to: now) ?? now
+        }
+        
+        let filteredWorkouts = workouts.filter { workout in
+            if let workoutDate = dateFormatter.date(from: workout.session_date) {
+                return workoutDate >= cutoffDate
+            }
+            return false
+        }
+
+        let shouldAggregate: Bool
+        let groupingComponent: Calendar.Component
+        
+        switch selectedTimeFrame {
+        case "Last 30 Days":
+            shouldAggregate = false
+            groupingComponent = .day
+        case "Last 90 Days":
+            shouldAggregate = true
+            groupingComponent = .weekOfYear
+        case "Last 6 Months", "Last 1 Year", "All Time":
+            shouldAggregate = true
+            groupingComponent = .month
+        default:
+            shouldAggregate = false
+            groupingComponent = .day
+        }
+        
+        if !shouldAggregate {
+            return filteredWorkouts.compactMap { workout in
+                if let date = dateFormatter.date(from: workout.session_date) {
+                    return AggregatedDataPoint(date: date, averageScore: Double(workout.movement_quality))
+                }
+                return nil
+            }
+        } else {
+            var groupedData: [DateComponents: [Int]] = [:]
+            
+            for workout in filteredWorkouts {
+                if let date = dateFormatter.date(from: workout.session_date) {
+                    let components: DateComponents
+                    if groupingComponent == .weekOfYear {
+                        components = calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: date)
+                    } else {
+                        components = calendar.dateComponents([.year, .month], from: date)
+                    }
+                    
+                    if groupedData[components] == nil {
+                        groupedData[components] = []
+                    }
+                    groupedData[components]?.append(workout.movement_quality)
+                }
+            }
+            
+            return groupedData.compactMap { (components, scores) in
+                let average = Double(scores.reduce(0, +)) / Double(scores.count)
+                
+                var representativeDate: Date?
+                if groupingComponent == .weekOfYear {
+                    representativeDate = calendar.date(from: components)
+                } else {
+                    var monthComponents = components
+                    monthComponents.day = 1
+                    representativeDate = calendar.date(from: monthComponents)
+                }
+                
+                if let date = representativeDate {
+                    return AggregatedDataPoint(date: date, averageScore: average)
+                }
+                return nil
+            }.sorted { $0.date < $1.date }
+        }
+    }
+    
+    var focusChartData: [AggregatedDataPoint] {
+        let calendar = Calendar.current
+        let now = Date()
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        
+        let cutoffDate: Date
+        switch selectedTimeFrame {
+        case "Last 30 Days":
+            cutoffDate = calendar.date(byAdding: .day, value: -30, to: now) ?? now
+        case "Last 90 Days":
+            cutoffDate = calendar.date(byAdding: .day, value: -90, to: now) ?? now
+        case "Last 6 Months":
+            cutoffDate = calendar.date(byAdding: .month, value: -6, to: now) ?? now
+        case "Last 1 Year":
+            cutoffDate = calendar.date(byAdding: .year, value: -1, to: now) ?? now
+        case "All Time":
+            cutoffDate = Date.distantPast
+        default:
+            cutoffDate = calendar.date(byAdding: .day, value: -30, to: now) ?? now
+        }
+        
+        let filteredWorkouts = workouts.filter { workout in
+            if let workoutDate = dateFormatter.date(from: workout.session_date) {
+                return workoutDate >= cutoffDate
+            }
+            return false
+        }
+
+        let shouldAggregate: Bool
+        let groupingComponent: Calendar.Component
+        
+        switch selectedTimeFrame {
+        case "Last 30 Days":
+            shouldAggregate = false
+            groupingComponent = .day
+        case "Last 90 Days":
+            shouldAggregate = true
+            groupingComponent = .weekOfYear
+        case "Last 6 Months", "Last 1 Year", "All Time":
+            shouldAggregate = true
+            groupingComponent = .month
+        default:
+            shouldAggregate = false
+            groupingComponent = .day
+        }
+        
+        if !shouldAggregate {
+            return filteredWorkouts.compactMap { workout in
+                if let date = dateFormatter.date(from: workout.session_date) {
+                    return AggregatedDataPoint(date: date, averageScore: Double(workout.focus))
+                }
+                return nil
+            }
+        } else {
+            var groupedData: [DateComponents: [Int]] = [:]
+            
+            for workout in filteredWorkouts {
+                if let date = dateFormatter.date(from: workout.session_date) {
+                    let components: DateComponents
+                    if groupingComponent == .weekOfYear {
+                        components = calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: date)
+                    } else {
+                        components = calendar.dateComponents([.year, .month], from: date)
+                    }
+                    
+                    if groupedData[components] == nil {
+                        groupedData[components] = []
+                    }
+                    groupedData[components]?.append(workout.focus)
+                }
+            }
+            
+            return groupedData.compactMap { (components, scores) in
+                let average = Double(scores.reduce(0, +)) / Double(scores.count)
+                
+                var representativeDate: Date?
+                if groupingComponent == .weekOfYear {
+                    representativeDate = calendar.date(from: components)
+                } else {
+                    var monthComponents = components
+                    monthComponents.day = 1
+                    representativeDate = calendar.date(from: monthComponents)
+                }
+                
+                if let date = representativeDate {
+                    return AggregatedDataPoint(date: date, averageScore: average)
+                }
+                return nil
+            }.sorted { $0.date < $1.date }
+        }
+    }
+    
+    var missesChartData: [AggregatedDataPoint] {
+        let calendar = Calendar.current
+        let now = Date()
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        
+        let cutoffDate: Date
+        switch selectedTimeFrame {
+        case "Last 30 Days":
+            cutoffDate = calendar.date(byAdding: .day, value: -30, to: now) ?? now
+        case "Last 90 Days":
+            cutoffDate = calendar.date(byAdding: .day, value: -90, to: now) ?? now
+        case "Last 6 Months":
+            cutoffDate = calendar.date(byAdding: .month, value: -6, to: now) ?? now
+        case "Last 1 Year":
+            cutoffDate = calendar.date(byAdding: .year, value: -1, to: now) ?? now
+        case "All Time":
+            cutoffDate = Date.distantPast
+        default:
+            cutoffDate = calendar.date(byAdding: .day, value: -30, to: now) ?? now
+        }
+        
+        let filteredWorkouts = workouts.filter { workout in
+            if let workoutDate = dateFormatter.date(from: workout.session_date) {
+                return workoutDate >= cutoffDate
+            }
+            return false
+        }
+
+        let shouldAggregate: Bool
+        let groupingComponent: Calendar.Component
+        
+        switch selectedTimeFrame {
+        case "Last 30 Days":
+            shouldAggregate = false
+            groupingComponent = .day
+        case "Last 90 Days":
+            shouldAggregate = true
+            groupingComponent = .weekOfYear
+        case "Last 6 Months", "Last 1 Year", "All Time":
+            shouldAggregate = true
+            groupingComponent = .month
+        default:
+            shouldAggregate = false
+            groupingComponent = .day
+        }
+        
+        if !shouldAggregate {
+            return filteredWorkouts.compactMap { workout in
+                if let date = dateFormatter.date(from: workout.session_date) {
+                    return AggregatedDataPoint(date: date, averageScore: Double(workout.misses) ?? 0)
+                }
+                return nil
+            }
+        } else {
+            var groupedData: [DateComponents: [Int]] = [:]
+            
+            for workout in filteredWorkouts {
+                if let date = dateFormatter.date(from: workout.session_date) {
+                    let components: DateComponents
+                    if groupingComponent == .weekOfYear {
+                        components = calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: date)
+                    } else {
+                        components = calendar.dateComponents([.year, .month], from: date)
+                    }
+                    
+                    if groupedData[components] == nil {
+                        groupedData[components] = []
+                    }
+                    groupedData[components]?.append(Int(workout.misses) ?? 0)
+                }
+            }
+            
+            return groupedData.compactMap { (components, scores) in
+                let average = Double(scores.reduce(0, +)) / Double(scores.count)
+                
+                var representativeDate: Date?
+                if groupingComponent == .weekOfYear {
+                    representativeDate = calendar.date(from: components)
+                } else {
+                    var monthComponents = components
+                    monthComponents.day = 1
+                    representativeDate = calendar.date(from: monthComponents)
+                }
+                
+                if let date = representativeDate {
+                    return AggregatedDataPoint(date: date, averageScore: average)
+                }
+                return nil
+            }.sorted { $0.date < $1.date }
+        }
+    }
+    
+    var xAxisStride: Calendar.Component {
+        switch selectedTimeFrame {
+        case "Last 30 Days":
+            return .day
+        case "Last 90 Days":
+            return .weekOfYear
+        case "Last 6 Months":
+            return .month
+        case "Last 1 Year":
+            return .month
+        case "All Time":
+            return .month
+        default:
+            return .day
+        }
+    }
+    
+    var xAxisFormat: Date.FormatStyle {
+        switch selectedTimeFrame {
+        case "Last 30 Days":
+            return .dateTime.day().month(.abbreviated)
+        case "Last 90 Days":
+            return .dateTime.day().month(.abbreviated)
+        case "Last 6 Months", "Last 1 Year", "All Time":
+            return .dateTime.month(.abbreviated).year()
+        default:
+            return .dateTime.day().month(.abbreviated)
+        }
+    }
+    
+    var needsDiagonalLabels: Bool {
+        switch selectedTimeFrame {
+        case "Last 6 Months", "Last 1 Year", "All Time":
+            return true
+        default:
+            return false
+        }
+    }
+    
+    var body: some View {
+        Text("AI Review Section")
+            .cardStyling()
+        
+        VStack{
+            Text("Session RPE")
+                .font(.headline.bold())
+                .padding(.bottom)
+            Chart {
+                ForEach(rpeChartData) { dataPoint in
+                    LineMark(x: .value("Date", dataPoint.date), y: .value("Readiness", dataPoint.averageScore))
+                        .foregroundStyle(blueEnergy)
+                        .interpolationMethod(.catmullRom)
+                        .lineStyle(.init(lineWidth: 2))
+                        .symbol {
+                            Circle()
+                                .fill(blueEnergy)
+                                .frame(width: 12, height: 12)
+                        }
+                }
+            }
+            .chartXAxis {
+                AxisMarks(preset: .extended, values: .stride(by: xAxisStride)) { value in
+                    AxisValueLabel {
+                        if needsDiagonalLabels {
+                            if let date = value.as(Date.self) {
+                                Text(date.formatted(xAxisFormat))
+                                    .font(.caption2)
+                                    .rotationEffect(.degrees(-45))
+                                    .offset(y: 10)
+                                    .padding(.vertical)
+                            }
+                        } else {
+                            if let date = value.as(Date.self) {
+                                Text(date.formatted(xAxisFormat))
+                                    .font(.caption2)
+                            }
+                        }
+                    }
+                }
+            }
+            .chartYAxis {
+                AxisMarks(preset: .extended, position: .trailing, values: .stride(by: 1))
+            }
+            .chartYScale(domain: 1...5)
+        }
+        .frame(height: needsDiagonalLabels ? 250 : 200)
+        .cardStyling()
+        
+        VStack{
+            Text("Movement Quality")
+                .font(.headline.bold())
+                .padding(.bottom)
+            Chart {
+                ForEach(movementChartData) { dataPoint in
+                    LineMark(x: .value("Date", dataPoint.date), y: .value("Readiness", dataPoint.averageScore))
+                        .foregroundStyle(blueEnergy)
+                        .interpolationMethod(.catmullRom)
+                        .lineStyle(.init(lineWidth: 2))
+                        .symbol {
+                            Circle()
+                                .fill(blueEnergy)
+                                .frame(width: 12, height: 12)
+                        }
+                }
+            }
+            .chartXAxis {
+                AxisMarks(preset: .extended, values: .stride(by: xAxisStride)) { value in
+                    AxisValueLabel {
+                        if needsDiagonalLabels {
+                            if let date = value.as(Date.self) {
+                                Text(date.formatted(xAxisFormat))
+                                    .font(.caption2)
+                                    .rotationEffect(.degrees(-45))
+                                    .offset(y: 10)
+                                    .padding(.vertical)
+                            }
+                        } else {
+                            if let date = value.as(Date.self) {
+                                Text(date.formatted(xAxisFormat))
+                                    .font(.caption2)
+                            }
+                        }
+                    }
+                }
+            }
+            .chartYAxis {
+                AxisMarks(preset: .extended, position: .trailing, values: .stride(by: 1))
+            }
+            .chartYScale(domain: 1...5)
+        }
+        .frame(height: needsDiagonalLabels ? 250 : 200)
+        .cardStyling()
+        
+        VStack{
+            Text("Focus")
+                .font(.headline.bold())
+                .padding(.bottom)
+            Chart {
+                ForEach(focusChartData) { dataPoint in
+                    LineMark(x: .value("Date", dataPoint.date), y: .value("Readiness", dataPoint.averageScore))
+                        .foregroundStyle(blueEnergy)
+                        .interpolationMethod(.catmullRom)
+                        .lineStyle(.init(lineWidth: 2))
+                        .symbol {
+                            Circle()
+                                .fill(blueEnergy)
+                                .frame(width: 12, height: 12)
+                        }
+                }
+            }
+            .chartXAxis {
+                AxisMarks(preset: .extended, values: .stride(by: xAxisStride)) { value in
+                    AxisValueLabel {
+                        if needsDiagonalLabels {
+                            if let date = value.as(Date.self) {
+                                Text(date.formatted(xAxisFormat))
+                                    .font(.caption2)
+                                    .rotationEffect(.degrees(-45))
+                                    .offset(y: 10)
+                                    .padding(.vertical)
+                            }
+                        } else {
+                            if let date = value.as(Date.self) {
+                                Text(date.formatted(xAxisFormat))
+                                    .font(.caption2)
+                            }
+                        }
+                    }
+                }
+            }
+            .chartYAxis {
+                AxisMarks(preset: .extended, position: .trailing, values: .stride(by: 1))
+            }
+            .chartYScale(domain: 1...5)
+        }
+        .frame(height: needsDiagonalLabels ? 250 : 200)
+        .cardStyling()
+        
+        VStack{
+            Text("Misses")
+                .font(.headline.bold())
+                .padding(.bottom)
+            Chart {
+                ForEach(missesChartData) { dataPoint in
+                    LineMark(x: .value("Date", dataPoint.date), y: .value("Readiness", dataPoint.averageScore))
+                        .foregroundStyle(blueEnergy)
+                        .interpolationMethod(.catmullRom)
+                        .lineStyle(.init(lineWidth: 2))
+                        .symbol {
+                            Circle()
+                                .fill(blueEnergy)
+                                .frame(width: 12, height: 12)
+                        }
+                }
+            }
+            .chartXAxis {
+                AxisMarks(preset: .extended, values: .stride(by: xAxisStride)) { value in
+                    AxisValueLabel {
+                        if needsDiagonalLabels {
+                            if let date = value.as(Date.self) {
+                                Text(date.formatted(xAxisFormat))
+                                    .font(.caption2)
+                                    .rotationEffect(.degrees(-45))
+                                    .offset(y: 10)
+                                    .padding(.vertical)
+                            }
+                        } else {
+                            if let date = value.as(Date.self) {
+                                Text(date.formatted(xAxisFormat))
+                                    .font(.caption2)
+                            }
+                        }
+                    }
+                }
+            }
+            .chartYAxis {
+                AxisMarks(preset: .extended, position: .trailing, values: .stride(by: 1))
+            }
+            .chartYScale(domain: 0...5)
+        }
+        .frame(height: needsDiagonalLabels ? 250 : 200)
+        .cardStyling()
+        .padding(.bottom, 30)
+    }
+}
+
+struct MeetsGraphView: View {
+    @Environment(\.colorScheme) var colorScheme
+    var meets: [CompReport]
+    var selectedTimeFrame: String
+    
+    struct AggregatedDataPoint: Identifiable {
+        let id = UUID()
+        let date: Date
+        let averageScore: Double
+    }
+    
+    var performanceChartData: [AggregatedDataPoint] {
+        let calendar = Calendar.current
+        let now = Date()
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        
+        let cutoffDate: Date
+        switch selectedTimeFrame {
+        case "Last 30 Days":
+            cutoffDate = calendar.date(byAdding: .day, value: -30, to: now) ?? now
+        case "Last 90 Days":
+            cutoffDate = calendar.date(byAdding: .day, value: -90, to: now) ?? now
+        case "Last 6 Months":
+            cutoffDate = calendar.date(byAdding: .month, value: -6, to: now) ?? now
+        case "Last 1 Year":
+            cutoffDate = calendar.date(byAdding: .year, value: -1, to: now) ?? now
+        case "All Time":
+            cutoffDate = Date.distantPast
+        default:
+            cutoffDate = calendar.date(byAdding: .day, value: -30, to: now) ?? now
+        }
+        
+        let filteredmeets = meets.filter { meet in
+            if let sessionDate = dateFormatter.date(from: meet.meet_date) {
+                return sessionDate >= cutoffDate
+            }
+            return false
+        }
+        
+        let shouldAggregate: Bool
+        let groupingComponent: Calendar.Component
+        
+        switch selectedTimeFrame {
+        case "Last 30 Days":
+            shouldAggregate = false
+            groupingComponent = .day
+        case "Last 90 Days":
+            shouldAggregate = true
+            groupingComponent = .weekOfYear
+        case "Last 6 Months", "Last 1 Year", "All Time":
+            shouldAggregate = true
+            groupingComponent = .month
+        default:
+            shouldAggregate = false
+            groupingComponent = .day
+        }
+        
+        if !shouldAggregate {
+            return filteredmeets.compactMap { meet in
+                if let date = dateFormatter.date(from: meet.meet_date) {
+                    return AggregatedDataPoint(date: date, averageScore: Double(meet.performance_rating))
+                }
+                return nil
+            }
+        } else {
+            var groupedData: [DateComponents: [Int]] = [:]
+            
+            for meet in filteredmeets {
+                if let date = dateFormatter.date(from: meet.meet_date) {
+                    let components: DateComponents
+                    if groupingComponent == .weekOfYear {
+                        components = calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: date)
+                    } else {
+                        components = calendar.dateComponents([.year, .month], from: date)
+                    }
+                    
+                    if groupedData[components] == nil {
+                        groupedData[components] = []
+                    }
+                    groupedData[components]?.append(meet.performance_rating)
+                }
+            }
+            
+            return groupedData.compactMap { (components, scores) in
+                let average = Double(scores.reduce(0, +)) / Double(scores.count)
+                
+                var representativeDate: Date?
+                if groupingComponent == .weekOfYear {
+                    representativeDate = calendar.date(from: components)
+                } else {
+                    var monthComponents = components
+                    monthComponents.day = 1
+                    representativeDate = calendar.date(from: monthComponents)
+                }
+                
+                if let date = representativeDate {
+                    return AggregatedDataPoint(date: date, averageScore: average)
+                }
+                return nil
+            }.sorted { $0.date < $1.date }
+        }
+    }
+    
+    var preparednessChartData: [AggregatedDataPoint] {
+        let calendar = Calendar.current
+        let now = Date()
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        
+        let cutoffDate: Date
+        switch selectedTimeFrame {
+        case "Last 30 Days":
+            cutoffDate = calendar.date(byAdding: .day, value: -30, to: now) ?? now
+        case "Last 90 Days":
+            cutoffDate = calendar.date(byAdding: .day, value: -90, to: now) ?? now
+        case "Last 6 Months":
+            cutoffDate = calendar.date(byAdding: .month, value: -6, to: now) ?? now
+        case "Last 1 Year":
+            cutoffDate = calendar.date(byAdding: .year, value: -1, to: now) ?? now
+        case "All Time":
+            cutoffDate = Date.distantPast
+        default:
+            cutoffDate = calendar.date(byAdding: .day, value: -30, to: now) ?? now
+        }
+        
+        let filteredmeets = meets.filter { meet in
+            if let meetDate = dateFormatter.date(from: meet.meet_date) {
+                return meetDate >= cutoffDate
+            }
+            return false
+        }
+
+        let shouldAggregate: Bool
+        let groupingComponent: Calendar.Component
+        
+        switch selectedTimeFrame {
+        case "Last 30 Days":
+            shouldAggregate = false
+            groupingComponent = .day
+        case "Last 90 Days":
+            shouldAggregate = true
+            groupingComponent = .weekOfYear
+        case "Last 6 Months", "Last 1 Year", "All Time":
+            shouldAggregate = true
+            groupingComponent = .month
+        default:
+            shouldAggregate = false
+            groupingComponent = .day
+        }
+        
+        if !shouldAggregate {
+            return filteredmeets.compactMap { meet in
+                if let date = dateFormatter.date(from: meet.meet_date) {
+                    return AggregatedDataPoint(date: date, averageScore: Double(meet.preparedness_rating))
+                }
+                return nil
+            }
+        } else {
+            var groupedData: [DateComponents: [Int]] = [:]
+            
+            for meet in filteredmeets {
+                if let date = dateFormatter.date(from: meet.meet_date) {
+                    let components: DateComponents
+                    if groupingComponent == .weekOfYear {
+                        components = calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: date)
+                    } else {
+                        components = calendar.dateComponents([.year, .month], from: date)
+                    }
+                    
+                    if groupedData[components] == nil {
+                        groupedData[components] = []
+                    }
+                    groupedData[components]?.append(meet.preparedness_rating)
+                }
+            }
+            
+            return groupedData.compactMap { (components, scores) in
+                let average = Double(scores.reduce(0, +)) / Double(scores.count)
+                
+                var representativeDate: Date?
+                if groupingComponent == .weekOfYear {
+                    representativeDate = calendar.date(from: components)
+                } else {
+                    var monthComponents = components
+                    monthComponents.day = 1
+                    representativeDate = calendar.date(from: monthComponents)
+                }
+                
+                if let date = representativeDate {
+                    return AggregatedDataPoint(date: date, averageScore: average)
+                }
+                return nil
+            }.sorted { $0.date < $1.date }
+        }
+    }
+    
+    var totalChartData: [AggregatedDataPoint] {
+        let calendar = Calendar.current
+        let now = Date()
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        
+        let cutoffDate: Date
+        switch selectedTimeFrame {
+        case "Last 30 Days":
+            cutoffDate = calendar.date(byAdding: .day, value: -30, to: now) ?? now
+        case "Last 90 Days":
+            cutoffDate = calendar.date(byAdding: .day, value: -90, to: now) ?? now
+        case "Last 6 Months":
+            cutoffDate = calendar.date(byAdding: .month, value: -6, to: now) ?? now
+        case "Last 1 Year":
+            cutoffDate = calendar.date(byAdding: .year, value: -1, to: now) ?? now
+        case "All Time":
+            cutoffDate = Date.distantPast
+        default:
+            cutoffDate = calendar.date(byAdding: .day, value: -30, to: now) ?? now
+        }
+        
+        let filteredmeets = meets.filter { meet in
+            if let meetDate = dateFormatter.date(from: meet.meet_date) {
+                return meetDate >= cutoffDate
+            }
+            return false
+        }
+
+        let shouldAggregate: Bool
+        let groupingComponent: Calendar.Component
+        
+        switch selectedTimeFrame {
+        case "Last 30 Days":
+            shouldAggregate = false
+            groupingComponent = .day
+        case "Last 90 Days":
+            shouldAggregate = true
+            groupingComponent = .weekOfYear
+        case "Last 6 Months", "Last 1 Year", "All Time":
+            shouldAggregate = true
+            groupingComponent = .month
+        default:
+            shouldAggregate = false
+            groupingComponent = .day
+        }
+        
+        if !shouldAggregate {
+            return filteredmeets.compactMap { meet in
+                if let date = dateFormatter.date(from: meet.meet_date) {
+                    return AggregatedDataPoint(date: date, averageScore: Double(meet.snatch_best + meet.cj_best))
+                }
+                return nil
+            }
+        } else {
+            var groupedData: [DateComponents: [Int]] = [:]
+            
+            for meet in filteredmeets {
+                if let date = dateFormatter.date(from: meet.meet_date) {
+                    let components: DateComponents
+                    if groupingComponent == .weekOfYear {
+                        components = calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: date)
+                    } else {
+                        components = calendar.dateComponents([.year, .month], from: date)
+                    }
+                    
+                    if groupedData[components] == nil {
+                        groupedData[components] = []
+                    }
+                    groupedData[components]?.append(meet.snatch_best + meet.cj_best)
+                }
+            }
+            
+            return groupedData.compactMap { (components, scores) in
+                let average = Double(scores.reduce(0, +)) / Double(scores.count)
+                
+                var representativeDate: Date?
+                if groupingComponent == .weekOfYear {
+                    representativeDate = calendar.date(from: components)
+                } else {
+                    var monthComponents = components
+                    monthComponents.day = 1
+                    representativeDate = calendar.date(from: monthComponents)
+                }
+                
+                if let date = representativeDate {
+                    return AggregatedDataPoint(date: date, averageScore: average)
+                }
+                return nil
+            }.sorted { $0.date < $1.date }
+        }
+    }
+    
+    var xAxisStride: Calendar.Component {
+        switch selectedTimeFrame {
+        case "Last 30 Days":
+            return .day
+        case "Last 90 Days":
+            return .weekOfYear
+        case "Last 6 Months":
+            return .month
+        case "Last 1 Year":
+            return .month
+        case "All Time":
+            return .month
+        default:
+            return .day
+        }
+    }
+    
+    var xAxisFormat: Date.FormatStyle {
+        switch selectedTimeFrame {
+        case "Last 30 Days":
+            return .dateTime.day().month(.abbreviated)
+        case "Last 90 Days":
+            return .dateTime.day().month(.abbreviated)
+        case "Last 6 Months", "Last 1 Year", "All Time":
+            return .dateTime.month(.abbreviated).year()
+        default:
+            return .dateTime.day().month(.abbreviated)
+        }
+    }
+    
+    var needsDiagonalLabels: Bool {
+        switch selectedTimeFrame {
+        case "Last 6 Months", "Last 1 Year", "All Time":
+            return true
+        default:
+            return false
+        }
+    }
+    
+    var body: some View {
+        Text("AI Review Section")
+            .cardStyling()
+        
+        VStack{
+            Text("Performance Rating")
+                .font(.headline.bold())
+                .padding(.bottom)
+            Chart {
+                ForEach(performanceChartData) { dataPoint in
+                    LineMark(x: .value("Date", dataPoint.date), y: .value("Readiness", dataPoint.averageScore))
+                        .foregroundStyle(blueEnergy)
+                        .interpolationMethod(.catmullRom)
+                        .lineStyle(.init(lineWidth: 2))
+                        .symbol {
+                            Circle()
+                                .fill(blueEnergy)
+                                .frame(width: 12, height: 12)
+                        }
+                }
+            }
+            .chartXAxis {
+                AxisMarks(preset: .extended, values: .stride(by: xAxisStride)) { value in
+                    AxisValueLabel {
+                        if needsDiagonalLabels {
+                            if let date = value.as(Date.self) {
+                                Text(date.formatted(xAxisFormat))
+                                    .font(.caption2)
+                                    .rotationEffect(.degrees(-45))
+                                    .offset(y: 10)
+                                    .padding(.vertical)
+                            }
+                        } else {
+                            if let date = value.as(Date.self) {
+                                Text(date.formatted(xAxisFormat))
+                                    .font(.caption2)
+                            }
+                        }
+                    }
+                }
+            }
+            .chartYAxis {
+                AxisMarks(preset: .extended, position: .trailing, values: .stride(by: 1))
+            }
+            .chartYScale(domain: 1...5)
+        }
+        .frame(height: needsDiagonalLabels ? 250 : 200)
+        .cardStyling()
+        
+        VStack{
+            Text("Preparedness Rating")
+                .font(.headline.bold())
+                .padding(.bottom)
+            Chart {
+                ForEach(preparednessChartData) { dataPoint in
+                    LineMark(x: .value("Date", dataPoint.date), y: .value("Readiness", dataPoint.averageScore))
+                        .foregroundStyle(blueEnergy)
+                        .interpolationMethod(.catmullRom)
+                        .lineStyle(.init(lineWidth: 2))
+                        .symbol {
+                            Circle()
+                                .fill(blueEnergy)
+                                .frame(width: 12, height: 12)
+                        }
+                }
+            }
+            .chartXAxis {
+                AxisMarks(preset: .extended, values: .stride(by: xAxisStride)) { value in
+                    AxisValueLabel {
+                        if needsDiagonalLabels {
+                            if let date = value.as(Date.self) {
+                                Text(date.formatted(xAxisFormat))
+                                    .font(.caption2)
+                                    .rotationEffect(.degrees(-45))
+                                    .offset(y: 10)
+                                    .padding(.vertical)
+                            }
+                        } else {
+                            if let date = value.as(Date.self) {
+                                Text(date.formatted(xAxisFormat))
+                                    .font(.caption2)
+                            }
+                        }
+                    }
+                }
+            }
+            .chartYAxis {
+                AxisMarks(preset: .extended, position: .trailing, values: .stride(by: 1))
+            }
+            .chartYScale(domain: 1...5)
+        }
+        .frame(height: needsDiagonalLabels ? 250 : 200)
+        .cardStyling()
+        
+        VStack{
+            Text("Total")
+                .font(.headline.bold())
+                .padding(.bottom)
+            Chart {
+                ForEach(totalChartData) { dataPoint in
+                    LineMark(x: .value("Date", dataPoint.date), y: .value("Readiness", dataPoint.averageScore))
+                        .foregroundStyle(blueEnergy)
+                        .interpolationMethod(.catmullRom)
+                        .lineStyle(.init(lineWidth: 2))
+                        .symbol {
+                            Circle()
+                                .fill(blueEnergy)
+                                .frame(width: 12, height: 12)
+                        }
+                }
+            }
+            .chartXAxis {
+                AxisMarks(preset: .extended, values: .stride(by: xAxisStride)) { value in
+                    AxisValueLabel {
+                        if needsDiagonalLabels {
+                            if let date = value.as(Date.self) {
+                                Text(date.formatted(xAxisFormat))
+                                    .font(.caption2)
+                                    .rotationEffect(.degrees(-45))
+                                    .offset(y: 10)
+                                    .padding(.vertical)
+                            }
+                        } else {
+                            if let date = value.as(Date.self) {
+                                Text(date.formatted(xAxisFormat))
+                                    .font(.caption2)
+                            }
+                        }
+                    }
+                }
+            }
+            .chartYAxis {
+                AxisMarks(preset: .extended, position: .trailing, values: .stride(by: 50))
+            }
+        }
+        .frame(height: needsDiagonalLabels ? 250 : 200)
+        .cardStyling()
+        .padding(.bottom, 30)
     }
 }
 
