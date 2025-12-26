@@ -42,7 +42,8 @@ struct CheckInView: View {
                     TextFieldSection(
                         field: $checkInScore.goal,
                         title: "What's your goal for this session?",
-                        colorScheme: colorScheme
+                        colorScheme: colorScheme,
+                        keyword: "goal"
                     )
                     
                     SliderSection(

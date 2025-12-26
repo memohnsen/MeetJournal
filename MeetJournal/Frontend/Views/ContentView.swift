@@ -15,6 +15,9 @@ struct ContentView: View {
             Tab("Home", systemImage: "house", value: "Home") {
                 HomeView()
             }
+            Tab("History", systemImage: "clock.arrow.trianglehead.counterclockwise.rotate.90", value: "History") {
+                TrendsView()
+            }
             Tab("Trends", systemImage: "chart.bar", value: "Trends") {
                 TrendsView()
             }

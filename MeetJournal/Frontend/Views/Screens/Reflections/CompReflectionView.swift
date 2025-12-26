@@ -66,15 +66,15 @@ struct CompReflectionView: View {
                     
                     SliderSection(colorScheme: colorScheme, title: "How would you rate your preparedness?", value: $preparednessRating, minString: "Poor", maxString: "Amazing")
                     
-                    TextFieldSection(field: $didWell, title: "What did you do well?", colorScheme: colorScheme)
+                    TextFieldSection(field: $didWell, title: "What did you do well?", colorScheme: colorScheme, keyword: "thoughts")
                     
-                    TextFieldSection(field: $needsWork, title: "What could you have done better?", colorScheme: colorScheme)
+                    TextFieldSection(field: $needsWork, title: "What could you have done better?", colorScheme: colorScheme, keyword: "thoughts")
                     
-                    TextFieldSection(field: $goodFromTraining, title: "What in training helped you feel prepared for the platform?", colorScheme: colorScheme)
+                    TextFieldSection(field: $goodFromTraining, title: "What in training helped you feel prepared for the platform?", colorScheme: colorScheme, keyword: "thoughts")
                     
-                    TextFieldSection(field: $cues, title: "What cues worked best for you?", colorScheme: colorScheme)
+                    TextFieldSection(field: $cues, title: "What cues worked best for you?", colorScheme: colorScheme, keyword: "cues")
                     
-                    TextFieldSection(field: $focus, title: "What do you need to focus on for the next meet?", colorScheme: colorScheme)
+                    TextFieldSection(field: $focus, title: "What do you need to focus on for the next meet?", colorScheme: colorScheme, keyword: "focus")
                     
                     Button {
                         let report: CompReport = CompReport(user_id: 1, meet: meet, selected_meet_type: selectedMeetType, performance_rating: performanceRating, preparedness_rating: preparednessRating, did_well: didWell, needs_work: needsWork, good_from_training: goodFromTraining, cues: cues, focus: focus, snatch1: snatch1, snatch2: snatch2, snatch3: snatch3, cj1: cj1, cj2: cj2, cj3: cj3)

@@ -11,6 +11,7 @@ struct TextFieldSection: View {
     @Binding var field: String
     var title: String
     var colorScheme: ColorScheme
+    var keyword: String
     
     var body: some View {
         VStack{
@@ -19,7 +20,7 @@ struct TextFieldSection: View {
                 .padding([.bottom, .horizontal])
                 .multilineTextAlignment(.center)
             
-            TextField("Enter your goal...", text: $field, axis: .vertical)
+            TextField("Enter your \(keyword)...", text: $field, axis: .vertical)
                 .padding()
                 .frame(height: 120, alignment: .topLeading)
                 .background(

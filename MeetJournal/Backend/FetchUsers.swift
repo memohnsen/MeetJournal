@@ -18,6 +18,8 @@ struct Users: Codable, Identifiable, Hashable {
     var goal: String
     var biggest_struggle: String
     var training_days: [String: String]
+    var next_competition: String
+    var next_competition_date: String
 }
 
 @MainActor @Observable
