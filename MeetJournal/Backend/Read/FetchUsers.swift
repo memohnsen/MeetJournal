@@ -14,13 +14,14 @@ class UsersViewModel {
     var error: Error?
     var users: [Users] = []
     
-    func fetchUsers() async {
+    func fetchUsers(id: Int) async {
         isLoading = true
         
         do {
             let response = try await supabase
                 .from("journal_users")
                 .select()
+                .eq("id", value: id)
                 .execute()
             
             let row = try JSONDecoder().decode([Users].self, from: response.data)

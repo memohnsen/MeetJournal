@@ -11,6 +11,9 @@ struct CompReflectionView: View {
     @Environment(\.colorScheme) var colorScheme
     @State private var viewModel = CompReportModel()
     
+    @State private var userViewModel = UsersViewModel()
+    var user: [Users] { userViewModel.users }
+    
     @State private var meet: String = ""
     @State private var selectedMeetType: String = "Local"
     @State private var meetDate: Date = Date()
@@ -28,6 +31,16 @@ struct CompReflectionView: View {
     @State private var cj1: String = ""
     @State private var cj2: String = ""
     @State private var cj3: String = ""
+    
+    @State private var squat1: String = ""
+    @State private var squat2: String = ""
+    @State private var squat3: String = ""
+    @State private var bench1: String = ""
+    @State private var bench2: String = ""
+    @State private var bench3: String = ""
+    @State private var deadlift1: String = ""
+    @State private var deadlift2: String = ""
+    @State private var deadlift3: String = ""
     
     let meetType: [String] = ["Local", "National", "International"]
     
@@ -73,7 +86,12 @@ struct CompReflectionView: View {
                     
                     DatePickerSection(title: "Meet Date:", selectedDate: $meetDate)
                     
-                    LiftResultsSection(snatch1: $snatch1, snatch2: $snatch2, snatch3: $snatch3, cj1: $cj1, cj2: $cj2, cj3: $cj3)
+                    
+                    if user.first?.sport == "Olympic Weightlifting" {
+                        WLLiftResultsSection(snatch1: $snatch1, snatch2: $snatch2, snatch3: $snatch3, cj1: $cj1, cj2: $cj2, cj3: $cj3)
+                    } else {
+                        PLLiftResultsSection(squat1: $squat1, squat2: $squat2, squat3: $squat3, bench1: $bench1, bench2: $bench2, bench3: $bench3, deadlift1: $deadlift1, deadlift2: $deadlift2, deadlift3: $deadlift3)
+                    }
                     
                     SliderSection(colorScheme: colorScheme, title: "How would you rate your performance?", value: $performanceRating, minString: "Poor", maxString: "Amazing")
                     
@@ -121,6 +139,9 @@ struct CompReflectionView: View {
             }
             .navigationTitle("Competition Report")
             .navigationBarTitleDisplayMode(.inline)
+            .task {
+                await userViewModel.fetchUsers(id: 2)
+            }
             .alert(viewModel.alertTitle, isPresented: $viewModel.alertShown) {} message: {
                 Text(viewModel.alertMessage)
             }
@@ -128,7 +149,7 @@ struct CompReflectionView: View {
     }
 }
 
-struct LiftResultsSection: View {
+struct WLLiftResultsSection: View {
     @Binding var snatch1: String
     @Binding var snatch2: String
     @Binding var snatch3: String
@@ -201,6 +222,116 @@ struct LiftResultsSection: View {
             
             if (calculateTotal(snatch1: snatch1, snatch2: snatch2, snatch3: snatch3, cj1: cj1, cj2: cj2, cj3: cj3) != 0) {
                 Text("Total: \(calculateTotal(snatch1: snatch1, snatch2: snatch2, snatch3: snatch3, cj1: cj1, cj2: cj2, cj3: cj3))kg")
+                    .font(.title3.bold())
+                    .padding(.top)
+                    .padding(.bottom, 6)
+            }
+        }
+        .cardStyling()
+    }
+}
+
+struct PLLiftResultsSection: View {
+    @Binding var squat1: String
+    @Binding var squat2: String
+    @Binding var squat3: String
+    @Binding var bench1: String
+    @Binding var bench2: String
+    @Binding var bench3: String
+    @Binding var deadlift1: String
+    @Binding var deadlift2: String
+    @Binding var deadlift3: String
+    
+    func bindingForSquat(_ index: Int) -> Binding<String> {
+        switch index {
+        case 0: return $squat1
+        case 1: return $squat2
+        default: return $squat3
+        }
+    }
+    
+    func bindingForBench(_ index: Int) -> Binding<String> {
+        switch index {
+        case 0: return $bench1
+        case 1: return $bench2
+        default: return $bench3
+        }
+    }
+    
+    func bindingForDeadlift(_ index: Int) -> Binding<String> {
+        switch index {
+        case 0: return $deadlift1
+        case 1: return $deadlift2
+        default: return $deadlift3
+        }
+    }
+    
+    func calculateTotal(squat1: String, squat2: String, squat3: String, bench1: String, bench2: String, bench3: String, deadlift1: String, deadlift2: String, deadlift3: String) -> Int {
+        let squatBest = max(Int(squat1) ?? 0, Int(squat2) ?? 0, Int(squat3) ?? 0)
+        let benchBest = max(Int(bench1) ?? 0, Int(bench2) ?? 0, Int(bench3) ?? 0)
+        let deadliftBest = max(Int(deadlift1) ?? 0, Int(deadlift2) ?? 0, Int(deadlift3) ?? 0)
+        
+        return squatBest + benchBest + deadliftBest
+    }
+    
+    var body: some View {
+        VStack{
+            Text("What numbers did you hit?")
+                .font(.headline.bold())
+                .padding(.bottom, 6)
+            Text("Write a miss as a negative number (ex: -115)")
+                .foregroundStyle(.secondary)
+            
+            Text("Squat")
+                .font(.headline.bold())
+                .padding(.top)
+                .padding(.bottom, 6)
+            
+            HStack{
+                ForEach(0...2, id: \.self) { num in
+                    TextField("\(num + 1)", text: bindingForSquat(num))
+                        .padding()
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(blueEnergy.opacity(0.1))
+                        )
+                }
+            }
+            
+            Text("Bench")
+                .font(.headline.bold())
+                .padding(.top)
+                .padding(.bottom, 6)
+            
+            HStack{
+                ForEach(0...2, id: \.self) { num in
+                    TextField("\(num + 1)", text: bindingForBench(num))
+                        .padding()
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(blueEnergy.opacity(0.1))
+                        )
+                }
+            }
+            
+            Text("Deadlift")
+                .font(.headline.bold())
+                .padding(.top)
+                .padding(.bottom, 6)
+            
+            HStack{
+                ForEach(0...2, id: \.self) { num in
+                    TextField("\(num + 1)", text: bindingForDeadlift(num))
+                        .padding()
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(blueEnergy.opacity(0.1))
+                        )
+                }
+            }
+            
+            if ((calculateTotal(squat1: squat1, squat2: squat2, squat3: squat3, bench1: bench1, bench2: bench2, bench3: bench3, deadlift1: deadlift1, deadlift2: deadlift2, deadlift3: deadlift3)) != 0) {
+                Text("Total: \(calculateTotal(squat1: squat1, squat2: squat2, squat3: squat3, bench1: bench1, bench2: bench2, bench3: bench3, deadlift1: deadlift1, deadlift2: deadlift2, deadlift3: deadlift3))kg")
                     .font(.title3.bold())
                     .padding(.top)
                     .padding(.bottom, 6)

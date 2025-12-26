@@ -12,6 +12,9 @@ struct WorkoutReflectionView: View {
     @Environment(\.dismiss) var dismiss
     @State private var viewModel = SessionReportModel()
     
+    @State private var userViewModel = UsersViewModel()
+    var user: [Users] { userViewModel.users }
+    
     @State private var sessionDate: Date = Date()
     @State private var sessionRPE: Int = 3
     @State private var movementQuality: Int = 3
@@ -23,8 +26,12 @@ struct WorkoutReflectionView: View {
     @State private var selectedLift: String = "Snatch"
     @State private var selectedIntensity: String = "Moderate"
     
-    let liftOptions: [String] = [
+    let liftOptionsWL: [String] = [
         "Snatch", "Clean", "Jerk", "C & J", "Total", "Squats", "Accessories", "Other"
+    ]
+    
+    let liftOptionsPL: [String] = [
+        "Squat", "Bench", "Deadlift", "Total", "Accessories", "Other"
     ]
     
     let intensityOptions: [String] = ["Maxing Out", "Heavy", "Moderate", "Light"]
@@ -50,12 +57,22 @@ struct WorkoutReflectionView: View {
                 ScrollView {
                     DatePickerSection(title: "Session Date:", selectedDate: $sessionDate)
                     
-                    MultipleChoiceSection(
-                        colorScheme: colorScheme,
-                        title: "What's the main focus?",
-                        arrayOptions: liftOptions,
-                        selected: $selectedLift
-                    )
+                    
+                    if user.first?.sport == "Olympic Weightlifting" {
+                        MultipleChoiceSection(
+                            colorScheme: colorScheme,
+                            title: "What's the main focus?",
+                            arrayOptions: liftOptionsWL,
+                            selected: $selectedLift
+                        )
+                    } else {
+                        MultipleChoiceSection(
+                            colorScheme: colorScheme,
+                            title: "What's the main focus?",
+                            arrayOptions: liftOptionsPL,
+                            selected: $selectedLift
+                        )
+                    }
                     
                     MultipleChoiceSection(
                         colorScheme: colorScheme,
@@ -108,6 +125,9 @@ struct WorkoutReflectionView: View {
             }
             .navigationTitle("Session Reflection")
             .navigationBarTitleDisplayMode(.inline)
+            .task {
+                await userViewModel.fetchUsers(id: 2)
+            }
             .alert(viewModel.alertTitle, isPresented: $viewModel.alertShown) {
                 Button("OK") {
                     dismiss()

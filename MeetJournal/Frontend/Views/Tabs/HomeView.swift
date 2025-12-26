@@ -55,7 +55,7 @@ struct HomeView: View {
             }
         }
         .task {
-            await viewModel.fetchUsers()
+            await viewModel.fetchUsers(id: 1)
             await historyModel.fetchCheckins(id: 1)
         }
     }
