@@ -84,8 +84,10 @@ struct HistoryCardSection: View {
                 HistoryComponent(
                     colorScheme: colorScheme,
                     title: report.meet,
-                    subtitle1: "DATE",
-                    subtitle2: "• \(report.snatch_best)/\(report.cj_best)/\(report.snatch_best + report.cj_best)"
+                    subtitle1: "\(dateFormat(report.meet_date) ?? "N/A")",
+                    subtitle2: "• \(report.snatch_best)/\(report.cj_best)/\(report.snatch_best + report.cj_best)",
+                    selection: selection,
+                    date: report.meet_date
                 )
             }
             .padding(.horizontal)
@@ -94,8 +96,10 @@ struct HistoryCardSection: View {
                 HistoryComponent(
                     colorScheme: colorScheme,
                     title: "\(report.selected_intensity) \(report.selected_lift) Session",
-                    subtitle1: "DATE",
-                    subtitle2: nil
+                    subtitle1: "\(dateFormat(report.session_date) ?? "N/A")",
+                    subtitle2: " • RPE \(report.session_rpe)/5",
+                    selection: selection,
+                    date: report.session_date
                 )
             }
             .padding(.horizontal)
@@ -104,8 +108,10 @@ struct HistoryCardSection: View {
                 HistoryComponent(
                     colorScheme: colorScheme,
                     title: "\(report.selected_intensity) \(report.selected_lift) Session",
-                    subtitle1: "\(report.overall_score)% Preparedness",
-                    subtitle2: "DATE"
+                    subtitle1: "\(dateFormat(report.check_in_date) ?? "N/A")",
+                    subtitle2: " • \(report.overall_score)% Preparedness",
+                    selection: selection,
+                    date: report.check_in_date
                 )
             }
             .padding(.horizontal)
@@ -118,17 +124,20 @@ struct HistoryComponent: View {
     var title: String
     var subtitle1: String
     var subtitle2: String?
+    var selection: String
+    var date: String
     
     var body: some View {
         HStack {
-            NavigationLink(destination: HistoryDetailsView()) {
+            NavigationLink(destination: HistoryDetailsView(title: title, selection: selection, date: date)) {
                 VStack {
                     Text(title)
                         .font(.title3.bold())
+                        .multilineTextAlignment(.center)
                     HStack{
                         Text(subtitle1)
                         
-                        if (subtitle2 == nil) {
+                        if (subtitle2 != nil) {
                             Text(subtitle2 ?? "")
                         }
                     }

@@ -12,6 +12,7 @@ struct WorkoutReflectionView: View {
     @Environment(\.dismiss) var dismiss
     @State private var viewModel = SessionReportModel()
     
+    @State private var sessionDate: Date = Date()
     @State private var sessionRPE: Int = 3
     @State private var movementQuality: Int = 3
     @State private var focus: Int = 3
@@ -47,6 +48,8 @@ struct WorkoutReflectionView: View {
                 BackgroundColor()
                 
                 ScrollView {
+                    DatePickerSection(title: "Session Date:", selectedDate: $sessionDate)
+                    
                     MultipleChoiceSection(
                         colorScheme: colorScheme,
                         title: "What's the main focus?",
@@ -74,7 +77,7 @@ struct WorkoutReflectionView: View {
                     MultipleChoiceSection(colorScheme: colorScheme, title: "How is your body feeling?", arrayOptions: feelingType, selected: $feeling)
                     
                     Button {
-                        let report: SessionReport = SessionReport(user_id: 1, session_rpe: sessionRPE, movement_quality: movementQuality, focus: focus, misses: misses, cues: cues, feeling: feeling, selected_lift: selectedLift, selected_intensity: selectedIntensity, created_at: iso8601String)
+                        let report: SessionReport = SessionReport(user_id: 1, session_date: sessionDate.formatted(.iso8601.year().month().day().dateSeparator(.dash)), session_rpe: sessionRPE, movement_quality: movementQuality, focus: focus, misses: misses, cues: cues, feeling: feeling, selected_lift: selectedLift, selected_intensity: selectedIntensity, created_at: iso8601String)
                         
                         Task {
                             await viewModel.submitSessionReport(sessionReport: report)

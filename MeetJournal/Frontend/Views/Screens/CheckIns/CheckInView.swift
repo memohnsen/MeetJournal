@@ -25,6 +25,8 @@ struct CheckInView: View {
                 BackgroundColor()
             
                 ScrollView{
+                    DatePickerSection(title: "Session date:", selectedDate: $checkInScore.checkInDate)
+                    
                     MultipleChoiceSection(
                         colorScheme: colorScheme,
                         title: "What's the main focus?",

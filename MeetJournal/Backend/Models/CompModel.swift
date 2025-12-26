@@ -11,6 +11,7 @@ struct CompReport: Codable, Hashable {
     var user_id: Int
     var meet: String
     var selected_meet_type: String
+    var meet_date: String
     var performance_rating: Int
     var preparedness_rating: Int
     var did_well: String

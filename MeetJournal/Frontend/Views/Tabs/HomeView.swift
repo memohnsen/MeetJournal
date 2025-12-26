@@ -12,6 +12,8 @@ struct HomeView: View {
     var users: [Users] { viewModel.users }
     @State private var checkInScore = CheckInScore()
     
+    let date: Date = Date.now
+    
     var body: some View {
         NavigationStack {
             ZStack(alignment: .top) {
@@ -22,15 +24,13 @@ struct HomeView: View {
                         DailyCheckInSection(checkInScore: checkInScore)
                         
                         ReflectionSection()
-                        
-                        HistorySection()
                     }
                     .padding(.top, 100)
                 }
                 
                 HStack {
                     VStack(alignment: .leading) {
-                        Text("Wednesday, Oct 25")
+                        Text("\(date.formatted(date: .complete, time: .omitted))")
                             .foregroundStyle(.secondary)
                         Text("Ready to train, \(users.first?.first_name ?? "")?")
                             .font(.headline.bold())
@@ -185,85 +185,6 @@ struct ReflectionSection: View {
                             .overlay(
                                 RoundedRectangle(cornerRadius: 16)
                                     .stroke(colorScheme == .light ? Color.white.opacity(0.1) : Color.black.opacity(0.1), lineWidth: 1)
-                            )
-                    )
-                    .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
-                    .padding(.bottom, 12)
-                }
-            }
-        }
-        .padding([.top, .horizontal])
-    }
-}
-
-struct HistorySection: View {
-    @Environment(\.colorScheme) var colorScheme
-
-    var body: some View {
-        VStack(alignment: .leading){
-            HStack {
-                Text("RECENT ACTIVITY")
-                    .foregroundStyle(.secondary)
-                    .bold()
-                    .padding(.horizontal)
-                
-                Spacer()
-                
-                NavigationLink(destination: HistoryView()) {
-                    Text("View All")
-                        .bold()
-                        .foregroundStyle(blueEnergy)
-                }
-                .padding(.trailing)
-            }
-            
-            HStack {
-                NavigationLink(destination: HistoryDetailsView()) {
-                    VStack{
-                        HStack{
-                            VStack{
-                                Text("OCT")
-                                Text("23")
-                            }
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .fill(.green.opacity(0.3))
-                                    .frame(width: 60, height: 60)
-                            )
-                            .padding(.leading)
-                            
-                            Spacer()
-                            
-                            VStack{
-                                Text("Heavy Snatch")
-                                    .bold()
-                                
-                                Text("Training • Feeling Strong")
-                                    .foregroundStyle(.secondary)
-                                    .font(.caption)
-                            }
-                            
-                            Spacer()
-                            
-                            Text("9/10")
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .fill(.green.opacity(0.3))
-                                        .frame(width: 60, height: 60)
-                                )
-                                .padding(.trailing)
-                        }
-                    }
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 50)
-                    .padding()
-                    .foregroundStyle(colorScheme == .light ? .black : .white)
-                    .background(
-                        RoundedRectangle(cornerRadius: 16)
-                            .fill(colorScheme == .light ? .white : .black.opacity(0.5))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 16)
-                                    .stroke(Color.white.opacity(0.1), lineWidth: 1)
                             )
                     )
                     .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)

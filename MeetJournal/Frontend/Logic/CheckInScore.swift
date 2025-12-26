@@ -10,6 +10,7 @@ import SwiftUI
 
 @Observable
 class CheckInScore {
+    var checkInDate: Date = Date()
     var physicalStrength: Int = 3
     var mentalStrength: Int = 3
     var recovered: Int = 3

@@ -26,6 +26,7 @@ class CheckInViewModel {
         
         let checkIn = DailyCheckIn(
             user_id: userId,
+            check_in_date: checkInScore.checkInDate.formatted(.iso8601.year().month().day().dateSeparator(.dash)),
             selected_lift: selectedLift,
             selected_intensity: selectedIntensity,
             goal: checkInScore.goal,

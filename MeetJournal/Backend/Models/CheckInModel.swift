@@ -9,6 +9,7 @@ import Foundation
 
 struct DailyCheckIn: Codable, Hashable {
     var user_id: Int
+    var check_in_date: String
     var selected_lift: String
     var selected_intensity: String
     var goal: String
