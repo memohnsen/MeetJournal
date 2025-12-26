@@ -13,6 +13,7 @@ struct HistoryDetailsView: View {
     var session: [SessionReport] { viewModel.session }
     var checkin: [DailyCheckIn] { viewModel.checkin }
     var title: String
+    var searchTerm: String
     var selection: String
     var date: String
     
@@ -54,9 +55,9 @@ struct HistoryDetailsView: View {
                 if selection == "Meets" {
                     await viewModel.fetchCompDetails(id: 1, title: title, date: date)
                 } else if selection == "Workouts" {
-                    await viewModel.fetchSessionDetails(id: 1, title: title, date: date)
+                    await viewModel.fetchSessionDetails(id: 1, title: searchTerm, date: date)
                 } else {
-                    await viewModel.fetchCheckInDetails(id: 1, title: title, date: date)
+                    await viewModel.fetchCheckInDetails(id: 1, title: searchTerm, date: date)
                 }
             }
         }
@@ -211,5 +212,5 @@ struct CheckInDisplaySection: View {
 }
 
 #Preview {
-    HistoryDetailsView(title: "American Open Finals", selection: "Meets", date: "2025-12-26")
+    HistoryDetailsView(title: "American Open Finals", searchTerm: "American Open Finals", selection: "Meets", date: "2025-12-26")
 }

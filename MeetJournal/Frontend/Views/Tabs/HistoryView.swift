@@ -80,39 +80,48 @@ struct HistoryCardSection: View {
      
     var body: some View {
         if selection == "Meets" {
-            ForEach(compReports, id: \.self) { report in
-                HistoryComponent(
-                    colorScheme: colorScheme,
-                    title: report.meet,
-                    subtitle1: "\(dateFormat(report.meet_date) ?? "N/A")",
-                    subtitle2: "• \(report.snatch_best)/\(report.cj_best)/\(report.snatch_best + report.cj_best)",
-                    selection: selection,
-                    date: report.meet_date
-                )
+            LazyVStack{
+                ForEach(compReports, id: \.self) { report in
+                    HistoryComponent(
+                        colorScheme: colorScheme,
+                        searchTerm: report.meet,
+                        title: report.meet,
+                        subtitle1: "\(dateFormat(report.meet_date) ?? "N/A")",
+                        subtitle2: "• \(report.snatch_best)/\(report.cj_best)/\(report.snatch_best + report.cj_best)",
+                        selection: selection,
+                        date: report.meet_date
+                    )
+                }
             }
             .padding(.horizontal)
         } else if selection == "Workouts" {
-            ForEach(sessionReports, id: \.self) { report in
-                HistoryComponent(
-                    colorScheme: colorScheme,
-                    title: "\(report.selected_intensity) \(report.selected_lift) Session",
-                    subtitle1: "\(dateFormat(report.session_date) ?? "N/A")",
-                    subtitle2: " • RPE \(report.session_rpe)/5",
-                    selection: selection,
-                    date: report.session_date
-                )
+            LazyVStack{
+                ForEach(sessionReports, id: \.self) { report in
+                    HistoryComponent(
+                        colorScheme: colorScheme,
+                        searchTerm: report.selected_lift,
+                        title: "\(report.selected_intensity) \(report.selected_lift) Session",
+                        subtitle1: "\(dateFormat(report.session_date) ?? "N/A")",
+                        subtitle2: " • RPE \(report.session_rpe)/5",
+                        selection: selection,
+                        date: report.session_date
+                    )
+                }
             }
             .padding(.horizontal)
         } else {
-            ForEach(checkins, id: \.self) { report in
-                HistoryComponent(
-                    colorScheme: colorScheme,
-                    title: "\(report.selected_intensity) \(report.selected_lift) Session",
-                    subtitle1: "\(dateFormat(report.check_in_date) ?? "N/A")",
-                    subtitle2: " • \(report.overall_score)% Preparedness",
-                    selection: selection,
-                    date: report.check_in_date
-                )
+            LazyVStack{
+                ForEach(checkins, id: \.self) { report in
+                    HistoryComponent(
+                        colorScheme: colorScheme,
+                        searchTerm: report.selected_lift,
+                        title: "\(report.selected_intensity) \(report.selected_lift) Session",
+                        subtitle1: "\(dateFormat(report.check_in_date) ?? "N/A")",
+                        subtitle2: " • \(report.overall_score)% Preparedness",
+                        selection: selection,
+                        date: report.check_in_date
+                    )
+                }
             }
             .padding(.horizontal)
         }
@@ -121,6 +130,7 @@ struct HistoryCardSection: View {
 
 struct HistoryComponent: View {
     var colorScheme: ColorScheme
+    var searchTerm: String
     var title: String
     var subtitle1: String
     var subtitle2: String?
@@ -129,7 +139,7 @@ struct HistoryComponent: View {
     
     var body: some View {
         HStack {
-            NavigationLink(destination: HistoryDetailsView(title: title, selection: selection, date: date)) {
+            NavigationLink(destination: HistoryDetailsView(title: title, searchTerm: searchTerm, selection: selection, date: date)) {
                 VStack {
                     Text(title)
                         .font(.title3.bold())

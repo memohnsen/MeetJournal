@@ -11,7 +11,6 @@ import ConfettiSwiftUI
 struct CheckinConfirmation: View {
     @Bindable var checkInScore: CheckInScore
     @State private var confettiCannon: Int = 0
-    @State private var checkInViewModel = CheckInViewModel()
     
     @Binding var selectedLift: String
     @Binding var selectedIntensity: String
@@ -50,16 +49,10 @@ struct CheckinConfirmation: View {
             }
             .confettiCannon(trigger: $confettiCannon, num: 300, radius: 600, hapticFeedback: true)
             .onAppear {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                    confettiCannon += 1
-                }
-                
-                Task {
-                    await checkInViewModel.submitCheckIn(
-                        checkInScore: checkInScore,
-                        selectedLift: selectedLift,
-                        selectedIntensity: selectedIntensity
-                    )
+                if checkInScore.overallScore >= 80 {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        confettiCannon += 1
+                    }
                 }
             }
             .navigationTitle("Check-In Submitted!")
@@ -210,7 +203,7 @@ struct ResultsSection: View {
 #Preview {
     struct CheckinConfirmation_PreviewContainer: View {
         @State private var checkInScore = CheckInScore()
-        @State private var selectedLift: String = "Back Squat"
+        @State private var selectedLift: String = "Snatch"
         @State private var selectedIntensity: String = "Moderate"
         
         var body: some View {

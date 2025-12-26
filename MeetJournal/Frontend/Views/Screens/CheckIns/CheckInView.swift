@@ -12,6 +12,8 @@ struct CheckInView: View {
     @Bindable var checkInScore: CheckInScore
     @State private var selectedLift: String = "Snatch"
     @State private var selectedIntensity: String = "Moderate"
+    @State private var checkInViewModel = CheckInViewModel()
+    @State private var navigateToConfirmation: Bool = false
     
     let liftOptions: [String] = [
         "Snatch", "Clean", "Jerk", "C & J", "Total", "Squats", "Accessories", "Other"
@@ -112,8 +114,22 @@ struct CheckInView: View {
                         maxString: "None"
                     )
                     
-                    NavigationLink(destination: CheckinConfirmation(checkInScore: checkInScore, selectedLift: $selectedLift, selectedIntensity: $selectedIntensity)) {
-                        Text("Submit Check-In")
+                    Button {
+                        Task {
+                            await checkInViewModel.submitCheckIn(
+                                checkInScore: checkInScore,
+                                selectedLift: selectedLift,
+                                selectedIntensity: selectedIntensity
+                            )
+                            navigateToConfirmation = true
+                        }
+                    } label: {
+                        if checkInViewModel.isLoading {
+                            ProgressView()
+                                .tint(.white)
+                        } else {
+                            Text("Submit Check-In")
+                        }
                     }
                     .frame(maxWidth: .infinity)
                     .padding(16)
@@ -129,8 +145,11 @@ struct CheckInView: View {
                     .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
                     .padding(.horizontal)
                     .padding(.bottom, 30)
-                    .disabled(!checkInScore.hasCompletedForm)
+                    .disabled(!checkInScore.hasCompletedForm || checkInViewModel.isLoading)
                 }
+            }
+            .navigationDestination(isPresented: $navigateToConfirmation) {
+                CheckinConfirmation(checkInScore: checkInScore, selectedLift: $selectedLift, selectedIntensity: $selectedIntensity)
             }
             .navigationTitle("Daily Check-In")
             .navigationBarTitleDisplayMode(.inline)

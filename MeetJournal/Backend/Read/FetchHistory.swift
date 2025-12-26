@@ -27,6 +27,7 @@ class HistoryModel {
                 .from("journal_daily_checkins")
                 .select()
                 .eq("user_id", value: id)
+                .order("check_in_date", ascending: false)
                 .execute()
             
             let row = try JSONDecoder().decode([DailyCheckIn].self, from: response.data)
@@ -61,6 +62,7 @@ class HistoryModel {
                 .from("journal_comp_report")
                 .select()
                 .eq("user_id", value: id)
+                .order("meet_date", ascending: false)
                 .execute()
             
             let row = try JSONDecoder().decode([CompReport].self, from: response.data)
@@ -95,6 +97,7 @@ class HistoryModel {
                 .from("journal_session_report")
                 .select()
                 .eq("user_id", value: id)
+                .order("session_date", ascending: false)
                 .execute()
             
             let row = try JSONDecoder().decode([SessionReport].self, from: response.data)
@@ -131,6 +134,7 @@ class HistoryModel {
                 .eq("user_id", value: id)
                 .eq("meet", value: title)
                 .eq("meet_date", value: date)
+                .order("meet_date", ascending: false)
                 .execute()
             
             let row = try JSONDecoder().decode([CompReport].self, from: response.data)
@@ -167,6 +171,7 @@ class HistoryModel {
                 .eq("user_id", value: id)
                 .eq("selected_lift", value: title)
                 .eq("session_date", value: date)
+                .order("session_date", ascending: false)
                 .execute()
             
             let row = try JSONDecoder().decode([SessionReport].self, from: response.data)
@@ -203,6 +208,7 @@ class HistoryModel {
                 .eq("user_id", value: id)
                 .eq("selected_lift", value: title)
                 .eq("check_in_date", value: date)
+                .order("check_in_date", ascending: false)
                 .execute()
             
             let row = try JSONDecoder().decode([DailyCheckIn].self, from: response.data)

@@ -7,7 +7,8 @@
 
 import Foundation
 
-struct DailyCheckIn: Codable, Hashable {
+struct DailyCheckIn: Codable, Hashable, Identifiable {
+    var id: Int?
     var user_id: Int
     var check_in_date: String
     var selected_lift: String

@@ -21,6 +21,9 @@ struct ContentView: View {
             Tab("Trends", systemImage: "chart.bar", value: "Trends") {
                 TrendsView()
             }
+            Tab("Settings", systemImage: "gearshape", value: "Settings") {
+                SettingsView()
+            }
         }
     }
 }
