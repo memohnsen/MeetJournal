@@ -22,6 +22,15 @@ struct SettingsView: View {
                     VStack(alignment: .leading) {
                         VStack{
                             HStack{
+                                Text("Export All Data")
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                            }
+                        }
+                        .cardStyling()
+                        
+                        VStack{
+                            HStack{
                                 Text("Customer Support")
                                 Spacer()
                                 Image(systemName: "chevron.right")

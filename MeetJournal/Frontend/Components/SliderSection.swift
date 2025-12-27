@@ -17,8 +17,8 @@ struct SliderSection: View {
     @State private var dragOffset: CGFloat = 0
     @State private var lineWidth: CGFloat = 0
     
-    let minValue = 1
-    let maxValue = 5
+    var minValue: Int
+    var maxValue: Int
     
     var body: some View {
         VStack(spacing: 20) {
@@ -36,12 +36,12 @@ struct SliderSection: View {
                         .frame(height: 8)
                     
                     HStack(spacing: 0) {
-                        ForEach(1...5, id: \.self) { position in
+                        ForEach(minValue...maxValue, id: \.self) { position in
                             Circle()
                                 .fill(value == position ? blueEnergy : blueEnergy.opacity(0.3))
                                 .frame(width: 12, height: 12)
                             
-                            if position < 5 {
+                            if position < maxValue {
                                 Spacer()
                             }
                         }

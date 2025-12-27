@@ -6,13 +6,18 @@
 //
 
 import SwiftUI
+import Clerk
 
 struct HomeView: View {
+    @Environment(\.colorScheme) var colorScheme
+    @Environment(\.clerk) private var clerk
     @State private var viewModel = UsersViewModel()
     var users: [Users] { viewModel.users }
     @State private var historyModel = HistoryModel()
     var checkins: [DailyCheckIn] { historyModel.checkIns }
     @State private var checkInScore = CheckInScore()
+    
+    @State private var userProfileShown: Bool = false
     
     let date: Date = Date.now
     
@@ -23,7 +28,7 @@ struct HomeView: View {
                 
                 ScrollView {
                     VStack {
-                        DailyCheckInSection(checkInScore: checkInScore)
+                        DailyCheckInSection(colorScheme: colorScheme, checkInScore: checkInScore)
                         
                         ReflectionSection()
                         
@@ -42,10 +47,26 @@ struct HomeView: View {
                     
                     Spacer()
                     
-                    NavigationLink(destination: ProfileView()) {
-                        Circle()
-                            .frame(width: 60)
-                            .foregroundStyle(.gray)
+                    
+                    Button {
+                        userProfileShown = true
+                    } label: {
+                        if clerk.user == nil {
+                            Image(systemName: "person")
+                                .resizable()
+                                .scaledToFit()
+                                .padding()
+                                .frame(width: 50)
+                                .foregroundStyle(colorScheme == .light ? .black : .white)
+                                .overlay(
+                                    Circle()
+                                        .frame(width: 60)
+                                        .foregroundStyle(colorScheme == .light ? .gray.opacity(0.3) : .gray.opacity(0.2))
+                                )
+                        } else {
+                            UserButton()
+                                .frame(width: 50, height: 50)
+                        }
                     }
                 }
                 .padding([.horizontal, .bottom])
@@ -58,10 +79,18 @@ struct HomeView: View {
             await viewModel.fetchUsers(id: 1)
             await historyModel.fetchCheckins(id: 1)
         }
+        .sheet(isPresented: $userProfileShown) {
+            if clerk.user != nil {
+                UserProfileView()
+            } else {
+                AuthView()
+            }
+        }
     }
 }
 
 struct DailyCheckInSection: View {
+    var colorScheme: ColorScheme
     @Bindable var checkInScore: CheckInScore
     
     var body: some View {
@@ -70,7 +99,7 @@ struct DailyCheckInSection: View {
                 VStack(alignment: .leading){
                     Text("Today's Focus")
                         .padding(6)
-                        .background(blueEnergy.opacity(0.1))
+                        .background(colorScheme == .light ? blueEnergy.opacity(0.1) : blueEnergy.opacity(0.2))
                         .foregroundStyle(blueEnergy)
                         .bold()
                         .clipShape(.rect(cornerRadius: 12))
@@ -237,7 +266,7 @@ struct HistorySection: View {
                                 .fill(colorScheme == .light ? .white : .black.opacity(0.5))
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 16)
-                                        .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                                        .stroke(colorScheme == .light ? Color.white.opacity(0.1) : Color.black.opacity(0.1), lineWidth: 1)
                                 )
                         )
                         .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)

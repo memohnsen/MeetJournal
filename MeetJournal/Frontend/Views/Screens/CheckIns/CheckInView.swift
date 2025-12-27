@@ -55,7 +55,9 @@ struct CheckInView: View {
                         title: "How physically strong do you feel?",
                         value: $checkInScore.physicalStrength,
                         minString: "Weak",
-                        maxString: "Strong"
+                        maxString: "Strong",
+                        minValue: 1,
+                        maxValue: 5
                     )
                     
                     SliderSection(
@@ -63,7 +65,9 @@ struct CheckInView: View {
                         title: "How mentally strong do you feel?",
                         value: $checkInScore.mentalStrength,
                         minString: "Weak",
-                        maxString: "Strong"
+                        maxString: "Strong",
+                        minValue: 1,
+                        maxValue: 5
                     )
                     
                     SliderSection(
@@ -71,7 +75,9 @@ struct CheckInView: View {
                         title: "How recovered do you feel?",
                         value: $checkInScore.recovered,
                         minString: "Not At All",
-                        maxString: "Very"
+                        maxString: "Very",
+                        minValue: 1,
+                        maxValue: 5
                     )
                     
                     SliderSection(
@@ -79,7 +85,9 @@ struct CheckInView: View {
                         title: "How confident do you feel?",
                         value: $checkInScore.confidence,
                         minString: "Not At All",
-                        maxString: "Very"
+                        maxString: "Very",
+                        minValue: 1,
+                        maxValue: 5
                     )
                     
                     SliderSection(
@@ -87,7 +95,9 @@ struct CheckInView: View {
                         title: "Rate last night's sleep",
                         value: $checkInScore.sleep,
                         minString: "Poor",
-                        maxString: "Great"
+                        maxString: "Great",
+                        minValue: 1,
+                        maxValue: 5
                     )
                     
                     SliderSection(
@@ -95,7 +105,9 @@ struct CheckInView: View {
                         title: "Rate your energy",
                         value: $checkInScore.energy,
                         minString: "Low",
-                        maxString: "High"
+                        maxString: "High",
+                        minValue: 1,
+                        maxValue: 5
                     )
                     
                     SliderSection(
@@ -103,7 +115,9 @@ struct CheckInView: View {
                         title: "Rate your stress",
                         value: $checkInScore.stress,
                         minString: "Extreme",
-                        maxString: "Relaxed"
+                        maxString: "Relaxed",
+                        minValue: 1,
+                        maxValue: 5
                     )
                     
                     SliderSection(
@@ -111,7 +125,9 @@ struct CheckInView: View {
                         title: "Rate your soreness",
                         value: $checkInScore.soreness,
                         minString: "Extreme",
-                        maxString: "None"
+                        maxString: "None",
+                        minValue: 1,
+                        maxValue: 5
                     )
                     
                     Button {

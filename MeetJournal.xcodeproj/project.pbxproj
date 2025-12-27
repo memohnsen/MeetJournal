@@ -9,6 +9,8 @@
 /* Begin PBXBuildFile section */
 		714CD1BC2EFDC22200FE4D9A /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 714CD1BB2EFDC22200FE4D9A /* Supabase */; };
 		714CD1C72EFDD62500FE4D9A /* ConfettiSwiftUI in Frameworks */ = {isa = PBXBuildFile; productRef = 714CD1C62EFDD62500FE4D9A /* ConfettiSwiftUI */; };
+		714CD2002EFF214E00FE4D9A /* Clerk in Frameworks */ = {isa = PBXBuildFile; productRef = 714CD1FF2EFF214E00FE4D9A /* Clerk */; };
+		714CD2032EFF215B00FE4D9A /* PostHog in Frameworks */ = {isa = PBXBuildFile; productRef = 714CD2022EFF215B00FE4D9A /* PostHog */; };
 		719E07CD2EFDB84C00ACB70A /* Config.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 719E07CC2EFDB84C00ACB70A /* Config.xcconfig */; };
 /* End PBXBuildFile section */
 
@@ -43,8 +45,10 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				714CD2002EFF214E00FE4D9A /* Clerk in Frameworks */,
 				714CD1C72EFDD62500FE4D9A /* ConfettiSwiftUI in Frameworks */,
 				714CD1BC2EFDC22200FE4D9A /* Supabase in Frameworks */,
+				714CD2032EFF215B00FE4D9A /* PostHog in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -90,6 +94,8 @@
 			packageProductDependencies = (
 				714CD1BB2EFDC22200FE4D9A /* Supabase */,
 				714CD1C62EFDD62500FE4D9A /* ConfettiSwiftUI */,
+				714CD1FF2EFF214E00FE4D9A /* Clerk */,
+				714CD2022EFF215B00FE4D9A /* PostHog */,
 			);
 			productName = MeetJournal;
 			productReference = 719E07932EFD868200ACB70A /* MeetJournal.app */;
@@ -122,6 +128,8 @@
 			packageReferences = (
 				714CD1BA2EFDC22200FE4D9A /* XCRemoteSwiftPackageReference "supabase-swift" */,
 				714CD1C52EFDD62500FE4D9A /* XCRemoteSwiftPackageReference "ConfettiSwiftUI" */,
+				714CD1FE2EFF214E00FE4D9A /* XCRemoteSwiftPackageReference "clerk-ios" */,
+				714CD2012EFF215B00FE4D9A /* XCRemoteSwiftPackageReference "posthog-ios" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 719E07942EFD868200ACB70A /* Products */;
@@ -281,6 +289,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = MeetJournal/MeetJournal.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = HCK9FFW6UX;
@@ -290,8 +299,8 @@
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -300,12 +309,16 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.memohnsen.MeetJournal;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};
@@ -314,6 +327,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = MeetJournal/MeetJournal.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = HCK9FFW6UX;
@@ -323,8 +337,8 @@
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -333,12 +347,16 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.memohnsen.MeetJournal;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
 		};
@@ -382,6 +400,22 @@
 				minimumVersion = 2.0.3;
 			};
 		};
+		714CD1FE2EFF214E00FE4D9A /* XCRemoteSwiftPackageReference "clerk-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/clerk/clerk-ios";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.71.4;
+			};
+		};
+		714CD2012EFF215B00FE4D9A /* XCRemoteSwiftPackageReference "posthog-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/PostHog/posthog-ios";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 3.36.2;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -394,6 +428,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 714CD1C52EFDD62500FE4D9A /* XCRemoteSwiftPackageReference "ConfettiSwiftUI" */;
 			productName = ConfettiSwiftUI;
+		};
+		714CD1FF2EFF214E00FE4D9A /* Clerk */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 714CD1FE2EFF214E00FE4D9A /* XCRemoteSwiftPackageReference "clerk-ios" */;
+			productName = Clerk;
+		};
+		714CD2022EFF215B00FE4D9A /* PostHog */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 714CD2012EFF215B00FE4D9A /* XCRemoteSwiftPackageReference "posthog-ios" */;
+			productName = PostHog;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

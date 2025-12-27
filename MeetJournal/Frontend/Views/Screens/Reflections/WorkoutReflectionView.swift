@@ -81,11 +81,11 @@ struct WorkoutReflectionView: View {
                         selected: $selectedIntensity
                     )
                     
-                    SliderSection(colorScheme: colorScheme, title: "How hard was this session?", value: $sessionRPE, minString: "Easy", maxString: "Almost Died")
+                    SliderSection(colorScheme: colorScheme, title: "How hard was this session?", value: $sessionRPE, minString: "Easy", maxString: "Almost Died", minValue: 1, maxValue: 5)
                     
-                    SliderSection(colorScheme: colorScheme, title: "How was your movement quality?", value: $movementQuality, minString: "Poor", maxString: "Excellent")
+                    SliderSection(colorScheme: colorScheme, title: "How was your movement quality?", value: $movementQuality, minString: "Poor", maxString: "Excellent", minValue: 1, maxValue: 5)
                     
-                    SliderSection(colorScheme: colorScheme, title: "How was your focus?", value: $focus, minString: "Distracted", maxString: "Locked In")
+                    SliderSection(colorScheme: colorScheme, title: "How was your focus?", value: $focus, minString: "Distracted", maxString: "Locked In", minValue: 1, maxValue: 5)
                     
                     MultipleChoiceSection(colorScheme: colorScheme, title: "How many lifts did you miss?", arrayOptions: missQuantity, selected: $misses)
                     

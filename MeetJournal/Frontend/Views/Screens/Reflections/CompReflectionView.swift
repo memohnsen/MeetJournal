@@ -93,9 +93,9 @@ struct CompReflectionView: View {
                         PLLiftResultsSection(squat1: $squat1, squat2: $squat2, squat3: $squat3, bench1: $bench1, bench2: $bench2, bench3: $bench3, deadlift1: $deadlift1, deadlift2: $deadlift2, deadlift3: $deadlift3)
                     }
                     
-                    SliderSection(colorScheme: colorScheme, title: "How would you rate your performance?", value: $performanceRating, minString: "Poor", maxString: "Amazing")
+                    SliderSection(colorScheme: colorScheme, title: "How would you rate your performance?", value: $performanceRating, minString: "Poor", maxString: "Amazing", minValue: 1, maxValue: 5)
                     
-                    SliderSection(colorScheme: colorScheme, title: "How would you rate your preparedness?", value: $preparednessRating, minString: "Poor", maxString: "Amazing")
+                    SliderSection(colorScheme: colorScheme, title: "How would you rate your preparedness?", value: $preparednessRating, minString: "Poor", maxString: "Amazing", minValue: 1, maxValue: 5)
                     
                     TextFieldSection(field: $didWell, title: "What did you do well?", colorScheme: colorScheme, keyword: "thoughts")
                     
