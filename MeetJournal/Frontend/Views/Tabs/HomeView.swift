@@ -7,6 +7,7 @@
 
 import SwiftUI
 import Clerk
+import RevenueCatUI
 
 struct HomeView: View {
     @Environment(\.colorScheme) var colorScheme
@@ -35,6 +36,9 @@ struct HomeView: View {
                         HistorySection(checkins: checkins)
                     }
                     .padding(.top, 100)
+                }
+                .refreshable {
+                    await historyModel.fetchCheckins(user_id: clerk.user?.id ?? "")
                 }
                 
                 HStack {
@@ -76,8 +80,8 @@ struct HomeView: View {
             }
         }
         .task {
-            await viewModel.fetchUsers(id: 1)
-            await historyModel.fetchCheckins(id: 1)
+            await viewModel.fetchUsers(user_id: clerk.user?.id ?? "")
+            await historyModel.fetchCheckins(user_id: clerk.user?.id ?? "")
         }
         .sheet(isPresented: $userProfileShown) {
             if clerk.user != nil {

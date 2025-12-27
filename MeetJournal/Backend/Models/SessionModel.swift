@@ -8,7 +8,7 @@
 import Foundation
 
 struct SessionReport: Codable, Hashable {
-    var user_id: Int
+    var user_id: String
     var session_date: String
     var session_rpe: Int
     var movement_quality: Int

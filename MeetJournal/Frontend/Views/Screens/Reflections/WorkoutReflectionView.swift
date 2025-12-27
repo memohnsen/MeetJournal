@@ -6,10 +6,12 @@
 //
 
 import SwiftUI
+import Clerk
 
 struct WorkoutReflectionView: View {
     @Environment(\.colorScheme) var colorScheme
     @Environment(\.dismiss) var dismiss
+    @Environment(\.clerk) private var clerk
     @State private var viewModel = SessionReportModel()
     
     @State private var userViewModel = UsersViewModel()
@@ -94,7 +96,7 @@ struct WorkoutReflectionView: View {
                     MultipleChoiceSection(colorScheme: colorScheme, title: "How is your body feeling?", arrayOptions: feelingType, selected: $feeling)
                     
                     Button {
-                        let report: SessionReport = SessionReport(user_id: 1, session_date: sessionDate.formatted(.iso8601.year().month().day().dateSeparator(.dash)), session_rpe: sessionRPE, movement_quality: movementQuality, focus: focus, misses: misses, cues: cues, feeling: feeling, selected_lift: selectedLift, selected_intensity: selectedIntensity, created_at: iso8601String)
+                        let report: SessionReport = SessionReport(user_id: clerk.user?.id ?? "", session_date: sessionDate.formatted(.iso8601.year().month().day().dateSeparator(.dash)), session_rpe: sessionRPE, movement_quality: movementQuality, focus: focus, misses: misses, cues: cues, feeling: feeling, selected_lift: selectedLift, selected_intensity: selectedIntensity, created_at: iso8601String)
                         
                         Task {
                             await viewModel.submitSessionReport(sessionReport: report)
@@ -126,7 +128,7 @@ struct WorkoutReflectionView: View {
             .navigationTitle("Session Reflection")
             .navigationBarTitleDisplayMode(.inline)
             .task {
-                await userViewModel.fetchUsers(id: 2)
+                await userViewModel.fetchUsers(user_id: clerk.user?.id ?? "")
             }
             .alert(viewModel.alertTitle, isPresented: $viewModel.alertShown) {
                 Button("OK") {

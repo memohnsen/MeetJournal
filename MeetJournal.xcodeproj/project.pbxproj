@@ -11,6 +11,8 @@
 		714CD1C72EFDD62500FE4D9A /* ConfettiSwiftUI in Frameworks */ = {isa = PBXBuildFile; productRef = 714CD1C62EFDD62500FE4D9A /* ConfettiSwiftUI */; };
 		714CD2002EFF214E00FE4D9A /* Clerk in Frameworks */ = {isa = PBXBuildFile; productRef = 714CD1FF2EFF214E00FE4D9A /* Clerk */; };
 		714CD2032EFF215B00FE4D9A /* PostHog in Frameworks */ = {isa = PBXBuildFile; productRef = 714CD2022EFF215B00FE4D9A /* PostHog */; };
+		714CD37F2F004FCE00FE4D9A /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = 714CD37E2F004FCE00FE4D9A /* RevenueCat */; };
+		714CD3812F004FCE00FE4D9A /* RevenueCatUI in Frameworks */ = {isa = PBXBuildFile; productRef = 714CD3802F004FCE00FE4D9A /* RevenueCatUI */; };
 		719E07CD2EFDB84C00ACB70A /* Config.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 719E07CC2EFDB84C00ACB70A /* Config.xcconfig */; };
 /* End PBXBuildFile section */
 
@@ -47,6 +49,8 @@
 			files = (
 				714CD2002EFF214E00FE4D9A /* Clerk in Frameworks */,
 				714CD1C72EFDD62500FE4D9A /* ConfettiSwiftUI in Frameworks */,
+				714CD3812F004FCE00FE4D9A /* RevenueCatUI in Frameworks */,
+				714CD37F2F004FCE00FE4D9A /* RevenueCat in Frameworks */,
 				714CD1BC2EFDC22200FE4D9A /* Supabase in Frameworks */,
 				714CD2032EFF215B00FE4D9A /* PostHog in Frameworks */,
 			);
@@ -96,6 +100,8 @@
 				714CD1C62EFDD62500FE4D9A /* ConfettiSwiftUI */,
 				714CD1FF2EFF214E00FE4D9A /* Clerk */,
 				714CD2022EFF215B00FE4D9A /* PostHog */,
+				714CD37E2F004FCE00FE4D9A /* RevenueCat */,
+				714CD3802F004FCE00FE4D9A /* RevenueCatUI */,
 			);
 			productName = MeetJournal;
 			productReference = 719E07932EFD868200ACB70A /* MeetJournal.app */;
@@ -130,6 +136,7 @@
 				714CD1C52EFDD62500FE4D9A /* XCRemoteSwiftPackageReference "ConfettiSwiftUI" */,
 				714CD1FE2EFF214E00FE4D9A /* XCRemoteSwiftPackageReference "clerk-ios" */,
 				714CD2012EFF215B00FE4D9A /* XCRemoteSwiftPackageReference "posthog-ios" */,
+				714CD37D2F004FCE00FE4D9A /* XCRemoteSwiftPackageReference "purchases-ios-spm" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 719E07942EFD868200ACB70A /* Products */;
@@ -416,6 +423,14 @@
 				minimumVersion = 3.36.2;
 			};
 		};
+		714CD37D2F004FCE00FE4D9A /* XCRemoteSwiftPackageReference "purchases-ios-spm" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/RevenueCat/purchases-ios-spm";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.52.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -438,6 +453,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 714CD2012EFF215B00FE4D9A /* XCRemoteSwiftPackageReference "posthog-ios" */;
 			productName = PostHog;
+		};
+		714CD37E2F004FCE00FE4D9A /* RevenueCat */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 714CD37D2F004FCE00FE4D9A /* XCRemoteSwiftPackageReference "purchases-ios-spm" */;
+			productName = RevenueCat;
+		};
+		714CD3802F004FCE00FE4D9A /* RevenueCatUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 714CD37D2F004FCE00FE4D9A /* XCRemoteSwiftPackageReference "purchases-ios-spm" */;
+			productName = RevenueCatUI;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

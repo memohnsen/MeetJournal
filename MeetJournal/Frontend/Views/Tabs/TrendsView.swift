@@ -7,8 +7,10 @@
 
 import SwiftUI
 import Charts
+import Clerk
 
 struct TrendsView: View {
+    @Environment(\.clerk) private var clerk
     @State private var viewModel = HistoryModel()
     var checkins: [DailyCheckIn] { viewModel.checkIns }
     var workouts: [SessionReport] { viewModel.sessionReport }
@@ -63,9 +65,9 @@ struct TrendsView: View {
                 }
             }
             .task {
-                await viewModel.fetchCheckins(id: 1)
-                await viewModel.fetchCompReports(id: 1)
-                await viewModel.fetchSessionReport(id: 1)
+                await viewModel.fetchCheckins(user_id: clerk.user?.id ?? "")
+                await viewModel.fetchCompReports(user_id: clerk.user?.id ?? "")
+                await viewModel.fetchSessionReport(user_id: clerk.user?.id ?? "")
             }
         }
     }

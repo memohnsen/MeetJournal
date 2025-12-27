@@ -19,14 +19,14 @@ class HistoryModel {
     var session: [SessionReport] = []
     var checkin: [DailyCheckIn] = []
     
-    func fetchCheckins(id: Int) async {
+    func fetchCheckins(user_id: String) async {
         isLoading = true
         
         do {
             let response = try await supabase
                 .from("journal_daily_checkins")
                 .select()
-                .eq("user_id", value: id)
+                .eq("user_id", value: user_id)
                 .order("check_in_date", ascending: false)
                 .execute()
             
@@ -54,14 +54,14 @@ class HistoryModel {
         isLoading = false
     }
     
-    func fetchCompReports(id: Int) async {
+    func fetchCompReports(user_id: String) async {
         isLoading = true
         
         do {
             let response = try await supabase
                 .from("journal_comp_report")
                 .select()
-                .eq("user_id", value: id)
+                .eq("user_id", value: user_id)
                 .order("meet_date", ascending: false)
                 .execute()
             
@@ -89,14 +89,14 @@ class HistoryModel {
         isLoading = false
     }
     
-    func fetchSessionReport(id: Int) async {
+    func fetchSessionReport(user_id: String) async {
         isLoading = true
         
         do {
             let response = try await supabase
                 .from("journal_session_report")
                 .select()
-                .eq("user_id", value: id)
+                .eq("user_id", value: user_id)
                 .order("session_date", ascending: false)
                 .execute()
             
@@ -124,14 +124,14 @@ class HistoryModel {
         isLoading = false
     }
     
-    func fetchCompDetails(id: Int, title: String, date: String) async {
+    func fetchCompDetails(user_id: String, title: String, date: String) async {
         isLoading = true
         
         do {
             let response = try await supabase
                 .from("journal_comp_report")
                 .select()
-                .eq("user_id", value: id)
+                .eq("user_id", value: user_id)
                 .eq("meet", value: title)
                 .eq("meet_date", value: date)
                 .order("meet_date", ascending: false)
@@ -161,14 +161,14 @@ class HistoryModel {
         isLoading = false
     }
     
-    func fetchSessionDetails(id: Int, title: String, date: String) async {
+    func fetchSessionDetails(user_id: String, title: String, date: String) async {
         isLoading = true
         
         do {
             let response = try await supabase
                 .from("journal_session_report")
                 .select()
-                .eq("user_id", value: id)
+                .eq("user_id", value: user_id)
                 .eq("selected_lift", value: title)
                 .eq("session_date", value: date)
                 .order("session_date", ascending: false)
@@ -198,14 +198,14 @@ class HistoryModel {
         isLoading = false
     }
     
-    func fetchCheckInDetails(id: Int, title: String, date: String) async {
+    func fetchCheckInDetails(user_id: String, title: String, date: String) async {
         isLoading = true
         
         do {
             let response = try await supabase
                 .from("journal_daily_checkins")
                 .select()
-                .eq("user_id", value: id)
+                .eq("user_id", value: user_id)
                 .eq("selected_lift", value: title)
                 .eq("check_in_date", value: date)
                 .order("check_in_date", ascending: false)

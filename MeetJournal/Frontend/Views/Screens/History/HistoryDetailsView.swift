@@ -6,8 +6,11 @@
 //
 
 import SwiftUI
+import Clerk
 
 struct HistoryDetailsView: View {
+    @Environment(\.clerk) private var clerk
+
     @State private var viewModel = HistoryModel()
     var comp: [CompReport] { viewModel.comp }
     var session: [SessionReport] { viewModel.session }
@@ -53,11 +56,11 @@ struct HistoryDetailsView: View {
             }
             .task {
                 if selection == "Meets" {
-                    await viewModel.fetchCompDetails(id: 1, title: title, date: date)
+                    await viewModel.fetchCompDetails(user_id: clerk.user?.id ?? "", title: title, date: date)
                 } else if selection == "Workouts" {
-                    await viewModel.fetchSessionDetails(id: 1, title: searchTerm, date: date)
+                    await viewModel.fetchSessionDetails(user_id: clerk.user?.id ?? "", title: searchTerm, date: date)
                 } else {
-                    await viewModel.fetchCheckInDetails(id: 1, title: searchTerm, date: date)
+                    await viewModel.fetchCheckInDetails(user_id: clerk.user?.id ?? "", title: searchTerm, date: date)
                 }
             }
         }

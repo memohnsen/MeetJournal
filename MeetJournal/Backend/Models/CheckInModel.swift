@@ -9,7 +9,7 @@ import Foundation
 
 struct DailyCheckIn: Codable, Hashable, Identifiable {
     var id: Int?
-    var user_id: Int
+    var user_id: String
     var check_in_date: String
     var selected_lift: String
     var selected_intensity: String

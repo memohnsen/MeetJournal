@@ -6,8 +6,11 @@
 //
 
 import SwiftUI
+import Clerk
 
 struct HistoryView: View {
+    @Environment(\.clerk) private var clerk
+
     @State private var viewModel = HistoryModel()
     var compReports: [CompReport] { viewModel.compReport }
     var checkins: [DailyCheckIn] { viewModel.checkIns }
@@ -27,13 +30,18 @@ struct HistoryView: View {
                         HistoryCardSection(compReports: compReports, checkins: checkins, sessionReports: sessionReports, selection: selected)
                     }
                     .padding(.bottom, 30)
+                    .refreshable {
+                        await viewModel.fetchCompReports(user_id: clerk.user?.id ?? "")
+                        await viewModel.fetchCheckins(user_id: clerk.user?.id ?? "")
+                        await viewModel.fetchSessionReport(user_id: clerk.user?.id ?? "")
+                    }
                 }
             }
             .navigationTitle("History")
             .task {
-                await viewModel.fetchCompReports(id: 1)
-                await viewModel.fetchCheckins(id: 1)
-                await viewModel.fetchSessionReport(id: 1)
+                await viewModel.fetchCompReports(user_id: clerk.user?.id ?? "")
+                await viewModel.fetchCheckins(user_id: clerk.user?.id ?? "")
+                await viewModel.fetchSessionReport(user_id: clerk.user?.id ?? "")
             }
         }
     }

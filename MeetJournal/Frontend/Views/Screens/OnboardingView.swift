@@ -7,6 +7,7 @@
 
 import SwiftUI
 import Clerk
+import RevenueCatUI
 
 struct OnboardingView: View {
     @State private var userViewModel = UserOnboardingViewModel()
@@ -318,8 +319,6 @@ struct TrainingDaysSection: View {
     @Environment(\.clerk) private var clerk
     @Environment(\.colorScheme) var colorScheme
     
-    @State private var isPaywallShown: Bool = false
-    @State private var isAuthShown: Bool = false
     @State private var showingTimePicker: String? = nil
     
     var userViewModel: UserOnboardingViewModel
@@ -480,7 +479,7 @@ struct TrainingDaysSection: View {
                             let formattedDate = dateFormatter.string(from: nextCompDate)
                             
                             let newUser = Users(
-                                id: 3,
+                                user_id: clerk.user?.id ?? "",
                                 first_name: firstName,
                                 last_name: lastName,
                                 sport: sport,
@@ -495,25 +494,15 @@ struct TrainingDaysSection: View {
                             
                             await userViewModel.submitUserProfile(user: newUser)
                             
+                            // Just set hasSeenOnboarding = true
+                            // ContentView will automatically show AuthView or PaywallView based on state
                             hasSeenOnboarding = true
-                            
-                            if clerk.user != nil {
-                                isPaywallShown = true
-                            } else {
-                                isAuthShown = true
-                            }
                         }
                     }
                 }
             }
             .navigationTitle("Building Your Profile")
             .navigationBarTitleDisplayMode(.inline)
-            .sheet(isPresented: $isPaywallShown) {
-                EmptyView()
-            }
-            .sheet(isPresented: $isAuthShown) {
-                AuthView()
-            }
         }
     }
 }

@@ -6,9 +6,11 @@
 //
 
 import SwiftUI
+import Clerk
 
 struct CompReflectionView: View {
     @Environment(\.colorScheme) var colorScheme
+    @Environment(\.clerk) private var clerk
     @State private var viewModel = CompReportModel()
     
     @State private var userViewModel = UsersViewModel()
@@ -108,7 +110,7 @@ struct CompReflectionView: View {
                     TextFieldSection(field: $focus, title: "What do you need to focus on for the next meet?", colorScheme: colorScheme, keyword: "focus")
                     
                     Button {
-                        let report: CompReport = CompReport(user_id: 1, meet: meet, selected_meet_type: selectedMeetType, meet_date: meetDate.formatted(.iso8601.year().month().day().dateSeparator(.dash)), performance_rating: performanceRating, preparedness_rating: preparednessRating, did_well: didWell, needs_work: needsWork, good_from_training: goodFromTraining, cues: cues, focus: focus, snatch1: snatch1, snatch2: snatch2, snatch3: snatch3, cj1: cj1, cj2: cj2, cj3: cj3, snatch_best: calculateSnatchBest(snatch1: snatch1, snatch2: snatch2, snatch3: snatch3), cj_best: calculateCJBest(cj1: cj1, cj2: cj2, cj3: cj3), created_at: iso8601String)
+                        let report: CompReport = CompReport(user_id: clerk.user?.id ?? "", meet: meet, selected_meet_type: selectedMeetType, meet_date: meetDate.formatted(.iso8601.year().month().day().dateSeparator(.dash)), performance_rating: performanceRating, preparedness_rating: preparednessRating, did_well: didWell, needs_work: needsWork, good_from_training: goodFromTraining, cues: cues, focus: focus, snatch1: snatch1, snatch2: snatch2, snatch3: snatch3, cj1: cj1, cj2: cj2, cj3: cj3, snatch_best: calculateSnatchBest(snatch1: snatch1, snatch2: snatch2, snatch3: snatch3), cj_best: calculateCJBest(cj1: cj1, cj2: cj2, cj3: cj3), created_at: iso8601String)
                         
                         Task {
                             await viewModel.submitCompReport(compReport: report)
@@ -140,7 +142,7 @@ struct CompReflectionView: View {
             .navigationTitle("Competition Report")
             .navigationBarTitleDisplayMode(.inline)
             .task {
-                await userViewModel.fetchUsers(id: 2)
+                await userViewModel.fetchUsers(user_id: clerk.user?.id ?? "")
             }
             .alert(viewModel.alertTitle, isPresented: $viewModel.alertShown) {} message: {
                 Text(viewModel.alertMessage)

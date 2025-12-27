@@ -8,7 +8,8 @@
 import Foundation
 
 struct Users: Codable, Identifiable, Hashable {
-    var id: Int
+    var id: Int?
+    var user_id: String
     var first_name: String
     var last_name: String
     var sport: String

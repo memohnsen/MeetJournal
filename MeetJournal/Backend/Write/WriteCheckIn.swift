@@ -17,7 +17,7 @@ class CheckInViewModel {
         checkInScore: CheckInScore,
         selectedLift: String,
         selectedIntensity: String,
-        userId: Int = 1
+        userId: String
     ) async {
         isLoading = true
         error = nil

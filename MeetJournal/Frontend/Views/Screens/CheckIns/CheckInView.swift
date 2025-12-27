@@ -6,9 +6,12 @@
 //
 
 import SwiftUI
+import Clerk
 
 struct CheckInView: View {
     @Environment(\.colorScheme) var colorScheme
+    @Environment(\.clerk) private var clerk
+
     @Bindable var checkInScore: CheckInScore
     @State private var selectedLift: String = "Snatch"
     @State private var selectedIntensity: String = "Moderate"
@@ -135,7 +138,8 @@ struct CheckInView: View {
                             await checkInViewModel.submitCheckIn(
                                 checkInScore: checkInScore,
                                 selectedLift: selectedLift,
-                                selectedIntensity: selectedIntensity
+                                selectedIntensity: selectedIntensity,
+                                userId: clerk.user?.id ?? ""
                             )
                             navigateToConfirmation = true
                         }
