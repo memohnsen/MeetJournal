@@ -6,8 +6,10 @@
 //
 
 import SwiftUI
+import RevenueCatUI
 
 struct SettingsView: View {
+    @State private var showCustomerCenter: Bool = false
     
     var appVersion: String? {
         return Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
@@ -20,16 +22,17 @@ struct SettingsView: View {
                 
                 ScrollView{
                     VStack(alignment: .leading) {
-                        VStack{
-                            HStack{
-                                Text("Export All Data")
-                                Spacer()
-                                Image(systemName: "chevron.right")
-                            }
+                        HStack{
+                            Text("Export All Data")
+                            Spacer()
+                            Image(systemName: "chevron.right")
                         }
                         .cardStyling()
                         
-                        VStack{
+                        
+                        Button{
+                            showCustomerCenter = true
+                        } label: {
                             HStack{
                                 Text("Customer Support")
                                 Spacer()
@@ -38,30 +41,24 @@ struct SettingsView: View {
                         }
                         .cardStyling()
                         
-                        VStack{
-                            HStack{
-                                Text("Submit Feedback")
-                                Spacer()
-                                Image(systemName: "chevron.right")
-                            }
+                        HStack{
+                            Text("Submit Feedback")
+                            Spacer()
+                            Image(systemName: "chevron.right")
                         }
                         .cardStyling()
                         
-                        VStack{
-                            HStack{
-                                Text("Leave a Review")
-                                Spacer()
-                                Image(systemName: "chevron.right")
-                            }
+                        HStack{
+                            Text("Leave a Review")
+                            Spacer()
+                            Image(systemName: "chevron.right")
                         }
                         .cardStyling()
                         
-                        VStack{
-                            HStack{
-                                Text("Open Source Code on Github")
-                                Spacer()
-                                Image(systemName: "chevron.right")
-                            }
+                        HStack{
+                            Text("Open Source Code on Github")
+                            Spacer()
+                            Image(systemName: "chevron.right")
                         }
                         .cardStyling()
                         
@@ -88,6 +85,9 @@ struct SettingsView: View {
                 }
             }
             .navigationTitle("Settings")
+            .sheet(isPresented: $showCustomerCenter) {
+                CustomerCenterView()
+            }
         }
     }
 }

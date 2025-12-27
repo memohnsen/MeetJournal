@@ -10,6 +10,7 @@ import Clerk
 import RevenueCatUI
 
 struct HomeView: View {
+    @AppStorage("hasWrittenUserToDB") private var hasWrittenUserToDB: Bool = false
     @Environment(\.colorScheme) var colorScheme
     @Environment(\.clerk) private var clerk
     @State private var viewModel = UsersViewModel()
@@ -17,8 +18,11 @@ struct HomeView: View {
     @State private var historyModel = HistoryModel()
     var checkins: [DailyCheckIn] { historyModel.checkIns }
     @State private var checkInScore = CheckInScore()
+    @State private var userOnboardingViewModel = UserOnboardingViewModel()
     
     @State private var userProfileShown: Bool = false
+    
+    @Bindable var onboardingData: OnboardingData
     
     let date: Date = Date.now
     
@@ -80,6 +84,30 @@ struct HomeView: View {
             }
         }
         .task {
+            // Write user to DB if this is their first time logging in after onboarding
+            if !hasWrittenUserToDB && clerk.user != nil && !onboardingData.firstName.isEmpty {
+                let dateFormatter = DateFormatter()
+                dateFormatter.dateFormat = "yyyy-MM-dd"
+                let formattedDate = dateFormatter.string(from: onboardingData.nextCompDate)
+                
+                let newUser = Users(
+                    user_id: clerk.user?.id ?? "",
+                    first_name: onboardingData.firstName,
+                    last_name: onboardingData.lastName,
+                    sport: onboardingData.sport,
+                    years_of_experience: onboardingData.yearsExperience,
+                    meets_per_year: onboardingData.meetsPerYear,
+                    goal: onboardingData.goal,
+                    biggest_struggle: onboardingData.biggestStruggle,
+                    training_days: onboardingData.trainingDays,
+                    next_competition: onboardingData.nextComp,
+                    next_competition_date: formattedDate
+                )
+                
+                await userOnboardingViewModel.submitUserProfile(user: newUser)
+                hasWrittenUserToDB = true
+            }
+            
             await viewModel.fetchUsers(user_id: clerk.user?.id ?? "")
             await historyModel.fetchCheckins(user_id: clerk.user?.id ?? "")
         }
@@ -257,7 +285,7 @@ struct HistorySection: View {
                                 .font(.title3.bold())
                                 .multilineTextAlignment(.center)
                             
-                            Text("\(checkin.check_in_date) • \(checkin.overall_score)% Preparedness")
+                            Text("\(dateFormat(checkin.check_in_date) ?? checkin.check_in_date) • \(checkin.overall_score)% Preparedness")
                                 .foregroundStyle(.secondary)
                                 .font(.subheadline)
                         }
@@ -285,5 +313,5 @@ struct HistorySection: View {
 }
 
 #Preview {
-    HomeView()
+    HomeView(onboardingData: OnboardingData())
 }

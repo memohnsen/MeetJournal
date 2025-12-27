@@ -10,20 +10,10 @@ import Clerk
 import RevenueCatUI
 
 struct OnboardingView: View {
-    @State private var userViewModel = UserOnboardingViewModel()
     @State private var pageCounter: Int = 1
+    @Bindable var onboardingData: OnboardingData
+
     
-    @State private var firstName: String = ""
-    @State private var lastName: String = ""
-    @State private var sport: String = "Olympic Weightlifting"
-    @State private var yearsExperience: Int = 3
-    @State private var meetsPerYear: Int = 2
-    
-    @State private var goal: String = ""
-    @State private var biggestStruggle: String = "Confidence"
-    @State private var trainingDays: [String: String] = [:]
-    @State private var nextComp: String = ""
-    @State private var nextCompDate: Date = Date.now
     
     var body: some View {
         if pageCounter == 1 {
@@ -70,36 +60,27 @@ struct OnboardingView: View {
         else if pageCounter == 5 {
             UserInfoSection(
                 pageCounter: $pageCounter,
-                firstName: $firstName,
-                lastName: $lastName,
-                sport: $sport,
-                yearsExperience: $yearsExperience,
-                meetsPerYear: $meetsPerYear,
+                firstName: $onboardingData.firstName,
+                lastName: $onboardingData.lastName,
+                sport: $onboardingData.sport,
+                yearsExperience: $onboardingData.yearsExperience,
+                meetsPerYear: $onboardingData.meetsPerYear,
                 buttonText: "Next"
             )
         } else if pageCounter == 6 {
             SportingInfoSection(
                 pageCounter: $pageCounter,
-                goal: $goal,
-                biggestStruggle: $biggestStruggle,
-                nextComp: $nextComp,
-                nextCompDate: $nextCompDate,
+                goal: $onboardingData.goal,
+                biggestStruggle: $onboardingData.biggestStruggle,
+                nextComp: $onboardingData.nextComp,
+                nextCompDate: $onboardingData.nextCompDate,
                 buttonText: "Next",
-                sport: $sport
+                sport: $onboardingData.sport
             )
         } else if pageCounter == 7 {
             TrainingDaysSection(
-                userViewModel: userViewModel,
-                firstName: firstName,
-                lastName: lastName,
-                sport: sport,
-                yearsExperience: yearsExperience,
-                meetsPerYear: meetsPerYear,
-                goal: goal,
-                biggestStruggle: biggestStruggle,
-                nextComp: nextComp,
-                nextCompDate: nextCompDate,
-                trainingDays: $trainingDays,
+                onboardingData: onboardingData,
+                trainingDays: $onboardingData.trainingDays,
                 buttonText: "Lets get started!"
             )
         }
@@ -316,21 +297,11 @@ struct SportingInfoSection: View {
 
 struct TrainingDaysSection: View {
     @AppStorage("hasSeenOnboarding") var hasSeenOnboarding: Bool = false
-    @Environment(\.clerk) private var clerk
     @Environment(\.colorScheme) var colorScheme
     
     @State private var showingTimePicker: String? = nil
     
-    var userViewModel: UserOnboardingViewModel
-    var firstName: String
-    var lastName: String
-    var sport: String
-    var yearsExperience: Int
-    var meetsPerYear: Int
-    var goal: String
-    var biggestStruggle: String
-    var nextComp: String
-    var nextCompDate: Date
+    var onboardingData: OnboardingData
     @Binding var trainingDays: [String: String]
     var buttonText: String
     
@@ -473,31 +444,9 @@ struct TrainingDaysSection: View {
                     .padding(.bottom, 30)
                     .disabled(!isDisabled)
                     .onTapGesture {
-                        Task {
-                            let dateFormatter = DateFormatter()
-                            dateFormatter.dateFormat = "yyyy-MM-dd"
-                            let formattedDate = dateFormatter.string(from: nextCompDate)
-                            
-                            let newUser = Users(
-                                user_id: clerk.user?.id ?? "",
-                                first_name: firstName,
-                                last_name: lastName,
-                                sport: sport,
-                                years_of_experience: yearsExperience,
-                                meets_per_year: meetsPerYear,
-                                goal: goal,
-                                biggest_struggle: biggestStruggle,
-                                training_days: trainingDays,
-                                next_competition: nextComp,
-                                next_competition_date: formattedDate
-                            )
-                            
-                            await userViewModel.submitUserProfile(user: newUser)
-                            
-                            // Just set hasSeenOnboarding = true
-                            // ContentView will automatically show AuthView or PaywallView based on state
-                            hasSeenOnboarding = true
-                        }
+                        // Just mark onboarding as complete
+                        // User data will be written to DB in HomeView after login
+                        hasSeenOnboarding = true
                     }
                 }
             }
@@ -508,5 +457,5 @@ struct TrainingDaysSection: View {
 }
 
 #Preview {
-    OnboardingView()
+    OnboardingView(onboardingData: OnboardingData())
 }

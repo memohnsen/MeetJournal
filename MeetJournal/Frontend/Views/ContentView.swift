@@ -15,12 +15,13 @@ struct ContentView: View {
     @State private var customerManager = CustomerInfoManager()
     @State private var selectedTab: String = "Home"
     @State private var showPaywall: Bool = false
+    @State private var onboardingData = OnboardingData()
     
     var body: some View {
         Group {
             // Hasn't completed onboarding yet
             if !hasSeenOnboarding {
-                OnboardingView()
+                OnboardingView(onboardingData: onboardingData)
                     .environment(customerManager)
             
             // Logged out (show auth first)
@@ -70,7 +71,7 @@ struct ContentView: View {
     private var mainTabView: some View {
         TabView(selection: $selectedTab) {
             Tab("Home", systemImage: "house", value: "Home") {
-                HomeView()
+                HomeView(onboardingData: onboardingData)
             }
             Tab("History", systemImage: "clock.arrow.trianglehead.counterclockwise.rotate.90", value: "History") {
                 HistoryView()
