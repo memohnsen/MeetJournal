@@ -9,13 +9,11 @@ import SwiftUI
 import Clerk
 
 struct WorkoutReflectionView: View {
+    @AppStorage("userSport") private var userSport: String = ""
     @Environment(\.colorScheme) var colorScheme
     @Environment(\.dismiss) var dismiss
     @Environment(\.clerk) private var clerk
     @State private var viewModel = SessionReportModel()
-    
-    @State private var userViewModel = UsersViewModel()
-    var user: [Users] { userViewModel.users }
     
     @State private var sessionDate: Date = Date()
     @State private var sessionRPE: Int = 3
@@ -60,7 +58,7 @@ struct WorkoutReflectionView: View {
                     DatePickerSection(title: "Session Date:", selectedDate: $sessionDate)
                     
                     
-                    if user.first?.sport == "Olympic Weightlifting" {
+                    if userSport == "Olympic Weightlifting" {
                         MultipleChoiceSection(
                             colorScheme: colorScheme,
                             title: "What's the main focus?",
@@ -127,9 +125,6 @@ struct WorkoutReflectionView: View {
             }
             .navigationTitle("Session Reflection")
             .navigationBarTitleDisplayMode(.inline)
-            .task {
-                await userViewModel.fetchUsers(user_id: clerk.user?.id ?? "")
-            }
             .alert(viewModel.alertTitle, isPresented: $viewModel.alertShown) {
                 Button("OK") {
                     dismiss()

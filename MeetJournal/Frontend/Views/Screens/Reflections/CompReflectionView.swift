@@ -9,12 +9,10 @@ import SwiftUI
 import Clerk
 
 struct CompReflectionView: View {
+    @AppStorage("userSport") private var userSport: String = ""
     @Environment(\.colorScheme) var colorScheme
     @Environment(\.clerk) private var clerk
     @State private var viewModel = CompReportModel()
-    
-    @State private var userViewModel = UsersViewModel()
-    var user: [Users] { userViewModel.users }
     
     @State private var meet: String = ""
     @State private var selectedMeetType: String = "Local"
@@ -54,15 +52,19 @@ struct CompReflectionView: View {
         return true
     }
     
-    func calculateSnatchBest(snatch1: String, snatch2: String, snatch3: String) -> Int {
-        return max(Int(snatch1) ?? 0, Int(snatch2) ?? 0, Int(snatch3) ?? 0)
-    }
-    
-    func calculateCJBest(cj1: String, cj2: String, cj3: String) -> Int {
-        return max(Int(cj1) ?? 0, Int(cj2) ?? 0, Int(cj3) ?? 0)
+    func calculateBest(lift1: String, lift2: String, lift3: String) -> Int {
+        return max(Int(lift1) ?? 0, Int(lift2) ?? 0, Int(lift2) ?? 0)
     }
     
     let iso8601String = Date.now.formatted(.iso8601)
+    
+    var report: CompReport {
+        if userSport == "Olympic Weightlifting" {
+            return CompReport(user_id: clerk.user?.id ?? "", meet: meet, selected_meet_type: selectedMeetType, meet_date: meetDate.formatted(.iso8601.year().month().day().dateSeparator(.dash)), performance_rating: performanceRating, preparedness_rating: preparednessRating, did_well: didWell, needs_work: needsWork, good_from_training: goodFromTraining, cues: cues, focus: focus, snatch1: snatch1, snatch2: snatch2, snatch3: snatch3, cj1: cj1, cj2: cj2, cj3: cj3, snatch_best: calculateBest(lift1: snatch1, lift2: snatch2, lift3: snatch3), cj_best: calculateBest(lift1: cj1, lift2: cj2, lift3: cj3), created_at: iso8601String)
+        } else {
+            return CompReport(user_id: clerk.user?.id ?? "", meet: meet, selected_meet_type: selectedMeetType, meet_date: meetDate.formatted(.iso8601.year().month().day().dateSeparator(.dash)), performance_rating: performanceRating, preparedness_rating: preparednessRating, did_well: didWell, needs_work: needsWork, good_from_training: goodFromTraining, cues: cues, focus: focus, squat1: squat1, squat2: squat2, squat3: squat3, bench1: bench1, bench2: bench2, bench3: bench3, deadlift1: deadlift1, deadlift2: deadlift2, deadlift3: deadlift3, squat_best: calculateBest(lift1: squat1, lift2: squat2, lift3: squat3), bench_best: calculateBest(lift1: bench1, lift2: bench2, lift3: bench3), deadlift_best: calculateBest(lift1: deadlift1, lift2: deadlift2, lift3: deadlift3), created_at: iso8601String)
+        }
+    }
     
     var body: some View {
         NavigationStack{
@@ -89,7 +91,7 @@ struct CompReflectionView: View {
                     DatePickerSection(title: "Meet Date:", selectedDate: $meetDate)
                     
                     
-                    if user.first?.sport == "Olympic Weightlifting" {
+                    if userSport == "Olympic Weightlifting" {
                         WLLiftResultsSection(snatch1: $snatch1, snatch2: $snatch2, snatch3: $snatch3, cj1: $cj1, cj2: $cj2, cj3: $cj3)
                     } else {
                         PLLiftResultsSection(squat1: $squat1, squat2: $squat2, squat3: $squat3, bench1: $bench1, bench2: $bench2, bench3: $bench3, deadlift1: $deadlift1, deadlift2: $deadlift2, deadlift3: $deadlift3)
@@ -110,8 +112,6 @@ struct CompReflectionView: View {
                     TextFieldSection(field: $focus, title: "What do you need to focus on for the next meet?", colorScheme: colorScheme, keyword: "focus")
                     
                     Button {
-                        let report: CompReport = CompReport(user_id: clerk.user?.id ?? "", meet: meet, selected_meet_type: selectedMeetType, meet_date: meetDate.formatted(.iso8601.year().month().day().dateSeparator(.dash)), performance_rating: performanceRating, preparedness_rating: preparednessRating, did_well: didWell, needs_work: needsWork, good_from_training: goodFromTraining, cues: cues, focus: focus, snatch1: snatch1, snatch2: snatch2, snatch3: snatch3, cj1: cj1, cj2: cj2, cj3: cj3, snatch_best: calculateSnatchBest(snatch1: snatch1, snatch2: snatch2, snatch3: snatch3), cj_best: calculateCJBest(cj1: cj1, cj2: cj2, cj3: cj3), created_at: iso8601String)
-                        
                         Task {
                             await viewModel.submitCompReport(compReport: report)
                         }
@@ -141,9 +141,6 @@ struct CompReflectionView: View {
             }
             .navigationTitle("Competition Report")
             .navigationBarTitleDisplayMode(.inline)
-            .task {
-                await userViewModel.fetchUsers(user_id: clerk.user?.id ?? "")
-            }
             .alert(viewModel.alertTitle, isPresented: $viewModel.alertShown) {} message: {
                 Text(viewModel.alertMessage)
             }

@@ -19,13 +19,25 @@ struct CompReport: Codable, Hashable {
     var good_from_training: String
     var cues: String
     var focus: String
-    var snatch1: String
-    var snatch2: String
-    var snatch3: String
-    var cj1: String
-    var cj2: String
-    var cj3: String
-    var snatch_best: Int
-    var cj_best: Int
+    var snatch1: String?
+    var snatch2: String?
+    var snatch3: String?
+    var cj1: String?
+    var cj2: String?
+    var cj3: String?
+    var snatch_best: Int?
+    var cj_best: Int?
+    var squat1: String?
+    var squat2: String?
+    var squat3: String?
+    var bench1: String?
+    var bench2: String?
+    var bench3: String?
+    var deadlift1: String?
+    var deadlift2: String?
+    var deadlift3: String?
+    var squat_best: Int?
+    var bench_best: Int?
+    var deadlift_best: Int?
     var created_at: String
 }

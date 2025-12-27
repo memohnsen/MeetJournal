@@ -9,9 +9,11 @@ import SwiftUI
 import Clerk
 
 struct HistoryDetailsView: View {
+    @AppStorage("userSport") private var userSport: String = ""
     @Environment(\.clerk) private var clerk
 
     @State private var viewModel = HistoryModel()
+    var isLoading: Bool { viewModel.isLoading }
     var comp: [CompReport] { viewModel.comp }
     var session: [SessionReport] { viewModel.session }
     var checkin: [DailyCheckIn] { viewModel.checkin }
@@ -20,13 +22,99 @@ struct HistoryDetailsView: View {
     var selection: String
     var date: String
     
+//    \(comp.first?.squat_best ?? 0)/\(comp.first?.bench_best ?? 0)/\(comp.first?.deadlift_best ?? 0)/\((comp.first?.squat_best ?? 0) + (comp.first?.bench_best ?? 0) + (comp.first?.deadlift_best ?? 0))
+    
+    var shareTextResult: String {
+        if selection == "Meets" {
+            if userSport == "Olympic Weightlifting" {
+                return """
+                    Meet Results for \(comp.first?.meet ?? "")
+                
+                    \(comp.first?.snatch_best ?? 0)/\(comp.first?.cj_best ?? 0)/\((comp.first?.snatch_best ?? 0) + (comp.first?.cj_best ?? 0))
+                
+                    Performance Rating: \(comp.first?.performance_rating ?? 0)/5
+                    Preparedness Rating: \(comp.first?.preparedness_rating ?? 0)/5
+                
+                    What I did well: \(comp.first?.did_well ?? "")
+                
+                    What I could have done better: \(comp.first?.needs_work ?? "")
+                
+                    What in training helped me feel prepared: \(comp.first?.good_from_training ?? "")
+                
+                    Cues that helped: \(comp.first?.cues ?? "")
+                
+                    What I need to focus on next meet: \(comp.first?.focus ?? "")
+                
+                    Powered By MeetJournal
+                """
+            } else {
+                return """
+                    Meet Results for \(comp.first?.meet ?? "")
+                
+                    \(comp.first?.squat_best ?? 0)/\(comp.first?.bench_best ?? 0)/\(comp.first?.deadlift_best ?? 0)/\((comp.first?.squat_best ?? 0) + (comp.first?.bench_best ?? 0) + (comp.first?.deadlift_best ?? 0))
+                
+                    Performance Rating: \(comp.first?.performance_rating ?? 0)/5
+                    Preparedness Rating: \(comp.first?.preparedness_rating ?? 0)/5
+                
+                    What I did well: \(comp.first?.did_well ?? "")
+                
+                    What I could have done better: \(comp.first?.needs_work ?? "")
+                
+                    What in training helped me feel prepared: \(comp.first?.good_from_training ?? "")
+                
+                    Cues that helped: \(comp.first?.cues ?? "")
+                
+                    What I need to focus on next meet: \(comp.first?.focus ?? "")
+                
+                    Powered By MeetJournal
+                """
+            }
+        } else if selection == "Workouts" {
+            return """
+                Session Results for \(dateFormat(session.first?.session_date ??  "") ?? "")
+                Session Focus: \(session.first?.selected_intensity ?? "") \(session.first?.selected_lift ?? "")
+            
+                Session RPE: \(session.first?.session_rpe ?? 0)/5
+                Movement Quality Rating: \(session.first?.movement_quality ?? 0)/5
+                Focus Rating: \(session.first?.focus ?? 0)/5
+                Count of Misses: \(session.first?.misses ?? "")
+                Helpful Cues: \(session.first?.cues ?? "")
+            
+                My body is feeling: \(session.first?.feeling ?? "")/5
+            
+                Powered By MeetJournal
+            """
+        } else {
+            return """
+                Check-In Results for \(dateFormat(checkin.first?.check_in_date ?? "") ?? "")
+            
+                Overall Readiness: \(checkin.first?.overall_score ?? 0)%
+                Physical Readiness: \(checkin.first?.physical_score ?? 0)%
+                Mental Readiness: \(checkin.first?.mental_score ?? 0)%
+            
+                Physical Rating: \(checkin.first?.physical_strength ?? 0)/5
+                Mental Rating: \(checkin.first?.mental_strength ?? 0)/5
+                Recovery Rating: \(checkin.first?.recovered ?? 0)/5
+                Confidence Rating: \(checkin.first?.confidence ?? 0)/5
+                Sleep Rating: \(checkin.first?.sleep ?? 0)/5
+                Energy Rating: \(checkin.first?.energy ?? 0)/5
+                Stress Rating: \(checkin.first?.stress ?? 0)/5
+                Soreness Rating: \(checkin.first?.soreness ?? 0)/5
+            
+                Daily Goal: \(checkin.first?.goal ?? "")
+            
+                Powered By MeetJournal
+            """
+        }
+    }
+    
     var pageTitle: String {
         if selection == "Meets" {
             return comp.first?.meet ?? ""
         } else if selection == "Workouts" {
             return (session.first?.selected_intensity ?? "") + " " + (session.first?.selected_lift ?? "")
         } else {
-            return (checkin.first?.selected_intensity ?? "") + " " +  (checkin.first?.selected_lift ?? "")
+            return (checkin.first?.selected_intensity ?? "") + " " + (checkin.first?.selected_lift ?? "")
         }
     }
     
@@ -35,22 +123,24 @@ struct HistoryDetailsView: View {
             ZStack{
                 BackgroundColor()
                 
-                ScrollView{
-                    if selection == "Meets" {
-                        CompDisplaySection(comp: comp)
-                    } else if selection == "Workouts" {
-                        SessionDisplaySection(session: session)
-                    } else {
-                        CheckInDisplaySection(checkin: checkin)
+                if isLoading {
+                    ProgressView()
+                } else {
+                    ScrollView{
+                        if selection == "Meets" {
+                            CompDisplaySection(comp: comp, userSport: userSport)
+                        } else if selection == "Workouts" {
+                            SessionDisplaySection(session: session)
+                        } else {
+                            CheckInDisplaySection(checkin: checkin)
+                        }
                     }
                 }
             }
             .navigationTitle(pageTitle)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                Button {
-                    
-                } label: {
+                ShareLink(item: shareTextResult, subject: Text("Share Your Results")) {
                     Image(systemName: "square.and.arrow.up")
                 }
             }
@@ -69,40 +159,90 @@ struct HistoryDetailsView: View {
 
 struct ResultsDisplaySection: View {
     var comp: [CompReport]
+    var userSport: String
+    
     var body: some View {
         VStack{
             Text("Results")
                 .font(.title.bold())
                 .padding(.bottom, 6)
+            
+            if userSport == "Olympic Weightlifting" {
+                VStack{
+                    HStack{
+                        Text("Snatch")
+                            .font(.headline.bold())
+                            .frame(width: 105)
+                        Spacer()
+                        Text("\(comp.first?.snatch1 ?? "0")kg")
+                        Spacer()
+                        Text("\(comp.first?.snatch2 ?? "0")kg")
+                        Spacer()
+                        Text("\(comp.first?.snatch3 ?? "0")kg")
+                    }
+                    .padding([.horizontal, .vertical])
+                    
+                    
+                    HStack{
+                        Text("Clean & Jerk")
+                            .font(.headline.bold())
+                            .frame(width: 105)
+                        Spacer()
+                        Text("\(comp.first?.cj1 ?? "0")kg")
+                        Spacer()
+                        Text("\(comp.first?.cj2 ?? "0")kg")
+                        Spacer()
+                        Text("\(comp.first?.cj3 ?? "0")kg")
+                    }
+                    .padding(.horizontal)
+                }
+                .cardStyling()
+            } else {
+                VStack{
+                    HStack{
+                        Text("Squat")
+                            .font(.headline.bold())
+                            .frame(width: 105)
+                        Spacer()
+                        Text("\(comp.first?.squat1 ?? "0")kg")
+                        Spacer()
+                        Text("\(comp.first?.squat2 ?? "0")kg")
+                        Spacer()
+                        Text("\(comp.first?.squat3 ?? "0")kg")
+                    }
+                    .padding(.horizontal)
+                    .padding(.bottom, 6)
 
-            HStack{
-                Text("Snatch")
-                    .font(.headline.bold())
-                    .frame(width: 105)
-                Spacer()
-                Text("\(comp.first?.snatch1 ?? "0")kg")
-                Spacer()
-                Text("\(comp.first?.snatch2 ?? "0")kg")
-                Spacer()
-                Text("\(comp.first?.snatch3 ?? "0")kg")
+                    HStack{
+                        Text("Bench")
+                            .font(.headline.bold())
+                            .frame(width: 105)
+                        Spacer()
+                        Text("\(comp.first?.bench1 ?? "0")kg")
+                        Spacer()
+                        Text("\(comp.first?.bench2 ?? "0")kg")
+                        Spacer()
+                        Text("\(comp.first?.bench3 ?? "0")kg")
+                    }
+                    .padding(.horizontal)
+                    .padding(.bottom, 6)
+                    
+                    HStack{
+                        Text("Deadlift")
+                            .font(.headline.bold())
+                            .frame(width: 105)
+                        Spacer()
+                        Text("\(comp.first?.deadlift1 ?? "0")kg")
+                        Spacer()
+                        Text("\(comp.first?.deadlift2 ?? "0")kg")
+                        Spacer()
+                        Text("\(comp.first?.deadlift3 ?? "0")kg")
+                    }
+                    .padding(.horizontal)
+                }
+                .cardStyling()
             }
-            .padding([.horizontal, .vertical])
-            
-            
-            HStack{
-                Text("Clean & Jerk")
-                    .font(.headline.bold())
-                    .frame(width: 105)
-                Spacer()
-                Text("\(comp.first?.cj1 ?? "0")kg")
-                Spacer()
-                Text("\(comp.first?.cj2 ?? "0")kg")
-                Spacer()
-                Text("\(comp.first?.cj3 ?? "0")kg")
-            }
-            .padding(.horizontal)
         }
-        .cardStyling()
     }
 }
 
@@ -142,9 +282,10 @@ struct TextDisplaySection: View {
 
 struct CompDisplaySection: View {
     var comp: [CompReport]
+    var userSport: String
     
     var body: some View {
-        ResultsDisplaySection(comp: comp)
+        ResultsDisplaySection(comp: comp, userSport: userSport)
             .padding(.top)
         
         RatingDisplaySection(title: "How would you rate your performance?", value: "\(comp.first?.performance_rating ?? 0)")

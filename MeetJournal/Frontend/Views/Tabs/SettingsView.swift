@@ -7,12 +7,45 @@
 
 import SwiftUI
 import RevenueCatUI
+import Clerk
 
 struct SettingsView: View {
+    @Environment(\.clerk) private var clerk
     @State private var showCustomerCenter: Bool = false
+    @State private var viewModel = HistoryModel()
+    @State private var csvFileURL: URL?
+    @State private var showShareSheet = false
+    @State private var isExporting = false
     
     var appVersion: String? {
         return Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
+    }
+    
+    func createCSVFile() async -> URL? {
+        guard let userId = clerk.user?.id else { return nil }
+        
+        await viewModel.fetchCheckinsCSV(user_id: userId)
+        await viewModel.fetchCompReportsCSV(user_id: userId)
+        await viewModel.fetchSessionReportCSV(user_id: userId)
+        
+        var combinedCSV = "=== DAILY CHECK-INS ===\n"
+        combinedCSV += viewModel.checkInsCSV
+        combinedCSV += "\n\n=== COMPETITION REPORTS ===\n"
+        combinedCSV += viewModel.compReportCSV
+        combinedCSV += "\n\n=== SESSION REPORTS ===\n"
+        combinedCSV += viewModel.sessionReportCSV
+        
+        let tempDir = FileManager.default.temporaryDirectory
+        let dateString = Date().formatted(date: .numeric, time: .omitted).replacingOccurrences(of: "/", with: "-")
+        let fileURL = tempDir.appendingPathComponent("MeetJournal_Export_\(dateString).csv")
+        
+        do {
+            try combinedCSV.write(to: fileURL, atomically: true, encoding: .utf8)
+            return fileURL
+        } catch {
+            print("Error creating CSV file: \(error)")
+            return nil
+        }
     }
     
     var body: some View {
@@ -22,13 +55,24 @@ struct SettingsView: View {
                 
                 ScrollView{
                     VStack(alignment: .leading) {
-                        HStack{
-                            Text("Export All Data")
-                            Spacer()
-                            Image(systemName: "chevron.right")
+                        Button {
+                            isExporting = true
+                            Task {
+                                if let fileURL = await createCSVFile() {
+                                    csvFileURL = fileURL
+                                    showShareSheet = true
+                                }
+                                isExporting = false
+                            }
+                        } label: {
+                            HStack {
+                                Text(isExporting ? "Exporting Data..." : "Export My Data")
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                            }
                         }
+                        .disabled(isExporting)
                         .cardStyling()
-                        
                         
                         Button{
                             showCustomerCenter = true
@@ -88,8 +132,24 @@ struct SettingsView: View {
             .sheet(isPresented: $showCustomerCenter) {
                 CustomerCenterView()
             }
+            .sheet(isPresented: $showShareSheet) {
+                if let fileURL = csvFileURL {
+                    ShareSheet(items: [fileURL])
+                }
+            }
         }
     }
+}
+
+struct ShareSheet: UIViewControllerRepresentable {
+    let items: [Any]
+    
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        let controller = UIActivityViewController(activityItems: items, applicationActivities: nil)
+        return controller
+    }
+    
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }
 
 #Preview {

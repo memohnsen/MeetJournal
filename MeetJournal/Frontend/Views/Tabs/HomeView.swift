@@ -11,6 +11,7 @@ import RevenueCatUI
 
 struct HomeView: View {
     @AppStorage("hasWrittenUserToDB") private var hasWrittenUserToDB: Bool = false
+    @AppStorage("userSport") private var userSport: String = ""
     @Environment(\.colorScheme) var colorScheme
     @Environment(\.clerk) private var clerk
     @State private var viewModel = UsersViewModel()
@@ -109,6 +110,11 @@ struct HomeView: View {
             }
             
             await viewModel.fetchUsers(user_id: clerk.user?.id ?? "")
+            
+            if let sport = viewModel.users.first?.sport {
+                userSport = sport
+            }
+            
             await historyModel.fetchCheckins(user_id: clerk.user?.id ?? "")
         }
         .sheet(isPresented: $userProfileShown) {

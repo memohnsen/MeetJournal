@@ -1405,7 +1405,7 @@ struct MeetsGraphView: View {
         if !shouldAggregate {
             return filteredmeets.compactMap { meet in
                 if let date = dateFormatter.date(from: meet.meet_date) {
-                    return AggregatedDataPoint(date: date, averageScore: Double(meet.snatch_best + meet.cj_best))
+                    return AggregatedDataPoint(date: date, averageScore: Double((meet.snatch_best ?? 0) + (meet.cj_best ?? 0)))
                 }
                 return nil
             }
@@ -1424,7 +1424,7 @@ struct MeetsGraphView: View {
                     if groupedData[components] == nil {
                         groupedData[components] = []
                     }
-                    groupedData[components]?.append(meet.snatch_best + meet.cj_best)
+                    groupedData[components]?.append((meet.snatch_best ?? 0) + (meet.cj_best ?? 0))
                 }
             }
             

@@ -21,3 +21,9 @@ struct Users: Codable, Identifiable, Hashable {
     var next_competition: String
     var next_competition_date: String
 }
+
+struct Sport: Codable, Hashable {
+    var id: Int?
+    var user_id: String
+    var sport: String
+}

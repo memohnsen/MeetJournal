@@ -9,9 +9,11 @@ import SwiftUI
 import Clerk
 
 struct HistoryView: View {
+    @AppStorage("userSport") private var userSport: String = ""
     @Environment(\.clerk) private var clerk
 
     @State private var viewModel = HistoryModel()
+    var historyIsLoading: Bool { viewModel.isLoading }
     var compReports: [CompReport] { viewModel.compReport }
     var checkins: [DailyCheckIn] { viewModel.checkIns }
     var sessionReports: [SessionReport] { viewModel.sessionReport }
@@ -27,7 +29,11 @@ struct HistoryView: View {
                     VStack{
                         Filter(selected: $selected)
                         
-                        HistoryCardSection(compReports: compReports, checkins: checkins, sessionReports: sessionReports, selection: selected)
+                        if historyIsLoading {
+                            ProgressView()
+                        } else {
+                            HistoryCardSection(compReports: compReports, checkins: checkins, sessionReports: sessionReports, selection: selected, userSport: userSport)
+                        }
                     }
                     .padding(.bottom, 30)
                     .refreshable {
@@ -53,20 +59,33 @@ struct HistoryCardSection: View {
     var checkins: [DailyCheckIn]
     var sessionReports: [SessionReport]
     var selection: String
+    var userSport: String
      
     var body: some View {
         if selection == "Meets" {
             LazyVStack{
                 ForEach(compReports, id: \.self) { report in
-                    HistoryComponent(
-                        colorScheme: colorScheme,
-                        searchTerm: report.meet,
-                        title: report.meet,
-                        subtitle1: "\(dateFormat(report.meet_date) ?? "N/A")",
-                        subtitle2: "• \(report.snatch_best)/\(report.cj_best)/\(report.snatch_best + report.cj_best)",
-                        selection: selection,
-                        date: report.meet_date
-                    )
+                    if userSport == "Olympic Weightlifting" {
+                        HistoryComponent(
+                            colorScheme: colorScheme,
+                            searchTerm: report.meet,
+                            title: report.meet,
+                            subtitle1: "\(dateFormat(report.meet_date) ?? "N/A")",
+                            subtitle2: "• \(report.snatch_best ?? 0)/\(report.cj_best ?? 0)/\((report.snatch_best ?? 0) + (report.cj_best ?? 0))",
+                            selection: selection,
+                            date: report.meet_date
+                        )
+                    } else {
+                        HistoryComponent(
+                            colorScheme: colorScheme,
+                            searchTerm: report.meet,
+                            title: report.meet,
+                            subtitle1: "\(dateFormat(report.meet_date) ?? "N/A")",
+                            subtitle2: "• \(report.squat_best ?? 0)/\(report.bench_best ?? 0)/\(report.deadlift_best ?? 0)/\((report.squat_best ?? 0) + (report.bench_best ?? 0) + (report.deadlift_best ?? 0))",
+                            selection: selection,
+                            date: report.meet_date
+                        )
+                    }
                 }
             }
             .padding(.horizontal)

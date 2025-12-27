@@ -15,9 +15,14 @@ class HistoryModel {
     var checkIns: [DailyCheckIn] = []
     var compReport: [CompReport] = []
     var sessionReport: [SessionReport] = []
+    
     var comp: [CompReport] = []
     var session: [SessionReport] = []
     var checkin: [DailyCheckIn] = []
+    
+    var checkInsCSV: String = ""
+    var compReportCSV: String = ""
+    var sessionReportCSV: String = ""
     
     func fetchCheckins(user_id: String) async {
         isLoading = true
@@ -229,6 +234,75 @@ class HistoryModel {
             print("codingPath:", context.codingPath)
         } catch {
             print("Error: \(error.localizedDescription)")
+            print("Full error: \(error)")
+        }
+        
+        isLoading = false
+    }
+    
+    func fetchCheckinsCSV(user_id: String) async {
+        isLoading = true
+        
+        do {
+            let response = try await supabase
+                .from("journal_daily_checkins")
+                .select()
+                .eq("user_id", value: user_id)
+                .order("check_in_date", ascending: false)
+                .csv()
+                .execute()
+            
+            if let csvString = String(data: response.data, encoding: .utf8) {
+                self.checkInsCSV = csvString
+            }
+        } catch {
+            print("Error fetching CSV: \(error.localizedDescription)")
+            print("Full error: \(error)")
+        }
+        
+        isLoading = false
+    }
+    
+    func fetchCompReportsCSV(user_id: String) async {
+        isLoading = true
+        
+        do {
+            let response = try await supabase
+                .from("journal_comp_report")
+                .select()
+                .eq("user_id", value: user_id)
+                .order("meet_date", ascending: false)
+                .csv()
+                .execute()
+            
+            if let csvString = String(data: response.data, encoding: .utf8) {
+                self.compReportCSV = csvString
+            }
+        } catch {
+            print("Error fetching CSV: \(error.localizedDescription)")
+            print("Full error: \(error)")
+        }
+        
+        isLoading = false
+    }
+    
+    func fetchSessionReportCSV(user_id: String) async {
+        isLoading = true
+        
+        do {
+            let response = try await supabase
+                .from("journal_session_report")
+                .select()
+                .eq("user_id", value: user_id)
+                .order("session_date", ascending: false)
+                .csv()
+                .execute()
+            
+            if let csvString = String(data: response.data, encoding: .utf8) {
+                self.sessionReportCSV = csvString
+            }
+        } catch {
+            print("Error fetching CSV: \(error.localizedDescription)")
             print("Full error: \(error)")
         }
         

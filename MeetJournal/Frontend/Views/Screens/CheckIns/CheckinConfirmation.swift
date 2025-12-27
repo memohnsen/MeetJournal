@@ -14,6 +14,29 @@ struct CheckinConfirmation: View {
     
     @Binding var selectedLift: String
     @Binding var selectedIntensity: String
+    
+    var shareTextResult: String {
+        """
+            Check-In Results for \(checkInScore.checkInDate.formatted(date: .abbreviated, time: .omitted))
+        
+            Overall Readiness: \(checkInScore.overallScore)%
+            Physical Readiness: \(checkInScore.physicalScore)%
+            Mental Readiness: \(checkInScore.mentalScore)%
+        
+            Physical Rating: \(checkInScore.physicalStrength)/5
+            Mental Rating: \(checkInScore.mentalStrength)/5
+            Recovery Rating: \(checkInScore.recovered)/5
+            Confidence Rating: \(checkInScore.confidence)/5
+            Sleep Rating: \(checkInScore.sleep)/5
+            Energy Rating: \(checkInScore.energy)/5
+            Stress Rating: \(checkInScore.stress)/5
+            Soreness Rating: \(checkInScore.soreness)/5
+        
+            Daily Goal: \(checkInScore.goal)
+        
+            Powered By MeetJournal
+        """
+    }
 
     var body: some View {
         NavigationStack{
@@ -25,26 +48,44 @@ struct CheckinConfirmation: View {
                     
                     Spacer()
                     
-                    Button{
-                        
-                    } label: {
-                        Image(systemName: "square.and.arrow.up")
-                        Text("Send To Your Coach")
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(16)
-                    .foregroundStyle(.white)
-                    .background(
-                        RoundedRectangle(cornerRadius: 16)
-                            .fill(blueEnergy)
-                            .overlay(
+                    ShareLink(item: shareTextResult, subject: Text("Share Your Check-In")) {
+                        Label("Send To Your Coach", systemImage: "square.and.arrow.up")
+                            .frame(maxWidth: .infinity)
+                            .padding(16)
+                            .foregroundStyle(.white)
+                            .background(
                                 RoundedRectangle(cornerRadius: 16)
-                                    .stroke(Color.black.opacity(0.1), lineWidth: 1)
+                                    .fill(blueEnergy)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 16)
+                                            .stroke(Color.black.opacity(0.1), lineWidth: 1)
+                                    )
                             )
-                    )
-                    .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
-                    .padding(.horizontal)
-                    .padding(.bottom, 30)
+                            .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
+                            .padding(.horizontal)
+                            .padding(.bottom, 30)
+                    }
+                    
+//                    Button{
+//                        
+//                    } label: {
+//                        Image(systemName: "square.and.arrow.up")
+//                        Text("Send To Your Coach")
+//                    }
+//                    .frame(maxWidth: .infinity)
+//                    .padding(16)
+//                    .foregroundStyle(.white)
+//                    .background(
+//                        RoundedRectangle(cornerRadius: 16)
+//                            .fill(blueEnergy)
+//                            .overlay(
+//                                RoundedRectangle(cornerRadius: 16)
+//                                    .stroke(Color.black.opacity(0.1), lineWidth: 1)
+//                            )
+//                    )
+//                    .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
+//                    .padding(.horizontal)
+//                    .padding(.bottom, 30)
                 }
             }
             .confettiCannon(trigger: $confettiCannon, num: 300, radius: 600, hapticFeedback: true)
