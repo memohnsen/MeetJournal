@@ -27,7 +27,7 @@ struct TrendsView: View {
             return """
                 Task: You are a sports data analyst specializing in Olympic Weightlifting and Powerlifting. You specialize in finding trends in large amounts of data. The following is the data we have on the athlete, I need you to analyze the data and find possible trends and return a response that will instruct the athlete on your findings.
                 
-                Data Type: Daily check-in data performed prior to their lifting session.
+                Data Type: Daily check-in data performed prior to their lifting session. The overall score is a function of the physical and mental scores which are functions of the other 1-5 scale scores.
                 
                 Data: \(checkins)
                             
@@ -36,7 +36,7 @@ struct TrendsView: View {
                 - Do not include any greetings, get straight to the data
                 - 300 words or less
                 - No more than 4 sentences
-                - Write as plain text, do not include any markdown
+                - Write as plain text, with each section of data formatted with a hyphen to mark it as a bullet point
                 - Do not include any reccommendations or draw conclusions, only comment on trends
                 """
         } else if selectedFilter == "Workouts" {
