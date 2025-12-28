@@ -65,27 +65,6 @@ struct CheckinConfirmation: View {
                             .padding(.horizontal)
                             .padding(.bottom, 30)
                     }
-                    
-//                    Button{
-//                        
-//                    } label: {
-//                        Image(systemName: "square.and.arrow.up")
-//                        Text("Send To Your Coach")
-//                    }
-//                    .frame(maxWidth: .infinity)
-//                    .padding(16)
-//                    .foregroundStyle(.white)
-//                    .background(
-//                        RoundedRectangle(cornerRadius: 16)
-//                            .fill(blueEnergy)
-//                            .overlay(
-//                                RoundedRectangle(cornerRadius: 16)
-//                                    .stroke(Color.black.opacity(0.1), lineWidth: 1)
-//                            )
-//                    )
-//                    .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
-//                    .padding(.horizontal)
-//                    .padding(.bottom, 30)
                 }
             }
             .confettiCannon(trigger: $confettiCannon, num: 300, radius: 600, hapticFeedback: true)

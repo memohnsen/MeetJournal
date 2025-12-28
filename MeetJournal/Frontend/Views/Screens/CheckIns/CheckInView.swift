@@ -148,7 +148,9 @@ struct CheckInView: View {
                             ProgressView()
                                 .tint(.white)
                         } else {
-                            Text("Submit Check-In")
+                            HStack{
+                                Text("Submit Check-In")
+                            }
                         }
                     }
                     .frame(maxWidth: .infinity)

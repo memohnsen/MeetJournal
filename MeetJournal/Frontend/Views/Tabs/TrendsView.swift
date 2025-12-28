@@ -16,8 +16,62 @@ struct TrendsView: View {
     var workouts: [SessionReport] { viewModel.sessionReport }
     var meets: [CompReport] { viewModel.compReport }
     
+    @State private var aiModel = OpenRouter()
+    var response: String { aiModel.response }
+    
     @State private var selectedFilter: String = "Check-Ins"
     @State private var selectedTimeFrame: String = "Last 30 Days"
+    
+    var prompt: String {
+        if selectedFilter == "Check-Ins" {
+            return """
+                Task: You are a sports data analyst specializing in Olympic Weightlifting and Powerlifting. You specialize in finding trends in large amounts of data. The following is the data we have on the athlete, I need you to analyze the data and find possible trends and return a response that will instruct the athlete on your findings.
+                
+                Data Type: Daily check-in data performed prior to their lifting session.
+                
+                Data: \(checkins)
+                            
+                Response Format:
+                - No emojis
+                - Do not include any greetings, get straight to the data
+                - 300 words or less
+                - No more than 4 sentences
+                - Write as plain text, do not include any markdown
+                - Do not include any reccommendations or draw conclusions, only comment on trends
+                """
+        } else if selectedFilter == "Workouts" {
+            return """
+                Task: You are a sports data analyst specializing in Olympic Weightlifting and Powerlifting. You specialize in finding trends in large amounts of data. The following is the data we have on the athlete, I need you to analyze the data and find possible trends and return a response that will instruct the athlete on your findings.
+                
+                Data Type: Post-session reflection data after each lifting session.
+                
+                Data: \(workouts)
+                            
+                Response Format:
+                - No emojis
+                - Do not include any greetings, get straight to the data
+                - 300 words or less
+                - No more than 4 sentences
+                - Write as plain text, do not include any markdown
+                - Do not include any reccommendations or draw conclusions, only comment on trends
+                """
+        } else {
+            return """
+                Task: You are a sports data analyst specializing in Olympic Weightlifting and Powerlifting. You specialize in finding trends in large amounts of data. The following is the data we have on the athlete, I need you to analyze the data and find possible trends and return a response that will instruct the athlete on your findings.
+                
+                Data Type: Post-competition reflection data.
+                
+                Data: \(meets)
+                            
+                Response Format:
+                - No emojis
+                - 300 words or less
+                - No more than 4 sentences
+                - Write as plain text, do not include any markdown
+                - Do not include any reccommendations or draw conclusions, only comment on trends
+                """
+        }
+    }
         
     var body: some View {
         NavigationStack{
@@ -28,11 +82,11 @@ struct TrendsView: View {
                     Filter(selected: $selectedFilter)
                     
                     if selectedFilter == "Check-Ins" {
-                        CheckInGraphView(checkins: checkins, selectedTimeFrame: selectedTimeFrame)
+                        CheckInGraphView(checkins: checkins, selectedTimeFrame: selectedTimeFrame, aiResponse: response)
                     } else if selectedFilter == "Workouts" {
-                        WorkoutsGraphView(workouts: workouts, selectedTimeFrame: selectedTimeFrame)
+                        WorkoutsGraphView(workouts: workouts, selectedTimeFrame: selectedTimeFrame, aiResponse: response)
                     } else {
-                        MeetsGraphView(meets: meets, selectedTimeFrame: selectedTimeFrame)
+                        MeetsGraphView(meets: meets, selectedTimeFrame: selectedTimeFrame, aiResponse: response)
                     }
                 }
             }
@@ -68,6 +122,18 @@ struct TrendsView: View {
                 await viewModel.fetchCheckins(user_id: clerk.user?.id ?? "")
                 await viewModel.fetchCompReports(user_id: clerk.user?.id ?? "")
                 await viewModel.fetchSessionReport(user_id: clerk.user?.id ?? "")
+                
+                if checkins.count >= 10 && selectedFilter == "Check-Ins" {
+                    try? await aiModel.query(prompt: prompt)
+                }
+                
+                if workouts.count >= 10 && selectedFilter == "Workouts" {
+                    try? await aiModel.query(prompt: prompt)
+                }
+                
+                if meets.count >= 3 && selectedFilter == "Meets" {
+                    try? await aiModel.query(prompt: prompt)
+                }
             }
         }
     }
@@ -77,11 +143,50 @@ struct CheckInGraphView: View {
     @Environment(\.colorScheme) var colorScheme
     var checkins: [DailyCheckIn]
     var selectedTimeFrame: String
+    var aiResponse: String
     
     struct AggregatedDataPoint: Identifiable {
         let id = UUID()
         let date: Date
         let averageScore: Double
+    }
+    
+    enum TrendDirection {
+        case up, down, flat
+    }
+    
+    func calculateTrend(from data: [AggregatedDataPoint]) -> TrendDirection {
+        guard data.count >= 2 else { return .flat }
+        let sortedData = data.sorted { $0.date < $1.date }
+        let first = sortedData.first!.averageScore
+        let last = sortedData.last!.averageScore
+        let threshold = 0.5 // Minimum change to be considered a trend
+        
+        if last > first + threshold {
+            return .up
+        } else if last < first - threshold {
+            return .down
+        } else {
+            return .flat
+        }
+    }
+    
+    @ViewBuilder
+    func trendIcon(for direction: TrendDirection) -> some View {
+        switch direction {
+        case .up:
+            Image(systemName: "arrow.up")
+                .foregroundColor(.green)
+                .font(.headline)
+        case .down:
+            Image(systemName: "arrow.down")
+                .foregroundColor(.red)
+                .font(.headline)
+        case .flat:
+            Image(systemName: "minus")
+                .foregroundColor(blueEnergy)
+                .font(.headline)
+        }
     }
     
     // Filter and aggregate checkins based on selected time frame
@@ -374,7 +479,7 @@ struct CheckInGraphView: View {
     var xAxisStride: Calendar.Component {
         switch selectedTimeFrame {
         case "Last 30 Days":
-            return .day
+            return .weekOfYear
         case "Last 90 Days":
             return .weekOfYear
         case "Last 6 Months":
@@ -384,7 +489,7 @@ struct CheckInGraphView: View {
         case "All Time":
             return .month
         default:
-            return .day
+            return .weekOfYear
         }
     }
     
@@ -394,7 +499,9 @@ struct CheckInGraphView: View {
             return .dateTime.day().month(.abbreviated)
         case "Last 90 Days":
             return .dateTime.day().month(.abbreviated)
-        case "Last 6 Months", "Last 1 Year", "All Time":
+        case "Last 6 Months", "Last 1 Year":
+            return .dateTime.month(.abbreviated)
+        case "All Time":
             return .dateTime.month(.abbreviated).year()
         default:
             return .dateTime.day().month(.abbreviated)
@@ -411,13 +518,36 @@ struct CheckInGraphView: View {
     }
     
     var body: some View {
-        Text("AI Review Section")
+        if checkins.count > 10 {
+            VStack{
+                Text("Trend Analysis")
+                    .font(.headline.bold())
+                    .padding(.bottom)
+                if aiResponse.isEmpty{
+                    Text("Generating Analysis...")
+                } else {
+                    Text(aiResponse)
+                }
+            }
             .cardStyling()
+        } else {
+            VStack {
+                Text("Trend Analysis")
+                    .font(.headline.bold())
+                    .padding(.bottom)
+                Text("This section will contain a trend analysis of your data once you've logged at least 10 check-ins")
+            }
+            .cardStyling()
+        }
         
         VStack{
-            Text("Overall Readiness")
-                .font(.headline.bold())
-                .padding(.bottom)
+            HStack {
+                Text("Overall Readiness")
+                    .font(.headline.bold())
+
+                trendIcon(for: calculateTrend(from: overallChartData))
+            }
+            .padding(.bottom)
             Chart {
                 ForEach(overallChartData) { dataPoint in
                     LineMark(x: .value("Date", dataPoint.date), y: .value("Readiness", dataPoint.averageScore))
@@ -459,9 +589,13 @@ struct CheckInGraphView: View {
         .cardStyling()
         
         VStack{
-            Text("Physical Readiness")
-                .font(.headline.bold())
-                .padding(.bottom)
+            HStack {
+                Text("Physical Readiness")
+                    .font(.headline.bold())
+                
+                trendIcon(for: calculateTrend(from: physicalChartData))
+            }
+            .padding(.bottom)
             Chart {
                 ForEach(physicalChartData) { dataPoint in
                     LineMark(x: .value("Date", dataPoint.date), y: .value("Readiness", dataPoint.averageScore))
@@ -503,9 +637,13 @@ struct CheckInGraphView: View {
         .cardStyling()
         
         VStack{
-            Text("Mental Readiness")
-                .font(.headline.bold())
-                .padding(.bottom)
+            HStack {
+                Text("Mental Readiness")
+                    .font(.headline.bold())
+                
+                trendIcon(for: calculateTrend(from: mentalChartData))
+            }
+            .padding(.bottom)
             Chart {
                 ForEach(mentalChartData) { dataPoint in
                     LineMark(x: .value("Date", dataPoint.date), y: .value("Readiness", dataPoint.averageScore))
@@ -553,11 +691,69 @@ struct WorkoutsGraphView: View {
     @Environment(\.colorScheme) var colorScheme
     var workouts: [SessionReport]
     var selectedTimeFrame: String
+    var aiResponse: String
     
     struct AggregatedDataPoint: Identifiable {
         let id = UUID()
         let date: Date
         let averageScore: Double
+    }
+    
+    enum TrendDirection {
+        case up, down, flat
+    }
+    
+    func calculateTrend(from data: [AggregatedDataPoint]) -> TrendDirection {
+        guard data.count >= 2 else { return .flat }
+        let sortedData = data.sorted { $0.date < $1.date }
+        let first = sortedData.first!.averageScore
+        let last = sortedData.last!.averageScore
+        let threshold = 0.1 // Minimum change to be considered a trend (smaller for 1-5 scale)
+        
+        if last > first + threshold {
+            return .up
+        } else if last < first - threshold {
+            return .down
+        } else {
+            return .flat
+        }
+    }
+    
+    @ViewBuilder
+    func trendIcon(for direction: TrendDirection) -> some View {
+        switch direction {
+        case .up:
+            Image(systemName: "arrow.up")
+                .foregroundColor(.green)
+                .font(.headline)
+        case .down:
+            Image(systemName: "arrow.down")
+                .foregroundColor(.red)
+                .font(.headline)
+        case .flat:
+            Image(systemName: "minus")
+                .foregroundColor(blueEnergy)
+                .font(.headline)
+        }
+    }
+    
+    @ViewBuilder
+    func trendIconInverted(for direction: TrendDirection) -> some View {
+        // For metrics where lower is better (like misses), invert the colors
+        switch direction {
+        case .up:
+            Image(systemName: "arrow.up")
+                .foregroundColor(.red) // Up is bad for misses
+                .font(.headline)
+        case .down:
+            Image(systemName: "arrow.down")
+                .foregroundColor(.green) // Down is good for misses
+                .font(.headline)
+        case .flat:
+            Image(systemName: "minus")
+                .foregroundColor(blueEnergy)
+                .font(.headline)
+        }
     }
     
     var rpeChartData: [AggregatedDataPoint] {
@@ -935,7 +1131,7 @@ struct WorkoutsGraphView: View {
     var xAxisStride: Calendar.Component {
         switch selectedTimeFrame {
         case "Last 30 Days":
-            return .day
+            return .weekOfYear
         case "Last 90 Days":
             return .weekOfYear
         case "Last 6 Months":
@@ -945,7 +1141,7 @@ struct WorkoutsGraphView: View {
         case "All Time":
             return .month
         default:
-            return .day
+            return .weekOfYear
         }
     }
     
@@ -955,7 +1151,9 @@ struct WorkoutsGraphView: View {
             return .dateTime.day().month(.abbreviated)
         case "Last 90 Days":
             return .dateTime.day().month(.abbreviated)
-        case "Last 6 Months", "Last 1 Year", "All Time":
+        case "Last 6 Months", "Last 1 Year":
+            return .dateTime.month(.abbreviated)
+        case "All Time":
             return .dateTime.month(.abbreviated).year()
         default:
             return .dateTime.day().month(.abbreviated)
@@ -972,13 +1170,36 @@ struct WorkoutsGraphView: View {
     }
     
     var body: some View {
-        Text("AI Review Section")
+        if workouts.count > 10 {
+            VStack{
+                Text("Trend Analysis")
+                    .font(.headline.bold())
+                    .padding(.bottom)
+                if aiResponse.isEmpty{
+                    Text("Generating Analysis...")
+                } else {
+                    Text(aiResponse)
+                }
+            }
             .cardStyling()
+        } else {
+            VStack {
+                Text("Trend Analysis")
+                    .font(.headline.bold())
+                    .padding(.bottom)
+                Text("This section will contain a trend analysis of your data once you've logged at least 10 workouts")
+            }
+            .cardStyling()
+        }
         
         VStack{
-            Text("Session RPE")
-                .font(.headline.bold())
-                .padding(.bottom)
+            HStack {
+                Text("Session RPE")
+                    .font(.headline.bold())
+                
+                trendIcon(for: calculateTrend(from: rpeChartData))
+            }
+            .padding(.bottom)
             Chart {
                 ForEach(rpeChartData) { dataPoint in
                     LineMark(x: .value("Date", dataPoint.date), y: .value("Readiness", dataPoint.averageScore))
@@ -1021,9 +1242,13 @@ struct WorkoutsGraphView: View {
         .cardStyling()
         
         VStack{
-            Text("Movement Quality")
-                .font(.headline.bold())
-                .padding(.bottom)
+            HStack {
+                Text("Movement Quality")
+                    .font(.headline.bold())
+                
+                trendIcon(for: calculateTrend(from: movementChartData))
+            }
+            .padding(.bottom)
             Chart {
                 ForEach(movementChartData) { dataPoint in
                     LineMark(x: .value("Date", dataPoint.date), y: .value("Readiness", dataPoint.averageScore))
@@ -1066,9 +1291,13 @@ struct WorkoutsGraphView: View {
         .cardStyling()
         
         VStack{
-            Text("Focus")
-                .font(.headline.bold())
-                .padding(.bottom)
+            HStack {
+                Text("Focus")
+                    .font(.headline.bold())
+                
+                trendIcon(for: calculateTrend(from: focusChartData))
+            }
+            .padding(.bottom)
             Chart {
                 ForEach(focusChartData) { dataPoint in
                     LineMark(x: .value("Date", dataPoint.date), y: .value("Readiness", dataPoint.averageScore))
@@ -1111,9 +1340,13 @@ struct WorkoutsGraphView: View {
         .cardStyling()
         
         VStack{
-            Text("Misses")
-                .font(.headline.bold())
-                .padding(.bottom)
+            HStack {
+                Text("Misses")
+                    .font(.headline.bold())
+                
+                trendIconInverted(for: calculateTrend(from: missesChartData))
+            }
+            .padding(.bottom)
             Chart {
                 ForEach(missesChartData) { dataPoint in
                     LineMark(x: .value("Date", dataPoint.date), y: .value("Readiness", dataPoint.averageScore))
@@ -1160,13 +1393,59 @@ struct WorkoutsGraphView: View {
 
 struct MeetsGraphView: View {
     @Environment(\.colorScheme) var colorScheme
+    @AppStorage("userSport") private var userSport: String = ""
     var meets: [CompReport]
     var selectedTimeFrame: String
+    var aiResponse: String
     
     struct AggregatedDataPoint: Identifiable {
         let id = UUID()
         let date: Date
         let averageScore: Double
+    }
+    
+    enum TrendDirection {
+        case up, down, flat
+    }
+    
+    func calculateTrend(from data: [AggregatedDataPoint]) -> TrendDirection {
+        guard data.count >= 2 else { return .flat }
+        let sortedData = data.sorted { $0.date < $1.date }
+        let first = sortedData.first!.averageScore
+        let last = sortedData.last!.averageScore
+        
+        let threshold: Double
+        if first > 0 && first <= 5 {
+            threshold = 0.1 // For 1-5 scale ratings
+        } else {
+            threshold = first * 0.02 // 2% change for totals
+        }
+        
+        if last > first + threshold {
+            return .up
+        } else if last < first - threshold {
+            return .down
+        } else {
+            return .flat
+        }
+    }
+    
+    @ViewBuilder
+    func trendIcon(for direction: TrendDirection) -> some View {
+        switch direction {
+        case .up:
+            Image(systemName: "arrow.up")
+                .foregroundColor(.green)
+                .font(.headline)
+        case .down:
+            Image(systemName: "arrow.down")
+                .foregroundColor(.red)
+                .font(.headline)
+        case .flat:
+            Image(systemName: "minus")
+                .foregroundColor(blueEnergy)
+                .font(.headline)
+        }
     }
     
     var performanceChartData: [AggregatedDataPoint] {
@@ -1355,7 +1634,7 @@ struct MeetsGraphView: View {
         }
     }
     
-    var totalChartData: [AggregatedDataPoint] {
+    var WLtotalChartData: [AggregatedDataPoint] {
         let calendar = Calendar.current
         let now = Date()
         let dateFormatter = DateFormatter()
@@ -1448,10 +1727,103 @@ struct MeetsGraphView: View {
         }
     }
     
+    var PLtotalChartData: [AggregatedDataPoint] {
+        let calendar = Calendar.current
+        let now = Date()
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        
+        let cutoffDate: Date
+        switch selectedTimeFrame {
+        case "Last 30 Days":
+            cutoffDate = calendar.date(byAdding: .day, value: -30, to: now) ?? now
+        case "Last 90 Days":
+            cutoffDate = calendar.date(byAdding: .day, value: -90, to: now) ?? now
+        case "Last 6 Months":
+            cutoffDate = calendar.date(byAdding: .month, value: -6, to: now) ?? now
+        case "Last 1 Year":
+            cutoffDate = calendar.date(byAdding: .year, value: -1, to: now) ?? now
+        case "All Time":
+            cutoffDate = Date.distantPast
+        default:
+            cutoffDate = calendar.date(byAdding: .day, value: -30, to: now) ?? now
+        }
+        
+        let filteredmeets = meets.filter { meet in
+            if let meetDate = dateFormatter.date(from: meet.meet_date) {
+                return meetDate >= cutoffDate
+            }
+            return false
+        }
+
+        let shouldAggregate: Bool
+        let groupingComponent: Calendar.Component
+        
+        switch selectedTimeFrame {
+        case "Last 30 Days":
+            shouldAggregate = false
+            groupingComponent = .day
+        case "Last 90 Days":
+            shouldAggregate = true
+            groupingComponent = .weekOfYear
+        case "Last 6 Months", "Last 1 Year", "All Time":
+            shouldAggregate = true
+            groupingComponent = .month
+        default:
+            shouldAggregate = false
+            groupingComponent = .day
+        }
+        
+        if !shouldAggregate {
+            return filteredmeets.compactMap { meet in
+                if let date = dateFormatter.date(from: meet.meet_date) {
+                    return AggregatedDataPoint(date: date, averageScore: Double((meet.squat_best ?? 0) + (meet.bench_best ?? 0) + (meet.deadlift_best ?? 0)))
+                }
+                return nil
+            }
+        } else {
+            var groupedData: [DateComponents: [Int]] = [:]
+            
+            for meet in filteredmeets {
+                if let date = dateFormatter.date(from: meet.meet_date) {
+                    let components: DateComponents
+                    if groupingComponent == .weekOfYear {
+                        components = calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: date)
+                    } else {
+                        components = calendar.dateComponents([.year, .month], from: date)
+                    }
+                    
+                    if groupedData[components] == nil {
+                        groupedData[components] = []
+                    }
+                    groupedData[components]?.append((meet.squat_best ?? 0) + (meet.bench_best ?? 0) + (meet.deadlift_best ?? 0))
+                }
+            }
+            
+            return groupedData.compactMap { (components, scores) in
+                let average = Double(scores.reduce(0, +)) / Double(scores.count)
+                
+                var representativeDate: Date?
+                if groupingComponent == .weekOfYear {
+                    representativeDate = calendar.date(from: components)
+                } else {
+                    var monthComponents = components
+                    monthComponents.day = 1
+                    representativeDate = calendar.date(from: monthComponents)
+                }
+                
+                if let date = representativeDate {
+                    return AggregatedDataPoint(date: date, averageScore: average)
+                }
+                return nil
+            }.sorted { $0.date < $1.date }
+        }
+    }
+    
     var xAxisStride: Calendar.Component {
         switch selectedTimeFrame {
         case "Last 30 Days":
-            return .day
+            return .weekOfYear
         case "Last 90 Days":
             return .weekOfYear
         case "Last 6 Months":
@@ -1461,7 +1833,7 @@ struct MeetsGraphView: View {
         case "All Time":
             return .month
         default:
-            return .day
+            return .weekOfYear
         }
     }
     
@@ -1471,7 +1843,9 @@ struct MeetsGraphView: View {
             return .dateTime.day().month(.abbreviated)
         case "Last 90 Days":
             return .dateTime.day().month(.abbreviated)
-        case "Last 6 Months", "Last 1 Year", "All Time":
+        case "Last 6 Months", "Last 1 Year":
+            return .dateTime.month(.abbreviated)
+        case "All Time":
             return .dateTime.month(.abbreviated).year()
         default:
             return .dateTime.day().month(.abbreviated)
@@ -1488,13 +1862,36 @@ struct MeetsGraphView: View {
     }
     
     var body: some View {
-        Text("AI Review Section")
+        if meets.count > 3 {
+            VStack{
+                Text("Trend Analysis")
+                    .font(.headline.bold())
+                    .padding(.bottom)
+                if aiResponse.isEmpty{
+                    Text("Generating Analysis...")
+                } else {
+                    Text(aiResponse)
+                }
+            }
             .cardStyling()
+        } else {
+            VStack {
+                Text("Trend Analysis")
+                    .font(.headline.bold())
+                    .padding(.bottom)
+                Text("This section will contain a trend analysis of your data once you've logged at least 3 meets")
+            }
+            .cardStyling()
+        }
         
         VStack{
-            Text("Performance Rating")
-                .font(.headline.bold())
-                .padding(.bottom)
+            HStack {
+                Text("Performance Rating")
+                    .font(.headline.bold())
+                
+                trendIcon(for: calculateTrend(from: performanceChartData))
+            }
+            .padding(.bottom)
             Chart {
                 ForEach(performanceChartData) { dataPoint in
                     LineMark(x: .value("Date", dataPoint.date), y: .value("Readiness", dataPoint.averageScore))
@@ -1537,9 +1934,13 @@ struct MeetsGraphView: View {
         .cardStyling()
         
         VStack{
-            Text("Preparedness Rating")
-                .font(.headline.bold())
-                .padding(.bottom)
+            HStack {
+                Text("Preparedness Rating")
+                    .font(.headline.bold())
+                
+                trendIcon(for: calculateTrend(from: preparednessChartData))
+            }
+            .padding(.bottom)
             Chart {
                 ForEach(preparednessChartData) { dataPoint in
                     LineMark(x: .value("Date", dataPoint.date), y: .value("Readiness", dataPoint.averageScore))
@@ -1581,50 +1982,105 @@ struct MeetsGraphView: View {
         .frame(height: needsDiagonalLabels ? 250 : 200)
         .cardStyling()
         
-        VStack{
-            Text("Total")
-                .font(.headline.bold())
-                .padding(.bottom)
-            Chart {
-                ForEach(totalChartData) { dataPoint in
-                    LineMark(x: .value("Date", dataPoint.date), y: .value("Readiness", dataPoint.averageScore))
-                        .foregroundStyle(blueEnergy)
-                        .interpolationMethod(.catmullRom)
-                        .lineStyle(.init(lineWidth: 2))
-                        .symbol {
-                            Circle()
-                                .fill(blueEnergy)
-                                .frame(width: 12, height: 12)
-                        }
+        if userSport == "Olympic Weightlifting" {
+            VStack{
+                HStack {
+                    Text("Total")
+                        .font(.headline.bold())
+                    
+                    trendIcon(for: calculateTrend(from: WLtotalChartData))
                 }
-            }
-            .chartXAxis {
-                AxisMarks(preset: .extended, values: .stride(by: xAxisStride)) { value in
-                    AxisValueLabel {
-                        if needsDiagonalLabels {
-                            if let date = value.as(Date.self) {
-                                Text(date.formatted(xAxisFormat))
-                                    .font(.caption2)
-                                    .rotationEffect(.degrees(-45))
-                                    .offset(y: 10)
-                                    .padding(.vertical)
+                .padding(.bottom)
+                Chart {
+                    ForEach(WLtotalChartData) { dataPoint in
+                        LineMark(x: .value("Date", dataPoint.date), y: .value("Readiness", dataPoint.averageScore))
+                            .foregroundStyle(blueEnergy)
+                            .interpolationMethod(.catmullRom)
+                            .lineStyle(.init(lineWidth: 2))
+                            .symbol {
+                                Circle()
+                                    .fill(blueEnergy)
+                                    .frame(width: 12, height: 12)
                             }
-                        } else {
-                            if let date = value.as(Date.self) {
-                                Text(date.formatted(xAxisFormat))
-                                    .font(.caption2)
+                    }
+                }
+                .chartXAxis {
+                    AxisMarks(preset: .extended, values: .stride(by: xAxisStride)) { value in
+                        AxisValueLabel {
+                            if needsDiagonalLabels {
+                                if let date = value.as(Date.self) {
+                                    Text(date.formatted(xAxisFormat))
+                                        .font(.caption2)
+                                        .rotationEffect(.degrees(-45))
+                                        .offset(y: 10)
+                                        .padding(.vertical)
+                                }
+                            } else {
+                                if let date = value.as(Date.self) {
+                                    Text(date.formatted(xAxisFormat))
+                                        .font(.caption2)
+                                }
                             }
                         }
                     }
                 }
+                .chartYAxis {
+                    AxisMarks(preset: .extended, position: .trailing, values: .stride(by: 50))
+                }
             }
-            .chartYAxis {
-                AxisMarks(preset: .extended, position: .trailing, values: .stride(by: 50))
+            .frame(height: needsDiagonalLabels ? 250 : 200)
+            .cardStyling()
+            .padding(.bottom, 30)
+        } else {
+            VStack{
+                HStack {
+                    Text("Total")
+                        .font(.headline.bold())
+                    
+                    trendIcon(for: calculateTrend(from: PLtotalChartData))
+                }
+                .padding(.bottom)
+                Chart {
+                    ForEach(PLtotalChartData) { dataPoint in
+                        LineMark(x: .value("Date", dataPoint.date), y: .value("Readiness", dataPoint.averageScore))
+                            .foregroundStyle(blueEnergy)
+                            .interpolationMethod(.catmullRom)
+                            .lineStyle(.init(lineWidth: 2))
+                            .symbol {
+                                Circle()
+                                    .fill(blueEnergy)
+                                    .frame(width: 12, height: 12)
+                            }
+                    }
+                }
+                .chartXAxis {
+                    AxisMarks(preset: .extended, values: .stride(by: xAxisStride)) { value in
+                        AxisValueLabel {
+                            if needsDiagonalLabels {
+                                if let date = value.as(Date.self) {
+                                    Text(date.formatted(xAxisFormat))
+                                        .font(.caption2)
+                                        .rotationEffect(.degrees(-45))
+                                        .offset(y: 10)
+                                        .padding(.vertical)
+                                }
+                            } else {
+                                if let date = value.as(Date.self) {
+                                    Text(date.formatted(xAxisFormat))
+                                        .font(.caption2)
+                                }
+                            }
+                        }
+                    }
+                }
+                .chartYAxis {
+                    AxisMarks(preset: .extended, position: .trailing, values: .stride(by: 50))
+                }
             }
+            .frame(height: needsDiagonalLabels ? 250 : 200)
+            .cardStyling()
+            .padding(.bottom, 30)
         }
-        .frame(height: needsDiagonalLabels ? 250 : 200)
-        .cardStyling()
-        .padding(.bottom, 30)
     }
 }
 

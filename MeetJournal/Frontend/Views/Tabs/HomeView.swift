@@ -20,6 +20,7 @@ struct HomeView: View {
     var checkins: [DailyCheckIn] { historyModel.checkIns }
     @State private var checkInScore = CheckInScore()
     @State private var userOnboardingViewModel = UserOnboardingViewModel()
+    var isLoading: Bool { viewModel.isLoading }
     
     @State private var userProfileShown: Bool = false
     
@@ -50,8 +51,11 @@ struct HomeView: View {
                     VStack(alignment: .leading) {
                         Text("\(date.formatted(date: .complete, time: .omitted))")
                             .foregroundStyle(.secondary)
-                        Text("Ready to train, \(users.first?.first_name ?? "")?")
-                            .font(.headline.bold())
+                        
+                        if !users.isEmpty {
+                            Text("Ready to train, \(users.first?.first_name ?? "")?")
+                                .font(.headline.bold())
+                        }
                     }
                     
                     Spacer()
@@ -283,36 +287,39 @@ struct HistorySection: View {
                 Spacer()
             }
             
-            ForEach(checkins.prefix(5), id: \.id) { checkin in
-                HStack {
-                    NavigationLink(destination: HistoryDetailsView(title: checkin.selected_lift, searchTerm: checkin.selected_lift, selection: "Check-Ins", date: checkin.check_in_date)) {
-                        VStack {
-                            Text("\(checkin.selected_intensity) \(checkin.selected_lift)")
-                                .font(.title3.bold())
-                                .multilineTextAlignment(.center)
-                            
-                            Text("\(dateFormat(checkin.check_in_date) ?? checkin.check_in_date) • \(checkin.overall_score)% Preparedness")
-                                .foregroundStyle(.secondary)
-                                .font(.subheadline)
+            if !checkins.isEmpty {
+                ForEach(checkins.prefix(5), id: \.id) { checkin in
+                    HStack {
+                        NavigationLink(destination: HistoryDetailsView(title: checkin.selected_lift, searchTerm: checkin.selected_lift, selection: "Check-Ins", date: checkin.check_in_date)) {
+                            VStack {
+                                Text("\(checkin.selected_intensity) \(checkin.selected_lift)")
+                                    .font(.title3.bold())
+                                    .multilineTextAlignment(.center)
+                                
+                                Text("\(dateFormat(checkin.check_in_date) ?? checkin.check_in_date) • \(checkin.overall_score)% Preparedness")
+                                    .foregroundStyle(.secondary)
+                                    .font(.subheadline)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 50)
+                            .padding()
+                            .foregroundStyle(colorScheme == .light ? .black : .white)
+                            .background(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .fill(colorScheme == .light ? .white : .black.opacity(0.5))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 16)
+                                            .stroke(colorScheme == .light ? Color.white.opacity(0.1) : Color.black.opacity(0.1), lineWidth: 1)
+                                    )
+                            )
+                            .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
+                            .padding(.bottom, 12)
                         }
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 50)
-                        .padding()
-                        .foregroundStyle(colorScheme == .light ? .black : .white)
-                        .background(
-                            RoundedRectangle(cornerRadius: 16)
-                                .fill(colorScheme == .light ? .white : .black.opacity(0.5))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 16)
-                                        .stroke(colorScheme == .light ? Color.white.opacity(0.1) : Color.black.opacity(0.1), lineWidth: 1)
-                                )
-                        )
-                        .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
-                        .padding(.bottom, 12)
                     }
                 }
+            } else {
+                CustomProgressView()
             }
-            
         }
         .padding([.top, .horizontal])
     }

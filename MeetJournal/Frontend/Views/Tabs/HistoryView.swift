@@ -30,7 +30,7 @@ struct HistoryView: View {
                         Filter(selected: $selected)
                         
                         if historyIsLoading {
-                            ProgressView()
+                            CustomProgressView()
                         } else {
                             HistoryCardSection(compReports: compReports, checkins: checkins, sessionReports: sessionReports, selection: selected, userSport: userSport)
                         }
