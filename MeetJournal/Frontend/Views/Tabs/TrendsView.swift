@@ -17,7 +17,8 @@ struct TrendsView: View {
     var meets: [CompReport] { viewModel.compReport }
     
     @State private var aiModel = OpenRouter()
-    var response: String { aiModel.response }
+    
+    @State private var aiShown: Bool = false
     
     @State private var selectedFilter: String = "Check-Ins"
     @State private var selectedTimeFrame: String = "Last 30 Days"
@@ -82,11 +83,11 @@ struct TrendsView: View {
                     Filter(selected: $selectedFilter)
                     
                     if selectedFilter == "Check-Ins" {
-                        CheckInGraphView(checkins: checkins, selectedTimeFrame: selectedTimeFrame, aiResponse: response)
+                        CheckInGraphView(checkins: checkins, selectedTimeFrame: selectedTimeFrame, aiShown: $aiShown)
                     } else if selectedFilter == "Workouts" {
-                        WorkoutsGraphView(workouts: workouts, selectedTimeFrame: selectedTimeFrame, aiResponse: response)
+                        WorkoutsGraphView(workouts: workouts, selectedTimeFrame: selectedTimeFrame, aiShown: $aiShown)
                     } else {
-                        MeetsGraphView(meets: meets, selectedTimeFrame: selectedTimeFrame, aiResponse: response)
+                        MeetsGraphView(meets: meets, selectedTimeFrame: selectedTimeFrame, aiShown: $aiShown)
                     }
                 }
             }
@@ -118,20 +119,186 @@ struct TrendsView: View {
                     }
                 }
             }
+            .sheet(isPresented: $aiShown) {
+                AIResults(selectedFilter: $selectedFilter, checkins: checkins, workouts: workouts, meets: meets, aiModel: aiModel)
+            }
             .task {
                 await viewModel.fetchCheckins(user_id: clerk.user?.id ?? "")
                 await viewModel.fetchCompReports(user_id: clerk.user?.id ?? "")
                 await viewModel.fetchSessionReport(user_id: clerk.user?.id ?? "")
+            }
+        }
+    }
+}
+
+struct AIResults: View {
+    @Environment(\.dismiss) var dismiss
+    @Binding var selectedFilter: String
+    var checkins: [DailyCheckIn]
+    var workouts: [SessionReport]
+    var meets: [CompReport]
+    var aiModel: OpenRouter
+    
+    var prompt: String {
+        if selectedFilter == "Check-Ins" {
+            return """
+                Task: You are a sports data analyst specializing in Olympic Weightlifting and Powerlifting. You specialize in finding trends in large amounts of data. The following is the data we have on the athlete, I need you to analyze the data and find possible trends and return a response that will instruct the athlete on your findings.
                 
-                if checkins.count >= 10 && selectedFilter == "Check-Ins" {
-                    try? await aiModel.query(prompt: prompt)
+                Data Type: Daily check-in data performed prior to their lifting session. The overall score is a function of the physical and mental scores which are functions of the other 1-5 scale scores. 1 is always a poor value, 5 is always considered a good value, stress of 5 means relaxed, soreness would mean none, etc.
+                
+                Data: \(checkins)
+                            
+                Response Format:
+                - No emojis
+                - Do not include any greetings, get straight to the data
+                - 300 words or less
+                - No more than 4 sentences
+                - Write as plain text, with each section of data formatted with a hyphen to mark it as a bullet point
+                - Do not include any reccommendations or draw conclusions, only comment on trends
+                """
+        } else if selectedFilter == "Workouts" {
+            return """
+                Task: You are a sports data analyst specializing in Olympic Weightlifting and Powerlifting. You specialize in finding trends in large amounts of data. The following is the data we have on the athlete, I need you to analyze the data and find possible trends and return a response that will instruct the athlete on your findings.
+                
+                Data Type: Post-session reflection data after each lifting session. 1 is always a poor value, 5 is always considered a good value, stress of 5 means relaxed, soreness would mean none, etc.
+                
+                Data: \(workouts)
+                            
+                Response Format:
+                - No emojis
+                - Do not include any greetings, get straight to the data
+                - 300 words or less
+                - No more than 4 sentences
+                - Write as plain text, do not include any markdown
+                - Do not include any reccommendations or draw conclusions, only comment on trends
+                """
+        } else {
+            return """
+                Task: You are a sports data analyst specializing in Olympic Weightlifting and Powerlifting. You specialize in finding trends in large amounts of data. The following is the data we have on the athlete, I need you to analyze the data and find possible trends and return a response that will instruct the athlete on your findings.
+                
+                Data Type: Post-competition reflection data. 1 is always a poor value, 5 is always considered a good value, stress of 5 means relaxed, soreness would mean none, etc.
+                
+                Data: \(meets)
+                            
+                Response Format:
+                - No emojis
+                - 300 words or less
+                - No more than 4 sentences
+                - Write as plain text, do not include any markdown
+                - Do not include any reccommendations or draw conclusions, only comment on trends
+                """
+        }
+    }
+    
+    @ViewBuilder
+    func insufficientDataView(icon: String, title: String, description: String) -> some View {
+        VStack(spacing: 24) {
+            Spacer()
+            
+            Image(systemName: icon)
+                .font(.system(size: 60))
+                .foregroundColor(.secondary)
+            
+            VStack(spacing: 12) {
+                Text(title)
+                    .font(.title2)
+                    .fontWeight(.bold)
+                    .multilineTextAlignment(.center)
+                
+                Text(description)
+                    .font(.body)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal)
+            }
+            
+            Spacer()
+        }
+        .padding()
+    }
+    
+    var body: some View {
+        NavigationStack {
+            ZStack{
+                BackgroundColor()
+    
+                VStack {
+                    if selectedFilter == "Check-Ins" {
+                        if checkins.count >= 10 {
+                            if aiModel.isLoading || aiModel.response.isEmpty {
+                                ProgressView("Analyzing your data...")
+                            } else {
+                                ScrollView {
+                                    VStack{
+                                        Text(aiModel.response)
+                                            .padding()
+                                    }
+                                    .cardStyling()
+                                }
+                            }
+                        } else {
+                            insufficientDataView(
+                                icon: "chart.bar.doc.horizontal",
+                                title: "More Data Needed",
+                                description: "Complete at least 10 check-ins to unlock this feature. The more data you provide, the more accurate the analysis will be."
+                            )
+                        }
+                    } else if selectedFilter == "Workouts" {
+                        if workouts.count >= 10 {
+                            if aiModel.isLoading || aiModel.response.isEmpty {
+                                ProgressView("Analyzing your data...")
+                            } else {
+                                ScrollView {
+                                    VStack{
+                                        Text(aiModel.response)
+                                            .padding()
+                                    }
+                                    .cardStyling()
+                                }
+                            }
+                        } else {
+                            insufficientDataView(
+                                icon: "dumbbell",
+                                title: "More Workouts Needed",
+                                description: "Log at least 10 workouts to unlock this feature. The more data you provide, the more accurate the analysis will be."
+                            )
+                        }
+                    } else if selectedFilter == "Meets" {
+                        if meets.count >= 3 {
+                            if aiModel.isLoading || aiModel.response.isEmpty {
+                                ProgressView("Analyzing your data...")
+                            } else {
+                                ScrollView {
+                                    VStack{
+                                        Text(aiModel.response)
+                                            .padding()
+                                    }
+                                    .cardStyling()
+                                }
+                            }
+                        } else {
+                            insufficientDataView(
+                                icon: "trophy",
+                                title: "More Meets Needed",
+                                description: "Log at least 3 meets to unlock this feature. The more data you provide, the more accurate the analysis will be."
+                            )
+                        }
+                    }
                 }
-                
-                if workouts.count >= 10 && selectedFilter == "Workouts" {
-                    try? await aiModel.query(prompt: prompt)
+            }
+            .navigationTitle("AI Trend Analysis")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem {
+                    Button("Done", role: .confirm, action: { dismiss() })
                 }
-                
-                if meets.count >= 3 && selectedFilter == "Meets" {
+            }
+            .task {
+                if selectedFilter == "Check-Ins" && checkins.count >= 10 {
+                    try? await aiModel.query(prompt: prompt)
+                } else if selectedFilter == "Workouts" && workouts.count >= 10 {
+                    try? await aiModel.query(prompt: prompt)
+                } else if selectedFilter == "Meets" && meets.count >= 3 {
                     try? await aiModel.query(prompt: prompt)
                 }
             }
@@ -143,7 +310,7 @@ struct CheckInGraphView: View {
     @Environment(\.colorScheme) var colorScheme
     var checkins: [DailyCheckIn]
     var selectedTimeFrame: String
-    var aiResponse: String
+    @Binding var aiShown: Bool
     
     struct AggregatedDataPoint: Identifiable {
         let id = UUID()
@@ -518,27 +685,18 @@ struct CheckInGraphView: View {
     }
     
     var body: some View {
-        if checkins.count > 10 {
-            VStack{
-                Text("Trend Analysis")
-                    .font(.headline.bold())
-                    .padding(.bottom)
-                if aiResponse.isEmpty{
-                    Text("Generating Analysis...")
-                } else {
-                    Text(aiResponse)
+        VStack{
+            Button {
+                aiShown = true
+            } label: {
+                HStack{
+                    Text("Let AI Analyze Your Data")
+                    Image(systemName: "chevron.right")
                 }
+                .font(.headline.bold())
             }
-            .cardStyling()
-        } else {
-            VStack {
-                Text("Trend Analysis")
-                    .font(.headline.bold())
-                    .padding(.bottom)
-                Text("This section will contain a trend analysis of your data once you've logged at least 10 check-ins")
-            }
-            .cardStyling()
         }
+        .cardStyling()
         
         VStack{
             HStack {
@@ -691,7 +849,7 @@ struct WorkoutsGraphView: View {
     @Environment(\.colorScheme) var colorScheme
     var workouts: [SessionReport]
     var selectedTimeFrame: String
-    var aiResponse: String
+    @Binding var aiShown: Bool
     
     struct AggregatedDataPoint: Identifiable {
         let id = UUID()
@@ -1170,27 +1328,18 @@ struct WorkoutsGraphView: View {
     }
     
     var body: some View {
-        if workouts.count > 10 {
-            VStack{
-                Text("Trend Analysis")
-                    .font(.headline.bold())
-                    .padding(.bottom)
-                if aiResponse.isEmpty{
-                    Text("Generating Analysis...")
-                } else {
-                    Text(aiResponse)
+        VStack{
+            Button {
+                aiShown = true
+            } label: {
+                HStack{
+                    Text("Let AI Analyze Your Data")
+                    Image(systemName: "chevron.right")
                 }
+                .font(.headline.bold())
             }
-            .cardStyling()
-        } else {
-            VStack {
-                Text("Trend Analysis")
-                    .font(.headline.bold())
-                    .padding(.bottom)
-                Text("This section will contain a trend analysis of your data once you've logged at least 10 workouts")
-            }
-            .cardStyling()
         }
+        .cardStyling()
         
         VStack{
             HStack {
@@ -1396,7 +1545,7 @@ struct MeetsGraphView: View {
     @AppStorage("userSport") private var userSport: String = ""
     var meets: [CompReport]
     var selectedTimeFrame: String
-    var aiResponse: String
+    @Binding var aiShown: Bool
     
     struct AggregatedDataPoint: Identifiable {
         let id = UUID()
@@ -1862,27 +2011,18 @@ struct MeetsGraphView: View {
     }
     
     var body: some View {
-        if meets.count > 3 {
-            VStack{
-                Text("Trend Analysis")
-                    .font(.headline.bold())
-                    .padding(.bottom)
-                if aiResponse.isEmpty{
-                    Text("Generating Analysis...")
-                } else {
-                    Text(aiResponse)
+        VStack{
+            Button {
+                aiShown = true
+            } label: {
+                HStack{
+                    Text("Let AI Analyze Your Data")
+                    Image(systemName: "chevron.right")
                 }
+                .font(.headline.bold())
             }
-            .cardStyling()
-        } else {
-            VStack {
-                Text("Trend Analysis")
-                    .font(.headline.bold())
-                    .padding(.bottom)
-                Text("This section will contain a trend analysis of your data once you've logged at least 3 meets")
-            }
-            .cardStyling()
         }
+        .cardStyling()
         
         VStack{
             HStack {

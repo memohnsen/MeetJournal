@@ -20,6 +20,16 @@ struct SliderSection: View {
     var minValue: Int
     var maxValue: Int
     
+    var colorByRating: Color {
+        if value <= 2 {
+            .red
+        } else if value == 3 {
+            blueEnergy
+        } else {
+            .green
+        }
+    }
+    
     var body: some View {
         VStack(spacing: 20) {
             Text(title)
@@ -27,18 +37,18 @@ struct SliderSection: View {
             
             Text("\(value)")
                 .font(.system(size: 48, weight: .bold))
-                .foregroundStyle(blueEnergy)
+                .foregroundStyle(colorByRating)
             
             GeometryReader { geometry in
                 ZStack(alignment: .leading) {
                     Capsule()
-                        .fill(blueEnergy.opacity(0.2))
+                        .fill(colorByRating.opacity(0.2))
                         .frame(height: 8)
                     
                     HStack(spacing: 0) {
                         ForEach(minValue...maxValue, id: \.self) { position in
                             Circle()
-                                .fill(value == position ? blueEnergy : blueEnergy.opacity(0.3))
+                                .fill(value == position ? colorByRating : colorByRating.opacity(0.3))
                                 .frame(width: 12, height: 12)
                             
                             if position < maxValue {
@@ -49,7 +59,7 @@ struct SliderSection: View {
                     .padding(.horizontal, 20)
                     
                     Circle()
-                        .fill(blueEnergy)
+                        .fill(colorByRating)
                         .frame(width: 40, height: 40)
                         .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
                         .offset(x: circlePosition(in: geometry.size.width))

@@ -141,6 +141,7 @@ struct CheckInView: View {
                                 selectedIntensity: selectedIntensity,
                                 userId: clerk.user?.id ?? ""
                             )
+                            
                             navigateToConfirmation = true
                         }
                     } label: {

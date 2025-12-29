@@ -75,6 +75,17 @@ struct CheckinConfirmation: View {
                     }
                 }
             }
+            .onDisappear{
+                checkInScore.physicalStrength = 3
+                checkInScore.mentalStrength = 3
+                checkInScore.recovered = 3
+                checkInScore.confidence = 3
+                checkInScore.sleep = 3
+                checkInScore.energy = 3
+                checkInScore.stress = 3
+                checkInScore.soreness = 3
+                checkInScore.goal = ""
+            }
             .navigationTitle("Check-In Submitted!")
             .navigationBarTitleDisplayMode(.inline)
         }
@@ -109,7 +120,7 @@ struct ResultsSection: View {
                 ZStack {
                     Circle()
                         .stroke(blueEnergy.opacity(0.2), lineWidth: 12)
-                        .frame(width: 160, height: 160)
+                        .frame(width: 180, height: 180)
                     
                     Circle()
                         .trim(from: 0, to: CGFloat(checkInScore.overallScore) / 100)
@@ -121,7 +132,7 @@ struct ResultsSection: View {
                             ),
                             style: StrokeStyle(lineWidth: 12, lineCap: .round)
                         )
-                        .frame(width: 160, height: 160)
+                        .frame(width: 180, height: 180)
                         .rotationEffect(.degrees(-90))
                         .animation(.spring(response: 1.2, dampingFraction: 0.8), value: checkInScore.overallScore)
                     
