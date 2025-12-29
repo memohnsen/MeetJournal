@@ -73,7 +73,8 @@ struct HistoryCardSection: View {
                             subtitle1: "\(dateFormat(report.meet_date) ?? "N/A")",
                             subtitle2: "• \(report.snatch_best ?? 0)/\(report.cj_best ?? 0)/\((report.snatch_best ?? 0) + (report.cj_best ?? 0))",
                             selection: selection,
-                            date: report.meet_date
+                            date: report.meet_date,
+                            reportId: report.id
                         )
                     } else {
                         HistoryComponent(
@@ -83,7 +84,8 @@ struct HistoryCardSection: View {
                             subtitle1: "\(dateFormat(report.meet_date) ?? "N/A")",
                             subtitle2: "• \(report.squat_best ?? 0)/\(report.bench_best ?? 0)/\(report.deadlift_best ?? 0)/\((report.squat_best ?? 0) + (report.bench_best ?? 0) + (report.deadlift_best ?? 0))",
                             selection: selection,
-                            date: report.meet_date
+                            date: report.meet_date,
+                            reportId: report.id
                         )
                     }
                 }
@@ -99,7 +101,8 @@ struct HistoryCardSection: View {
                         subtitle1: "\(dateFormat(report.session_date) ?? "N/A")",
                         subtitle2: " • RPE \(report.session_rpe)/5",
                         selection: selection,
-                        date: report.session_date
+                        date: report.session_date,
+                        reportId: report.id
                     )
                 }
             }
@@ -114,7 +117,8 @@ struct HistoryCardSection: View {
                         subtitle1: "\(dateFormat(report.check_in_date) ?? "N/A")",
                         subtitle2: " • \(report.overall_score)% Preparedness",
                         selection: selection,
-                        date: report.check_in_date
+                        date: report.check_in_date,
+                        reportId: report.id
                     )
                 }
             }
@@ -131,10 +135,11 @@ struct HistoryComponent: View {
     var subtitle2: String?
     var selection: String
     var date: String
+    var reportId: Int?
     
     var body: some View {
         HStack {
-            NavigationLink(destination: HistoryDetailsView(title: title, searchTerm: searchTerm, selection: selection, date: date)) {
+            NavigationLink(destination: HistoryDetailsView(title: title, searchTerm: searchTerm, selection: selection, date: date, reportId: reportId)) {
                 VStack {
                     Text(title)
                         .font(.title3.bold())

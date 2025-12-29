@@ -15,8 +15,9 @@ struct CompReflectionView: View {
     @State private var viewModel = CompReportModel()
     
     @State private var meet: String = ""
-    @State private var selectedMeetType: String = "Local"
+    @State private var selectedMeetType: String = ""
     @State private var meetDate: Date = Date()
+    @State private var bodyweight: String = ""
     @State private var performanceRating: Int = 3
     @State private var preparednessRating: Int = 3
     @State private var didWell: String = ""
@@ -24,6 +25,8 @@ struct CompReflectionView: View {
     @State private var goodFromTraining: String = ""
     @State private var cues: String = ""
     @State private var focus: String = ""
+    @State private var nutrition: String = ""
+    @State private var hydration: String = ""
     
     @State private var snatch1: String = ""
     @State private var snatch2: String = ""
@@ -45,7 +48,7 @@ struct CompReflectionView: View {
     let meetType: [String] = ["Local", "National", "International"]
     
     var hasCompletedForm: Bool {
-        if snatch1.isEmpty || snatch2.isEmpty || snatch3.isEmpty || cj1.isEmpty || cj2.isEmpty || cj3.isEmpty || meet.isEmpty || didWell.isEmpty || needsWork.isEmpty || goodFromTraining.isEmpty || cues.isEmpty || focus.isEmpty {
+        if snatch1.isEmpty || snatch2.isEmpty || snatch3.isEmpty || cj1.isEmpty || cj2.isEmpty || cj3.isEmpty || meet.isEmpty || didWell.isEmpty || needsWork.isEmpty || goodFromTraining.isEmpty || cues.isEmpty || focus.isEmpty || selectedMeetType.isEmpty || nutrition.isEmpty || hydration.isEmpty {
             return false
         }
         
@@ -60,9 +63,9 @@ struct CompReflectionView: View {
     
     var report: CompReport {
         if userSport == "Olympic Weightlifting" {
-            return CompReport(user_id: clerk.user?.id ?? "", meet: meet, selected_meet_type: selectedMeetType, meet_date: meetDate.formatted(.iso8601.year().month().day().dateSeparator(.dash)), performance_rating: performanceRating, preparedness_rating: preparednessRating, did_well: didWell, needs_work: needsWork, good_from_training: goodFromTraining, cues: cues, focus: focus, snatch1: snatch1, snatch2: snatch2, snatch3: snatch3, cj1: cj1, cj2: cj2, cj3: cj3, snatch_best: calculateBest(lift1: snatch1, lift2: snatch2, lift3: snatch3), cj_best: calculateBest(lift1: cj1, lift2: cj2, lift3: cj3), created_at: iso8601String)
+            return CompReport(user_id: clerk.user?.id ?? "", meet: meet, selected_meet_type: selectedMeetType, meet_date: meetDate.formatted(.iso8601.year().month().day().dateSeparator(.dash)), bodyweight: bodyweight, performance_rating: performanceRating, preparedness_rating: preparednessRating, nutrition: nutrition, hydration: hydration, did_well: didWell, needs_work: needsWork, good_from_training: goodFromTraining, cues: cues, focus: focus, snatch1: snatch1, snatch2: snatch2, snatch3: snatch3, cj1: cj1, cj2: cj2, cj3: cj3, snatch_best: calculateBest(lift1: snatch1, lift2: snatch2, lift3: snatch3), cj_best: calculateBest(lift1: cj1, lift2: cj2, lift3: cj3), created_at: iso8601String)
         } else {
-            return CompReport(user_id: clerk.user?.id ?? "", meet: meet, selected_meet_type: selectedMeetType, meet_date: meetDate.formatted(.iso8601.year().month().day().dateSeparator(.dash)), performance_rating: performanceRating, preparedness_rating: preparednessRating, did_well: didWell, needs_work: needsWork, good_from_training: goodFromTraining, cues: cues, focus: focus, squat1: squat1, squat2: squat2, squat3: squat3, bench1: bench1, bench2: bench2, bench3: bench3, deadlift1: deadlift1, deadlift2: deadlift2, deadlift3: deadlift3, squat_best: calculateBest(lift1: squat1, lift2: squat2, lift3: squat3), bench_best: calculateBest(lift1: bench1, lift2: bench2, lift3: bench3), deadlift_best: calculateBest(lift1: deadlift1, lift2: deadlift2, lift3: deadlift3), created_at: iso8601String)
+            return CompReport(user_id: clerk.user?.id ?? "", meet: meet, selected_meet_type: selectedMeetType, meet_date: meetDate.formatted(.iso8601.year().month().day().dateSeparator(.dash)), bodyweight: bodyweight, performance_rating: performanceRating, preparedness_rating: preparednessRating, nutrition: nutrition, hydration: hydration, did_well: didWell, needs_work: needsWork, good_from_training: goodFromTraining, cues: cues, focus: focus, squat1: squat1, squat2: squat2, squat3: squat3, bench1: bench1, bench2: bench2, bench3: bench3, deadlift1: deadlift1, deadlift2: deadlift2, deadlift3: deadlift3, squat_best: calculateBest(lift1: squat1, lift2: squat2, lift3: squat3), bench_best: calculateBest(lift1: bench1, lift2: bench2, lift3: bench3), deadlift_best: calculateBest(lift1: deadlift1, lift2: deadlift2, lift3: deadlift3), created_at: iso8601String)
         }
     }
     
@@ -90,6 +93,7 @@ struct CompReflectionView: View {
                     
                     DatePickerSection(title: "Meet Date:", selectedDate: $meetDate)
                     
+                    TextFieldSection(field: $bodyweight, title: "What was your bodyweight?", colorScheme: colorScheme, keyword: "bodyweight")
                     
                     if userSport == "Olympic Weightlifting" {
                         WLLiftResultsSection(snatch1: $snatch1, snatch2: $snatch2, snatch3: $snatch3, cj1: $cj1, cj2: $cj2, cj3: $cj3)
@@ -100,6 +104,10 @@ struct CompReflectionView: View {
                     SliderSection(colorScheme: colorScheme, title: "How would you rate your performance?", value: $performanceRating, minString: "Poor", maxString: "Amazing", minValue: 1, maxValue: 5)
                     
                     SliderSection(colorScheme: colorScheme, title: "How would you rate your preparedness?", value: $preparednessRating, minString: "Poor", maxString: "Amazing", minValue: 1, maxValue: 5)
+                    
+                    TextFieldSection(field: $nutrition, title: "How was your nutrition?", colorScheme: colorScheme, keyword: "nutrition")
+                    
+                    TextFieldSection(field: $hydration, title: "How was your hydration?", colorScheme: colorScheme, keyword: "hydration")
                     
                     TextFieldSection(field: $didWell, title: "What did you do well?", colorScheme: colorScheme, keyword: "thoughts")
                     

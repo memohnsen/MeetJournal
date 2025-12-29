@@ -82,12 +82,25 @@ struct TrendsView: View {
                 ScrollView{
                     Filter(selected: $selectedFilter)
                     
+                    VStack{
+                        Button {
+                            aiShown = true
+                        } label: {
+                            HStack{
+                                Text("Let AI Analyze Your Data")
+                                Image(systemName: "chevron.right")
+                            }
+                            .font(.headline.bold())
+                        }
+                    }
+                    .cardStyling()
+                    
                     if selectedFilter == "Check-Ins" {
-                        CheckInGraphView(checkins: checkins, selectedTimeFrame: selectedTimeFrame, aiShown: $aiShown)
+                        CheckInGraphView(checkins: checkins, selectedTimeFrame: selectedTimeFrame)
                     } else if selectedFilter == "Workouts" {
-                        WorkoutsGraphView(workouts: workouts, selectedTimeFrame: selectedTimeFrame, aiShown: $aiShown)
+                        WorkoutsGraphView(workouts: workouts, selectedTimeFrame: selectedTimeFrame)
                     } else {
-                        MeetsGraphView(meets: meets, selectedTimeFrame: selectedTimeFrame, aiShown: $aiShown)
+                        MeetsGraphView(meets: meets, selectedTimeFrame: selectedTimeFrame)
                     }
                 }
             }
@@ -140,54 +153,29 @@ struct AIResults: View {
     var aiModel: OpenRouter
     
     var prompt: String {
-        if selectedFilter == "Check-Ins" {
-            return """
-                Task: You are a sports data analyst specializing in Olympic Weightlifting and Powerlifting. You specialize in finding trends in large amounts of data. The following is the data we have on the athlete, I need you to analyze the data and find possible trends and return a response that will instruct the athlete on your findings.
-                
-                Data Type: Daily check-in data performed prior to their lifting session. The overall score is a function of the physical and mental scores which are functions of the other 1-5 scale scores. 1 is always a poor value, 5 is always considered a good value, stress of 5 means relaxed, soreness would mean none, etc.
-                
-                Data: \(checkins)
-                            
-                Response Format:
-                - No emojis
-                - Do not include any greetings, get straight to the data
-                - 300 words or less
-                - No more than 4 sentences
-                - Write as plain text, with each section of data formatted with a hyphen to mark it as a bullet point
-                - Do not include any reccommendations or draw conclusions, only comment on trends
-                """
-        } else if selectedFilter == "Workouts" {
-            return """
-                Task: You are a sports data analyst specializing in Olympic Weightlifting and Powerlifting. You specialize in finding trends in large amounts of data. The following is the data we have on the athlete, I need you to analyze the data and find possible trends and return a response that will instruct the athlete on your findings.
-                
-                Data Type: Post-session reflection data after each lifting session. 1 is always a poor value, 5 is always considered a good value, stress of 5 means relaxed, soreness would mean none, etc.
-                
-                Data: \(workouts)
-                            
-                Response Format:
-                - No emojis
-                - Do not include any greetings, get straight to the data
-                - 300 words or less
-                - No more than 4 sentences
-                - Write as plain text, do not include any markdown
-                - Do not include any reccommendations or draw conclusions, only comment on trends
-                """
-        } else {
-            return """
-                Task: You are a sports data analyst specializing in Olympic Weightlifting and Powerlifting. You specialize in finding trends in large amounts of data. The following is the data we have on the athlete, I need you to analyze the data and find possible trends and return a response that will instruct the athlete on your findings.
-                
-                Data Type: Post-competition reflection data. 1 is always a poor value, 5 is always considered a good value, stress of 5 means relaxed, soreness would mean none, etc.
-                
-                Data: \(meets)
-                            
-                Response Format:
-                - No emojis
-                - 300 words or less
-                - No more than 4 sentences
-                - Write as plain text, do not include any markdown
-                - Do not include any reccommendations or draw conclusions, only comment on trends
-                """
-        }
+        return """
+            Task: You are a sports data analyst specializing in Olympic Weightlifting and Powerlifting. You specialize in finding trends in large amounts of data. The following is the data we have on the athlete, I need you to analyze the data and find possible trends and return a response that will instruct the athlete on your findings. You are receiving data for an athlete's pre-lift check-ins, post-lift check-ins, and meet reflections. You should begin your process by matching the data and ordering by date to get a clear trend across the individual.
+            
+            Data Type: Daily check-in data performed prior to their lifting session. The overall score is a function of the physical and mental scores which are functions of the other 1-5 scale scores. 1 is always a poor value, 5 is always considered a good value, stress of 5 means relaxed, soreness would mean none, etc.
+            
+            Data: \(checkins)
+            
+            Data Type: Post-session reflection data after each lifting session. 1 is always a poor value, 5 is always considered a good value, stress of 5 means relaxed, soreness would mean none, etc.
+            
+            Data: \(workouts)
+            
+            Data Type: Post-competition reflection data. 1 is always a poor value, 5 is always considered a good value, stress of 5 means relaxed, soreness would mean none, etc.
+            
+            Data: \(meets)
+                        
+            Response Format:
+            - No emojis
+            - Do not include any greetings, get straight to the data
+            - 300 words or less
+            - No more than 4 sentences
+            - Write as plain text, with each section of data formatted with a hyphen to mark it as a bullet point
+            - Do not include any reccommendations or draw conclusions, only comment on trends
+            """
     }
     
     @ViewBuilder
@@ -310,7 +298,6 @@ struct CheckInGraphView: View {
     @Environment(\.colorScheme) var colorScheme
     var checkins: [DailyCheckIn]
     var selectedTimeFrame: String
-    @Binding var aiShown: Bool
     
     struct AggregatedDataPoint: Identifiable {
         let id = UUID()
@@ -686,19 +673,6 @@ struct CheckInGraphView: View {
     
     var body: some View {
         VStack{
-            Button {
-                aiShown = true
-            } label: {
-                HStack{
-                    Text("Let AI Analyze Your Data")
-                    Image(systemName: "chevron.right")
-                }
-                .font(.headline.bold())
-            }
-        }
-        .cardStyling()
-        
-        VStack{
             HStack {
                 Text("Overall Readiness")
                     .font(.headline.bold())
@@ -849,7 +823,6 @@ struct WorkoutsGraphView: View {
     @Environment(\.colorScheme) var colorScheme
     var workouts: [SessionReport]
     var selectedTimeFrame: String
-    @Binding var aiShown: Bool
     
     struct AggregatedDataPoint: Identifiable {
         let id = UUID()
@@ -1329,19 +1302,6 @@ struct WorkoutsGraphView: View {
     
     var body: some View {
         VStack{
-            Button {
-                aiShown = true
-            } label: {
-                HStack{
-                    Text("Let AI Analyze Your Data")
-                    Image(systemName: "chevron.right")
-                }
-                .font(.headline.bold())
-            }
-        }
-        .cardStyling()
-        
-        VStack{
             HStack {
                 Text("Session RPE")
                     .font(.headline.bold())
@@ -1545,7 +1505,6 @@ struct MeetsGraphView: View {
     @AppStorage("userSport") private var userSport: String = ""
     var meets: [CompReport]
     var selectedTimeFrame: String
-    @Binding var aiShown: Bool
     
     struct AggregatedDataPoint: Identifiable {
         let id = UUID()
@@ -2011,19 +1970,6 @@ struct MeetsGraphView: View {
     }
     
     var body: some View {
-        VStack{
-            Button {
-                aiShown = true
-            } label: {
-                HStack{
-                    Text("Let AI Analyze Your Data")
-                    Image(systemName: "chevron.right")
-                }
-                .font(.headline.bold())
-            }
-        }
-        .cardStyling()
-        
         VStack{
             HStack {
                 Text("Performance Rating")

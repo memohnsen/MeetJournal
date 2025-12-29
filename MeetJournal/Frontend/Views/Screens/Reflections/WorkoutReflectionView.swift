@@ -16,15 +16,16 @@ struct WorkoutReflectionView: View {
     @State private var viewModel = SessionReportModel()
     
     @State private var sessionDate: Date = Date()
+    @State private var timeOfDay: String = ""
     @State private var sessionRPE: Int = 3
     @State private var movementQuality: Int = 3
     @State private var focus: Int = 3
-    @State private var misses: String = "0"
+    @State private var misses: String = ""
     @State private var cues: String = ""
-    @State private var feeling: String = "Good"
+    @State private var feeling: Int = 3
     
-    @State private var selectedLift: String = "Snatch"
-    @State private var selectedIntensity: String = "Moderate"
+    @State private var selectedLift: String = ""
+    @State private var selectedIntensity: String = ""
     
     let liftOptionsWL: [String] = [
         "Snatch", "Clean", "Jerk", "C & J", "Total", "Squats", "Accessories", "Other"
@@ -34,13 +35,14 @@ struct WorkoutReflectionView: View {
         "Squat", "Bench", "Deadlift", "Total", "Accessories", "Other"
     ]
     
+    let timesOfDay: [String] = ["Early Morning", "Late Morning", "Afternoon", "Evening", "Night"]
+    
     let intensityOptions: [String] = ["Maxing Out", "Heavy", "Moderate", "Light"]
     
     let missQuantity: [String] = ["0", "1", "2", "3", "4", "5+"]
-    let feelingType: [String] = ["Beat Up", "Not too bad", "Good", "Great", "Amazing"]
     
     var hasCompletedForm: Bool {
-        if cues.isEmpty {
+        if cues.isEmpty || timeOfDay.isEmpty || misses.isEmpty || selectedLift.isEmpty || selectedIntensity.isEmpty {
             return false
         }
         
@@ -57,18 +59,19 @@ struct WorkoutReflectionView: View {
                 ScrollView {
                     DatePickerSection(title: "Session Date:", selectedDate: $sessionDate)
                     
+                    MultipleChoiceSection(colorScheme: colorScheme, title: "What time of day did you train?", arrayOptions: timesOfDay, selected: $timeOfDay)
                     
                     if userSport == "Olympic Weightlifting" {
                         MultipleChoiceSection(
                             colorScheme: colorScheme,
-                            title: "What's the main focus?",
+                            title: "What was the main focus?",
                             arrayOptions: liftOptionsWL,
                             selected: $selectedLift
                         )
                     } else {
                         MultipleChoiceSection(
                             colorScheme: colorScheme,
-                            title: "What's the main focus?",
+                            title: "What was the main focus?",
                             arrayOptions: liftOptionsPL,
                             selected: $selectedLift
                         )
@@ -91,10 +94,10 @@ struct WorkoutReflectionView: View {
                     
                     TextFieldSection(field: $cues, title: "What cues made a difference?", colorScheme: colorScheme, keyword: "cues")
                     
-                    MultipleChoiceSection(colorScheme: colorScheme, title: "How is your body feeling?", arrayOptions: feelingType, selected: $feeling)
+                    SliderSection(colorScheme: colorScheme, title: "How is your body feeling?", value: $feeling, minString: "Beat Up", maxString: "Amazing", minValue: 1, maxValue: 5)
                     
                     Button {
-                        let report: SessionReport = SessionReport(user_id: clerk.user?.id ?? "", session_date: sessionDate.formatted(.iso8601.year().month().day().dateSeparator(.dash)), session_rpe: sessionRPE, movement_quality: movementQuality, focus: focus, misses: misses, cues: cues, feeling: feeling, selected_lift: selectedLift, selected_intensity: selectedIntensity, created_at: iso8601String)
+                        let report: SessionReport = SessionReport(user_id: clerk.user?.id ?? "", session_date: sessionDate.formatted(.iso8601.year().month().day().dateSeparator(.dash)), timeOfDay: timeOfDay, session_rpe: sessionRPE, movement_quality: movementQuality, focus: focus, misses: misses, cues: cues, feeling: feeling, selected_lift: selectedLift, selected_intensity: selectedIntensity, created_at: iso8601String)
                         
                         Task {
                             await viewModel.submitSessionReport(sessionReport: report)

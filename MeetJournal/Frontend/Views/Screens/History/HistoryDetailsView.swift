@@ -11,8 +11,10 @@ import Clerk
 struct HistoryDetailsView: View {
     @AppStorage("userSport") private var userSport: String = ""
     @Environment(\.clerk) private var clerk
+    @Environment(\.dismiss) private var dismiss
 
     @State private var viewModel = HistoryModel()
+    @State private var deleteModel = DeleteOneModel()
     var isLoading: Bool { viewModel.isLoading }
     var comp: [CompReport] { viewModel.comp }
     var session: [SessionReport] { viewModel.session }
@@ -21,6 +23,7 @@ struct HistoryDetailsView: View {
     var searchTerm: String
     var selection: String
     var date: String
+    var reportId: Int?
     
 //    \(comp.first?.squat_best ?? 0)/\(comp.first?.bench_best ?? 0)/\(comp.first?.deadlift_best ?? 0)/\((comp.first?.squat_best ?? 0) + (comp.first?.bench_best ?? 0) + (comp.first?.deadlift_best ?? 0))
     
@@ -80,7 +83,7 @@ struct HistoryDetailsView: View {
                 Count of Misses: \(session.first?.misses ?? "")
                 Helpful Cues: \(session.first?.cues ?? "")
             
-                My body is feeling: \(session.first?.feeling ?? "")/5
+                My body is feeling: \(session.first?.feeling ?? 0)/5
             
                 Powered By MeetJournal
             """
@@ -140,8 +143,30 @@ struct HistoryDetailsView: View {
             .navigationTitle(pageTitle)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ShareLink(item: shareTextResult, subject: Text("Share Your Results")) {
-                    Image(systemName: "square.and.arrow.up")
+                ToolbarItem{
+                    ShareLink(item: shareTextResult, subject: Text("Share Your Results")) {
+                        Image(systemName: "square.and.arrow.up")
+                    }
+                }
+                ToolbarSpacer()
+                ToolbarItem{
+                    Button(role: .destructive) {
+                        Task {
+                            if let reportId {
+                                if selection == "Meets" {
+                                    await deleteModel.deleteCompReport(reportId: reportId)
+                                } else if selection == "Workouts" {
+                                    await deleteModel.deleteSessionReport(reportId: reportId)
+                                } else {
+                                    await deleteModel.deleteCheckIn(checkInId: reportId)
+                                }
+                                dismiss()
+                            }
+                        }
+                    } label: {
+                        Image(systemName: "trash")
+                            .foregroundStyle(.red)
+                    }
                 }
             }
             .task {
@@ -319,7 +344,7 @@ struct SessionDisplaySection: View {
 
         TextDisplaySection(title: "What cues made a difference?", value: "\(session.first?.cues ?? "")")
 
-        RatingDisplaySection(title: "How is your body feeling?", value: "\(session.first?.feeling ?? "")")
+        RatingDisplaySection(title: "How is your body feeling?", value: "\(session.first?.feeling ?? 0)")
             .padding(.bottom, 30)
     }
 }
@@ -356,5 +381,5 @@ struct CheckInDisplaySection: View {
 }
 
 #Preview {
-    HistoryDetailsView(title: "American Open Finals", searchTerm: "American Open Finals", selection: "Meets", date: "2025-12-26")
+    HistoryDetailsView(title: "American Open Finals", searchTerm: "American Open Finals", selection: "Meets", date: "2025-12-26", reportId: 1)
 }

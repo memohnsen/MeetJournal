@@ -13,8 +13,11 @@ struct CompReport: Codable, Hashable {
     var meet: String
     var selected_meet_type: String
     var meet_date: String
+    var bodyweight: String
     var performance_rating: Int
     var preparedness_rating: Int
+    var nutrition: String
+    var hydration: String
     var did_well: String
     var needs_work: String
     var good_from_training: String
