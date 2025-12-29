@@ -17,6 +17,9 @@ struct SettingsView: View {
     @State private var showShareSheet = false
     @State private var isExporting = false
     
+    @State private var deleteViewModel = RemoveAllModel()
+    @State private var alertShown: Bool = false
+    
     var appVersion: String? {
         return Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
     }
@@ -106,6 +109,30 @@ struct SettingsView: View {
                         }
                         .cardStyling()
                         
+                        Text("DANGER ZONE")
+                            .foregroundStyle(.red.opacity(0.75))
+                            .bold()
+                            .padding(.horizontal, 24)
+                            .padding(.top)
+                        
+                        
+                        Button {
+                            Task {
+                                await deleteViewModel.removeAllCheckIns(userId: clerk.user?.id ?? "")
+                                await deleteViewModel.removeAllMeets(userId: clerk.user?.id ?? "")
+                                await deleteViewModel.removeAllWorkouts(userId: clerk.user?.id ?? "")
+                            }
+                            alertShown = true
+                        } label: {
+                            HStack{
+                                Text("Delete All Data")
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                            }
+                            .foregroundStyle(.red)
+                            .cardStyling()
+                        }
+                        
                         VStack {
                             HStack {
                                 Spacer()
@@ -136,6 +163,11 @@ struct SettingsView: View {
                 if let fileURL = csvFileURL {
                     ShareSheet(items: [fileURL])
                 }
+            }
+            .alert("Data Deletion Successful", isPresented: $alertShown) {
+                Button("OK") {}
+            } message: {
+                Text("All your data has been deleted from the database.")
             }
         }
     }

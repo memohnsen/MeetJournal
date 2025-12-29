@@ -103,7 +103,7 @@ struct WorkoutReflectionView: View {
                         if viewModel.isLoading {
                             ProgressView()
                         } else {
-                            Text("Submit Check-In")
+                            Text("Submit Session Review")
                         }
                     }
                     .frame(maxWidth: .infinity)

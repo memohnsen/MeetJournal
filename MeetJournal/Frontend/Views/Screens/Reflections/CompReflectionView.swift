@@ -119,7 +119,7 @@ struct CompReflectionView: View {
                         if viewModel.isLoading {
                             ProgressView()
                         } else {
-                            Text("Submit Check-In")
+                            Text("Submit Comp Report")
                         }
                     }
                     .frame(maxWidth: .infinity)

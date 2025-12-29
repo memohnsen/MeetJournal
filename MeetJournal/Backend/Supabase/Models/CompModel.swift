@@ -8,6 +8,7 @@
 import Foundation
 
 struct CompReport: Codable, Hashable {
+    var id: Int?
     var user_id: String
     var meet: String
     var selected_meet_type: String
