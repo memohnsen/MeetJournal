@@ -204,15 +204,9 @@ struct AIResults: View {
                 }
             }
             .task {
-                if selectedFilter == "Check-Ins" && checkins.count >= 10 {
+                if checkins.count >= 10 || workouts.count >= 10 || meets.count >= 3 {
                     try? await aiModel.query(prompt: prompt)
                     AnalyticsManager.shared.trackAIAnalysisCompleted(filter: selectedFilter, dataPoints: checkins.count)
-                } else if selectedFilter == "Workouts" && workouts.count >= 10 {
-                    try? await aiModel.query(prompt: prompt)
-                    AnalyticsManager.shared.trackAIAnalysisCompleted(filter: selectedFilter, dataPoints: workouts.count)
-                } else if selectedFilter == "Meets" && meets.count >= 3 {
-                    try? await aiModel.query(prompt: prompt)
-                    AnalyticsManager.shared.trackAIAnalysisCompleted(filter: selectedFilter, dataPoints: meets.count)
                 }
             }
         }

@@ -28,21 +28,13 @@ struct SettingsView: View {
     
     let recipient: String = "maddisen@meetcal.app"
     let subject: String = "Forge - Performance Journal Feedback"
-    var emailBody: String { """
-        Hello, my name is \(users.first?.first_name ?? "") \(users.first?.last_name ?? "").
-        
-        My Clerk ID is: \(clerk.user?.id ?? "").
-        My RevenueCat ID is: \(Purchases.shared.appUserID)
-        My subscription status is: 
-        My device and iOS version are: \(device.name) \(device.model) \(device.systemName) \(device.systemVersion)
-        """
-    }
+    var emailBody: String { "Hello, my name is \(users.first?.first_name ?? "") \(users.first?.last_name ?? "").\n\nMy User ID is: \(clerk.user?.id ?? "").\n\nMy Purchase ID is: \(Purchases.shared.appUserID)\n\nMy device and iOS version are: \(device.name) \(device.model) \(device.systemName) \(device.systemVersion)" }
     
     var encodedSubject: String? {
-        subject.addingPercentEncoding(withAllowedCharacters: .urlHostAllowed)
+        subject.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed)
     }
     var encodedBody: String? {
-        emailBody.addingPercentEncoding(withAllowedCharacters: .urlHostAllowed)
+        emailBody.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed)?.replacingOccurrences(of: "%0A", with: "%0D%0A")
     }
 
     var mailtoUrl: URL? {
@@ -229,6 +221,7 @@ struct SettingsView: View {
                 }
             }
             .task {
+                await userViewModel.fetchUsers(user_id: clerk.user?.id ?? "")
                 AnalyticsManager.shared.trackScreenView("SettingsView")
             }
             .alert("Data Deletion Successful", isPresented: $alertShown) {
