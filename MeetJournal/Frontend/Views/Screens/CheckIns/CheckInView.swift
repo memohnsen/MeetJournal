@@ -48,7 +48,7 @@ struct CheckInView: View {
                     
                     TextFieldSection(
                         field: $checkInScore.goal,
-                        title: "What's your goal for this session?",
+                        title: "What would make today feel like a successful session for you?",
                         colorScheme: colorScheme,
                         keyword: "goal"
                     )

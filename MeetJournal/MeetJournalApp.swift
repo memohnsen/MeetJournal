@@ -31,6 +31,18 @@ struct MeetJournalApp: App {
                         let clerkKey = Bundle.main.object(forInfoDictionaryKey: "CLERK_PUBLISHABLE_KEY") as! String
                         clerk.configure(publishableKey: clerkKey)
                         try? await clerk.load()
+                        
+                        if let userId = clerk.user?.id {
+                            Purchases.shared.logIn(userId) { customerInfo, created, error in
+                                if let error = error {
+                                    print("Error logging in to RevenueCat: \(error)")
+                                } else {
+                                    print("Logged in to RevenueCat with user ID: \(userId)")
+                                    print("New user created: \(created)")
+                                }
+                            }
+                        }
+                        
                         customerManager.setupDelegate()
                         await customerManager.fetchCustomerInfo()
                     }

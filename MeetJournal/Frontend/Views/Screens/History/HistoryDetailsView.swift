@@ -36,7 +36,8 @@ struct HistoryDetailsView: View {
                     \(comp.first?.snatch_best ?? 0)/\(comp.first?.cj_best ?? 0)/\((comp.first?.snatch_best ?? 0) + (comp.first?.cj_best ?? 0))
                 
                     Performance Rating: \(comp.first?.performance_rating ?? 0)/5
-                    Preparedness Rating: \(comp.first?.preparedness_rating ?? 0)/5
+                    Physical Preparedness Rating: \(comp.first?.physical_preparedness_rating ?? 0)/5
+                    Mental Preparedness Rating: \(comp.first?.mental_preparedness_rating ?? 0)/5
                 
                     How my nutrition was: \(comp.first?.nutrition ?? "")
                 
@@ -63,7 +64,8 @@ struct HistoryDetailsView: View {
                     \(comp.first?.squat_best ?? 0)/\(comp.first?.bench_best ?? 0)/\(comp.first?.deadlift_best ?? 0)/\((comp.first?.squat_best ?? 0) + (comp.first?.bench_best ?? 0) + (comp.first?.deadlift_best ?? 0))
                 
                     Performance Rating: \(comp.first?.performance_rating ?? 0)/5
-                    Preparedness Rating: \(comp.first?.preparedness_rating ?? 0)/5
+                    Physical Preparedness Rating: \(comp.first?.physical_preparedness_rating ?? 0)/5
+                    Mental Preparedness Rating: \(comp.first?.mental_preparedness_rating ?? 0)/5
                 
                     How my nutrition was: \(comp.first?.nutrition ?? "")
                 
@@ -350,8 +352,10 @@ struct CompDisplaySection: View {
         
         RatingDisplaySection(title: "How would you rate your performance?", value: "\(comp.first?.performance_rating ?? 0)")
         
-        RatingDisplaySection(title: "How would you rate your preparedness?", value: "\(comp.first?.preparedness_rating ?? 0)")
+        RatingDisplaySection(title: "How would you rate your physical preparedness?", value: "\(comp.first?.physical_preparedness_rating ?? 0)")
         
+        RatingDisplaySection(title: "How would you rate your mental preparedness?", value: "\(comp.first?.mental_preparedness_rating ?? 0)")
+
         TextDisplaySection(title: "How was your nutrition?", value: "\(comp.first?.nutrition ?? "")")
         
         TextDisplaySection(title: "How was your hydration?", value: "\(comp.first?.hydration ?? "")")
@@ -400,7 +404,7 @@ struct CheckInDisplaySection: View {
         
         RatingDisplaySection(title: "Mental Readiness", value: "\(checkin.first?.mental_score ?? 0)%")
         
-        TextDisplaySection(title: "What's your goal for this session?", value: "\(checkin.first?.goal ?? "")")
+        TextDisplaySection(title: "What would make today feel like a successful session for you?", value: "\(checkin.first?.goal ?? "")")
 
         RatingDisplaySection(title: "How physically strong do you feel?", value: "\(checkin.first?.physical_strength ?? 0)")
         

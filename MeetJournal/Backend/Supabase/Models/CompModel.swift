@@ -15,7 +15,8 @@ struct CompReport: Codable, Hashable {
     var meet_date: String
     var bodyweight: String
     var performance_rating: Int
-    var preparedness_rating: Int
+    var physical_preparedness_rating: Int
+    var mental_preparedness_rating: Int
     var nutrition: String
     var hydration: String
     var did_well: String
