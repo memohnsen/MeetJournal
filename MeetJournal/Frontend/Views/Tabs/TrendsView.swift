@@ -164,7 +164,7 @@ struct AIResults: View {
             
             Data: \(workouts)
             
-            Data Type: Post-competition reflection data. 1 is always a poor value, 5 is always considered a good value, stress of 5 means relaxed, soreness would mean none, etc.
+            Data Type: Post-competition reflection data. 1 is always a poor value, 5 is always considered a good value, stress of 5 means relaxed, soreness would mean none, etc. For How hard was the session, 5 is easy, 1 is hardest.
             
             Data: \(meets)
                         

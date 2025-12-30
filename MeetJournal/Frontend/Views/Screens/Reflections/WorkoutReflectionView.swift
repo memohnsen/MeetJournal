@@ -84,7 +84,7 @@ struct WorkoutReflectionView: View {
                         selected: $selectedIntensity
                     )
                     
-                    SliderSection(colorScheme: colorScheme, title: "How hard was this session?", value: $sessionRPE, minString: "Easy", maxString: "Almost Died", minValue: 1, maxValue: 5)
+                    SliderSection(colorScheme: colorScheme, title: "How hard was this session?", value: $sessionRPE, minString: "Almost Died", maxString: "Easy", minValue: 1, maxValue: 5)
                     
                     SliderSection(colorScheme: colorScheme, title: "How was your movement quality?", value: $movementQuality, minString: "Poor", maxString: "Excellent", minValue: 1, maxValue: 5)
                     
@@ -97,7 +97,7 @@ struct WorkoutReflectionView: View {
                     SliderSection(colorScheme: colorScheme, title: "How is your body feeling?", value: $feeling, minString: "Beat Up", maxString: "Amazing", minValue: 1, maxValue: 5)
                     
                     Button {
-                        let report: SessionReport = SessionReport(user_id: clerk.user?.id ?? "", session_date: sessionDate.formatted(.iso8601.year().month().day().dateSeparator(.dash)), timeOfDay: timeOfDay, session_rpe: sessionRPE, movement_quality: movementQuality, focus: focus, misses: misses, cues: cues, feeling: feeling, selected_lift: selectedLift, selected_intensity: selectedIntensity, created_at: iso8601String)
+                        let report: SessionReport = SessionReport(user_id: clerk.user?.id ?? "", session_date: sessionDate.formatted(.iso8601.year().month().day().dateSeparator(.dash)), time_of_day: timeOfDay, session_rpe: sessionRPE, movement_quality: movementQuality, focus: focus, misses: misses, cues: cues, feeling: feeling, selected_lift: selectedLift, selected_intensity: selectedIntensity, created_at: iso8601String)
                         
                         Task {
                             await viewModel.submitSessionReport(sessionReport: report)

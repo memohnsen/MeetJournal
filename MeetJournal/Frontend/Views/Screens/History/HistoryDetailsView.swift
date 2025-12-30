@@ -25,18 +25,22 @@ struct HistoryDetailsView: View {
     var date: String
     var reportId: Int?
     
-//    \(comp.first?.squat_best ?? 0)/\(comp.first?.bench_best ?? 0)/\(comp.first?.deadlift_best ?? 0)/\((comp.first?.squat_best ?? 0) + (comp.first?.bench_best ?? 0) + (comp.first?.deadlift_best ?? 0))
-    
     var shareTextResult: String {
         if selection == "Meets" {
             if userSport == "Olympic Weightlifting" {
                 return """
-                    Meet Results for \(comp.first?.meet ?? "")
+                    Meet Results for \(comp.first?.meet ?? "") - \(dateFormat(comp.first?.meet_date ?? "") ?? "")
+                
+                    Bodyweight: \(comp.first?.bodyweight ?? "")
                 
                     \(comp.first?.snatch_best ?? 0)/\(comp.first?.cj_best ?? 0)/\((comp.first?.snatch_best ?? 0) + (comp.first?.cj_best ?? 0))
                 
                     Performance Rating: \(comp.first?.performance_rating ?? 0)/5
                     Preparedness Rating: \(comp.first?.preparedness_rating ?? 0)/5
+                
+                    How my nutrition was: \(comp.first?.nutrition ?? "")
+                
+                    How my hydration was: \(comp.first?.hydration ?? "")
                 
                     What I did well: \(comp.first?.did_well ?? "")
                 
@@ -52,12 +56,18 @@ struct HistoryDetailsView: View {
                 """
             } else {
                 return """
-                    Meet Results for \(comp.first?.meet ?? "")
+                    Meet Results for \(comp.first?.meet ?? "") - \(dateFormat(comp.first?.meet_date ?? "") ?? "")
+                
+                    Bodyweight: \(comp.first?.bodyweight ?? "")
                 
                     \(comp.first?.squat_best ?? 0)/\(comp.first?.bench_best ?? 0)/\(comp.first?.deadlift_best ?? 0)/\((comp.first?.squat_best ?? 0) + (comp.first?.bench_best ?? 0) + (comp.first?.deadlift_best ?? 0))
                 
                     Performance Rating: \(comp.first?.performance_rating ?? 0)/5
                     Preparedness Rating: \(comp.first?.preparedness_rating ?? 0)/5
+                
+                    How my nutrition was: \(comp.first?.nutrition ?? "")
+                
+                    How my hydration was: \(comp.first?.hydration ?? "")
                 
                     What I did well: \(comp.first?.did_well ?? "")
                 
@@ -75,6 +85,7 @@ struct HistoryDetailsView: View {
         } else if selection == "Workouts" {
             return """
                 Session Results for \(dateFormat(session.first?.session_date ??  "") ?? "")
+                I trained in the \(session.first?.time_of_day ?? "")
                 Session Focus: \(session.first?.selected_intensity ?? "") \(session.first?.selected_lift ?? "")
             
                 Session RPE: \(session.first?.session_rpe ?? 0)/5
@@ -154,11 +165,11 @@ struct HistoryDetailsView: View {
                         Task {
                             if let reportId {
                                 if selection == "Meets" {
-                                    await deleteModel.deleteCompReport(reportId: reportId)
+                                    await deleteModel.deleteCompReport(reportId: comp.first?.id ?? 0)
                                 } else if selection == "Workouts" {
-                                    await deleteModel.deleteSessionReport(reportId: reportId)
+                                    await deleteModel.deleteSessionReport(reportId: session.first?.id ?? 0)
                                 } else {
-                                    await deleteModel.deleteCheckIn(checkInId: reportId)
+                                    await deleteModel.deleteCheckIn(checkInId: checkin.first?.id ?? 0)
                                 }
                                 dismiss()
                             }
@@ -188,10 +199,6 @@ struct ResultsDisplaySection: View {
     
     var body: some View {
         VStack{
-            Text("Results")
-                .font(.title.bold())
-                .padding(.bottom, 6)
-            
             if userSport == "Olympic Weightlifting" {
                 VStack{
                     HStack{
@@ -275,15 +282,41 @@ struct RatingDisplaySection: View {
     var title: String
     var value: String
     
+    var colorByRating: Color {
+        if title == "How many lifts did you miss?" {
+            if Int(value) ?? 0 <= 1 {
+                .green
+            } else if Int(value) ?? 0 == 2 {
+                blueEnergy
+            } else {
+                .red
+            }
+        } else {
+            if Int(value) ?? 3 <= 2 {
+                .red
+            } else if Int(value) ?? 3 == 3 {
+                blueEnergy
+            } else {
+                .green
+            }
+        }
+    }
+    
     var body: some View {
         VStack{
             Text(title)
                 .font(.headline.bold())
                 .padding(.bottom, 2)
             
-            Text("\(value)")
-                .font(.system(size: 48, weight: .bold))
-                .foregroundStyle(blueEnergy)
+            if title == "How many lifts did you miss?" || title == "Overall Readiness" || title == "Physical Readiness" || title == "Mental Readiness" {
+                Text("\(value)")
+                    .font(.system(size: 48, weight: .bold))
+                    .foregroundStyle(colorByRating)
+            } else {
+                Text("\(value)/5")
+                    .font(.system(size: 48, weight: .bold))
+                    .foregroundStyle(colorByRating)
+            }
         }
         .cardStyling()
     }
@@ -313,9 +346,15 @@ struct CompDisplaySection: View {
         ResultsDisplaySection(comp: comp, userSport: userSport)
             .padding(.top)
         
+        TextDisplaySection(title: "Bodyweight", value: "\(comp.first?.bodyweight ?? "")")
+        
         RatingDisplaySection(title: "How would you rate your performance?", value: "\(comp.first?.performance_rating ?? 0)")
         
         RatingDisplaySection(title: "How would you rate your preparedness?", value: "\(comp.first?.preparedness_rating ?? 0)")
+        
+        TextDisplaySection(title: "How was your nutrition?", value: "\(comp.first?.nutrition ?? "")")
+        
+        TextDisplaySection(title: "How was your hydration?", value: "\(comp.first?.hydration ?? "")")
         
         TextDisplaySection(title: "What did you do well?", value: "\(comp.first?.did_well ?? "")")
 
@@ -334,6 +373,8 @@ struct SessionDisplaySection: View {
     var session: [SessionReport]
     
     var body: some View {
+        TextDisplaySection(title: "Time of day you trained", value: "\(session.first?.time_of_day ?? "")")
+        
         RatingDisplaySection(title: "How hard was this session?", value: "\(session.first?.session_rpe ?? 0)")
         
         RatingDisplaySection(title: "How was your movement quality?", value: "\(session.first?.movement_quality ?? 0)")
@@ -381,5 +422,5 @@ struct CheckInDisplaySection: View {
 }
 
 #Preview {
-    HistoryDetailsView(title: "American Open Finals", searchTerm: "American Open Finals", selection: "Meets", date: "2025-12-26", reportId: 1)
+    HistoryDetailsView(title: "American Open Finals", searchTerm: "American Open Finals", selection: "Workouts", date: "2025-12-26", reportId: 1)
 }

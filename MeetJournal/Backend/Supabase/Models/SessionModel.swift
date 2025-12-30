@@ -11,7 +11,7 @@ struct SessionReport: Codable, Hashable {
     var id: Int?
     var user_id: String
     var session_date: String
-    var timeOfDay: String
+    var time_of_day: String
     var session_rpe: Int
     var movement_quality: Int
     var focus: Int

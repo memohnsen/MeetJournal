@@ -19,7 +19,7 @@ class DeleteOneModel {
         
         do {
             try await supabase
-                .from("journal_comp_reports")
+                .from("journal_comp_report")
                 .delete()
                 .eq("id", value: reportId)
                 .execute()
@@ -37,7 +37,7 @@ class DeleteOneModel {
         
         do {
             try await supabase
-                .from("journal_session_reports")
+                .from("journal_session_report")
                 .delete()
                 .eq("id", value: reportId)
                 .execute()
