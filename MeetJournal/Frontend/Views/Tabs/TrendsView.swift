@@ -30,10 +30,14 @@ struct TrendsView: View {
                 
                 ScrollView{
                     Filter(selected: $selectedFilter)
+                        .onChange(of: selectedFilter) { _, newValue in
+                            AnalyticsManager.shared.trackTrendsFilterChanged(filter: newValue)
+                        }
                     
                     VStack{
                         Button {
                             aiShown = true
+                            AnalyticsManager.shared.trackAIAnalysisRequested(filter: selectedFilter)
                         } label: {
                             HStack{
                                 Text("Let AI Analyze Your Data")
@@ -60,22 +64,27 @@ struct TrendsView: View {
                     Menu{
                         Button("Last 30 Days"){
                             selectedTimeFrame = "Last 30 Days"
+                            AnalyticsManager.shared.trackTrendsTimeFrameChanged(timeFrame: "Last 30 Days")
                         }
                         
                         Button("Last 90 Days"){
                             selectedTimeFrame = "Last 90 Days"
+                            AnalyticsManager.shared.trackTrendsTimeFrameChanged(timeFrame: "Last 90 Days")
                         }
                         
                         Button("Last 6 Months"){
                             selectedTimeFrame = "Last 6 Months"
+                            AnalyticsManager.shared.trackTrendsTimeFrameChanged(timeFrame: "Last 6 Months")
                         }
                         
                         Button("Last 1 Year"){
                             selectedTimeFrame = "Last 1 Year"
+                            AnalyticsManager.shared.trackTrendsTimeFrameChanged(timeFrame: "Last 1 Year")
                         }
                         
                         Button("All Time"){
                             selectedTimeFrame = "All Time"
+                            AnalyticsManager.shared.trackTrendsTimeFrameChanged(timeFrame: "All Time")
                         }
                     } label: {
                         Image(systemName: "line.3.horizontal.decrease")
@@ -86,6 +95,7 @@ struct TrendsView: View {
                 AIResults(selectedFilter: $selectedFilter, checkins: checkins, workouts: workouts, meets: meets, aiModel: aiModel)
             }
             .task {
+                AnalyticsManager.shared.trackScreenView("TrendsView")
                 await viewModel.fetchCheckins(user_id: clerk.user?.id ?? "")
                 await viewModel.fetchCompReports(user_id: clerk.user?.id ?? "")
                 await viewModel.fetchSessionReport(user_id: clerk.user?.id ?? "")
@@ -196,10 +206,13 @@ struct AIResults: View {
             .task {
                 if selectedFilter == "Check-Ins" && checkins.count >= 10 {
                     try? await aiModel.query(prompt: prompt)
+                    AnalyticsManager.shared.trackAIAnalysisCompleted(filter: selectedFilter, dataPoints: checkins.count)
                 } else if selectedFilter == "Workouts" && workouts.count >= 10 {
                     try? await aiModel.query(prompt: prompt)
+                    AnalyticsManager.shared.trackAIAnalysisCompleted(filter: selectedFilter, dataPoints: workouts.count)
                 } else if selectedFilter == "Meets" && meets.count >= 3 {
                     try? await aiModel.query(prompt: prompt)
+                    AnalyticsManager.shared.trackAIAnalysisCompleted(filter: selectedFilter, dataPoints: meets.count)
                 }
             }
         }

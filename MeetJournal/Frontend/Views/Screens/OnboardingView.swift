@@ -444,8 +444,7 @@ struct TrainingDaysSection: View {
                     .padding(.bottom, 30)
                     .disabled(!isDisabled)
                     .onTapGesture {
-                        // Just mark onboarding as complete
-                        // User data will be written to DB in HomeView after login
+                        AnalyticsManager.shared.trackOnboardingCompleted()
                         hasSeenOnboarding = true
                     }
                 }

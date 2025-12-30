@@ -46,6 +46,7 @@ struct HistoryView: View {
             .navigationTitle("History")
             .toolbarTitleDisplayMode(.inlineLarge)
             .task {
+                AnalyticsManager.shared.trackScreenView("HistoryView")
                 await viewModel.fetchCompReports(user_id: clerk.user?.id ?? "")
                 await viewModel.fetchCheckins(user_id: clerk.user?.id ?? "")
                 await viewModel.fetchSessionReport(user_id: clerk.user?.id ?? "")

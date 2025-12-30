@@ -142,6 +142,7 @@ struct CheckInView: View {
                                 userId: clerk.user?.id ?? ""
                             )
                             
+                            AnalyticsManager.shared.trackCheckInSubmitted(lift: selectedLift, intensity: selectedIntensity, overallScore: checkInScore.overallScore)
                             navigateToConfirmation = true
                         }
                     } label: {
@@ -176,6 +177,9 @@ struct CheckInView: View {
             }
             .navigationTitle("Daily Check-In")
             .navigationBarTitleDisplayMode(.inline)
+            .task {
+                AnalyticsManager.shared.trackScreenView("CheckInView")
+            }
         }
     }
 }

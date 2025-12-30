@@ -125,6 +125,7 @@ struct CompReflectionView: View {
                     Button {
                         Task {
                             await viewModel.submitCompReport(compReport: report)
+                            AnalyticsManager.shared.trackCompReflectionSubmitted(meetName: meet, meetType: selectedMeetType, performanceRating: performanceRating)
                         }
                     } label: {
                         if viewModel.isLoading {
@@ -152,6 +153,9 @@ struct CompReflectionView: View {
             }
             .navigationTitle("Competition Report")
             .navigationBarTitleDisplayMode(.inline)
+            .task {
+                AnalyticsManager.shared.trackScreenView("CompReflectionView")
+            }
             .alert(viewModel.alertTitle, isPresented: $viewModel.alertShown) {} message: {
                 Text(viewModel.alertMessage)
             }

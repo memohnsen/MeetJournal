@@ -36,7 +36,11 @@ struct ContentView: View {
             } else {
                 Color.clear
                     .onAppear {
-                        showPaywall = true
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+                            if !customerManager.hasProAccess {
+                                showPaywall = true
+                            }
+                        }
                     }
             }
         }
@@ -82,6 +86,9 @@ struct ContentView: View {
             Tab("Settings", systemImage: "gearshape", value: "Settings") {
                 SettingsView()
             }
+        }
+        .onChange(of: selectedTab) { oldValue, newValue in
+            AnalyticsManager.shared.trackTabSwitched(fromTab: oldValue, toTab: newValue)
         }
     }
 }

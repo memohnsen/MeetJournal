@@ -101,6 +101,7 @@ struct WorkoutReflectionView: View {
                         
                         Task {
                             await viewModel.submitSessionReport(sessionReport: report)
+                            AnalyticsManager.shared.trackSessionReflectionSubmitted(lift: selectedLift, intensity: selectedIntensity, rpe: sessionRPE)
                         }
                     } label: {
                         if viewModel.isLoading {
@@ -128,6 +129,9 @@ struct WorkoutReflectionView: View {
             }
             .navigationTitle("Session Reflection")
             .navigationBarTitleDisplayMode(.inline)
+            .task {
+                AnalyticsManager.shared.trackScreenView("WorkoutReflectionView")
+            }
             .alert(viewModel.alertTitle, isPresented: $viewModel.alertShown) {
                 Button("OK") {
                     dismiss()
@@ -138,6 +142,7 @@ struct WorkoutReflectionView: View {
         }
     }
 }
+
 
 #Preview {
     WorkoutReflectionView()

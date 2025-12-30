@@ -169,10 +169,13 @@ struct HistoryDetailsView: View {
                         Task {
                             if selection == "Meets" {
                                 await deleteModel.deleteCompReport(reportId: comp.first?.id ?? 0)
+                                AnalyticsManager.shared.trackCompReflectionDeleted(compId: comp.first?.id ?? 0)
                             } else if selection == "Workouts" {
                                 await deleteModel.deleteSessionReport(reportId: session.first?.id ?? 0)
+                                AnalyticsManager.shared.trackSessionReflectionDeleted(sessionId: session.first?.id ?? 0)
                             } else {
                                 await deleteModel.deleteCheckIn(checkInId: checkin.first?.id ?? 0)
+                                AnalyticsManager.shared.trackCheckInDeleted(checkInId: checkin.first?.id ?? 0)
                             }
                             dismiss()
                         }
@@ -183,6 +186,7 @@ struct HistoryDetailsView: View {
                 }
             }
             .task {
+                AnalyticsManager.shared.trackScreenView("HistoryDetailsView")
                 if selection == "Meets" {
                     await viewModel.fetchCompDetails(user_id: clerk.user?.id ?? "", title: title, date: date)
                 } else if selection == "Workouts" {

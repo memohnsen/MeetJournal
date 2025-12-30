@@ -88,6 +88,9 @@ struct CheckinConfirmation: View {
             }
             .navigationTitle("Check-In Submitted!")
             .navigationBarTitleDisplayMode(.inline)
+            .task {
+                AnalyticsManager.shared.trackScreenView("CheckinConfirmation")
+            }
         }
     }
 }

@@ -283,6 +283,7 @@ struct HomeView: View {
             }
             
             await historyModel.fetchCheckins(user_id: clerk.user?.id ?? "")
+            AnalyticsManager.shared.trackScreenView("HomeView")
         }
         .sheet(isPresented: $userProfileShown) {
             if clerk.user != nil {

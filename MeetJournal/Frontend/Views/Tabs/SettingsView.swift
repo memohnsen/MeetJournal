@@ -119,14 +119,7 @@ struct SettingsView: View {
                         .cardStyling()
                         
                         Button {
-                            isExporting = true
-                            Task {
-                                if let fileURL = await createCSVFile() {
-                                    csvFileURL = fileURL
-                                    showShareSheet = true
-                                }
-                                isExporting = false
-                            }
+                            
                         } label: {
                             HStack {
                                 Text("Auto-Send Results")
@@ -138,6 +131,7 @@ struct SettingsView: View {
                         
                         Button{
                             showCustomerCenter = true
+                            AnalyticsManager.shared.trackCustomerCenterViewed()
                         } label: {
                             HStack{
                                 Text("Customer Support")
@@ -156,8 +150,6 @@ struct SettingsView: View {
                                 }
                                 .cardStyling()
                             }
-                        } else {
-                            Text("Could not generate email link.")
                         }
                         
 //                        HStack{
@@ -167,12 +159,17 @@ struct SettingsView: View {
 //                        }
 //                        .cardStyling()
                         
-                        HStack{
-                            Text("Open Source Code on Github")
-                            Spacer()
-                            Image(systemName: "chevron.right")
+                        Link(destination: URL(string: "https://github.com/memohnsen/MeetJournal")!) {
+                            HStack{
+                                Text("Open Source Code on Github")
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                            }
+                            .cardStyling()
                         }
-                        .cardStyling()
+                        .onTapGesture {
+                            AnalyticsManager.shared.trackGitHubLinkOpened()
+                        }
                         
                         Text("DANGER ZONE")
                             .foregroundStyle(.red.opacity(0.75))
@@ -186,6 +183,7 @@ struct SettingsView: View {
                                 await deleteViewModel.removeAllCheckIns(userId: clerk.user?.id ?? "")
                                 await deleteViewModel.removeAllMeets(userId: clerk.user?.id ?? "")
                                 await deleteViewModel.removeAllWorkouts(userId: clerk.user?.id ?? "")
+                                AnalyticsManager.shared.trackAllDataDeleted()
                             }
                             alertShown = true
                         } label: {
@@ -209,7 +207,7 @@ struct SettingsView: View {
                                 Spacer()
                             }
                             
-                            Text("MeetJournal Version: \(appVersion ?? "1.0.0")")
+                            Text("Forge Version: \(appVersion ?? "1.0.0")")
                                 .foregroundStyle(.secondary)
                                 .padding(.top)
                         }
@@ -229,6 +227,9 @@ struct SettingsView: View {
                 if let fileURL = csvFileURL {
                     ShareSheet(items: [fileURL])
                 }
+            }
+            .task {
+                AnalyticsManager.shared.trackScreenView("SettingsView")
             }
             .alert("Data Deletion Successful", isPresented: $alertShown) {
                 Button("OK") {}

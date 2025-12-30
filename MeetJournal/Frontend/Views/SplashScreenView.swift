@@ -32,7 +32,7 @@ struct SplashScreenView: View {
                 logoOpacity = 1.0
             }
             
-            DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
                 withAnimation(.easeInOut(duration: 0.4)) {
                     isActive = false
                 }

@@ -158,6 +158,7 @@ struct NotificationSettingsView: View {
             .navigationTitle("Notifications")
             .toolbarTitleDisplayMode(.inlineLarge)
             .task {
+                AnalyticsManager.shared.trackNotificationSettingsViewed()
                 loadTrainingDays()
             }
             .sheet(isPresented: $showEditTrainingDays) {
