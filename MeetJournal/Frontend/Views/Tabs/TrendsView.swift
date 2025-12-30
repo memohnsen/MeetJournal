@@ -22,57 +22,6 @@ struct TrendsView: View {
     
     @State private var selectedFilter: String = "Check-Ins"
     @State private var selectedTimeFrame: String = "Last 30 Days"
-    
-    var prompt: String {
-        if selectedFilter == "Check-Ins" {
-            return """
-                Task: You are a sports data analyst specializing in Olympic Weightlifting and Powerlifting. You specialize in finding trends in large amounts of data. The following is the data we have on the athlete, I need you to analyze the data and find possible trends and return a response that will instruct the athlete on your findings.
-                
-                Data Type: Daily check-in data performed prior to their lifting session. The overall score is a function of the physical and mental scores which are functions of the other 1-5 scale scores.
-                
-                Data: \(checkins)
-                            
-                Response Format:
-                - No emojis
-                - Do not include any greetings, get straight to the data
-                - 300 words or less
-                - No more than 4 sentences
-                - Write as plain text, with each section of data formatted with a hyphen to mark it as a bullet point
-                - Do not include any reccommendations or draw conclusions, only comment on trends
-                """
-        } else if selectedFilter == "Workouts" {
-            return """
-                Task: You are a sports data analyst specializing in Olympic Weightlifting and Powerlifting. You specialize in finding trends in large amounts of data. The following is the data we have on the athlete, I need you to analyze the data and find possible trends and return a response that will instruct the athlete on your findings.
-                
-                Data Type: Post-session reflection data after each lifting session.
-                
-                Data: \(workouts)
-                            
-                Response Format:
-                - No emojis
-                - Do not include any greetings, get straight to the data
-                - 300 words or less
-                - No more than 4 sentences
-                - Write as plain text, do not include any markdown
-                - Do not include any reccommendations or draw conclusions, only comment on trends
-                """
-        } else {
-            return """
-                Task: You are a sports data analyst specializing in Olympic Weightlifting and Powerlifting. You specialize in finding trends in large amounts of data. The following is the data we have on the athlete, I need you to analyze the data and find possible trends and return a response that will instruct the athlete on your findings.
-                
-                Data Type: Post-competition reflection data.
-                
-                Data: \(meets)
-                            
-                Response Format:
-                - No emojis
-                - 300 words or less
-                - No more than 4 sentences
-                - Write as plain text, do not include any markdown
-                - Do not include any reccommendations or draw conclusions, only comment on trends
-                """
-        }
-    }
         
     var body: some View {
         NavigationStack{
@@ -105,6 +54,7 @@ struct TrendsView: View {
                 }
             }
             .navigationTitle("Trends")
+            .toolbarTitleDisplayMode(.inlineLarge)
             .toolbar{
                 ToolbarItem{
                     Menu{
@@ -156,15 +106,15 @@ struct AIResults: View {
         return """
             Task: You are a sports data analyst specializing in Olympic Weightlifting and Powerlifting. You specialize in finding trends in large amounts of data. The following is the data we have on the athlete, I need you to analyze the data and find possible trends and return a response that will instruct the athlete on your findings. You are receiving data for an athlete's pre-lift check-ins, post-lift check-ins, and meet reflections. You should begin your process by matching the data and ordering by date to get a clear trend across the individual.
             
-            Data Type: Daily check-in data performed prior to their lifting session. The overall score is a function of the physical and mental scores which are functions of the other 1-5 scale scores. 1 is always a poor value, 5 is always considered a good value, stress of 5 means relaxed, soreness would mean none, etc.
+            Data Type: Daily check-in data performed prior to their lifting session. The overall score is a function of the physical and mental scores which are functions of the other 1-5 scale scores. 1 is always a poor value, 5 is always considered a good value, stress of 5 means relaxed, etc. The only time this isn't the case is for soreness, 1 is none, 5 is extreme.
             
             Data: \(checkins)
             
-            Data Type: Post-session reflection data after each lifting session. 1 is always a poor value, 5 is always considered a good value, stress of 5 means relaxed, soreness would mean none, etc.
+            Data Type: Post-session reflection data after each lifting session. 1 is always a poor value, 5 is always considered a good value, stress of 5 means relaxed, etc. The only time this isn't the case is for how hard was the session, 1 is easy, 5 is very hard.
             
             Data: \(workouts)
             
-            Data Type: Post-competition reflection data. 1 is always a poor value, 5 is always considered a good value, stress of 5 means relaxed, soreness would mean none, etc. For How hard was the session, 5 is easy, 1 is hardest.
+            Data Type: Post-competition reflection data. 1 is always a poor value, 5 is always considered a good value, stress of 5 means relaxed, etc.
             
             Data: \(meets)
                         
@@ -211,66 +161,24 @@ struct AIResults: View {
                 BackgroundColor()
     
                 VStack {
-                    if selectedFilter == "Check-Ins" {
-                        if checkins.count >= 10 {
-                            if aiModel.isLoading || aiModel.response.isEmpty {
-                                ProgressView("Analyzing your data...")
-                            } else {
-                                ScrollView {
-                                    VStack{
-                                        Text(aiModel.response)
-                                            .padding()
-                                    }
-                                    .cardStyling()
-                                }
-                            }
+                    if checkins.count >= 10 || workouts.count >= 10 || meets.count >= 3 {
+                        if aiModel.isLoading || aiModel.response.isEmpty {
+                            ProgressView("Analyzing your data...")
                         } else {
-                            insufficientDataView(
-                                icon: "chart.bar.doc.horizontal",
-                                title: "More Data Needed",
-                                description: "Complete at least 10 check-ins to unlock this feature. The more data you provide, the more accurate the analysis will be."
-                            )
-                        }
-                    } else if selectedFilter == "Workouts" {
-                        if workouts.count >= 10 {
-                            if aiModel.isLoading || aiModel.response.isEmpty {
-                                ProgressView("Analyzing your data...")
-                            } else {
-                                ScrollView {
-                                    VStack{
-                                        Text(aiModel.response)
-                                            .padding()
-                                    }
-                                    .cardStyling()
+                            ScrollView {
+                                VStack{
+                                    Text(aiModel.response)
+                                        .padding()
                                 }
+                                .cardStyling()
                             }
-                        } else {
-                            insufficientDataView(
-                                icon: "dumbbell",
-                                title: "More Workouts Needed",
-                                description: "Log at least 10 workouts to unlock this feature. The more data you provide, the more accurate the analysis will be."
-                            )
                         }
-                    } else if selectedFilter == "Meets" {
-                        if meets.count >= 3 {
-                            if aiModel.isLoading || aiModel.response.isEmpty {
-                                ProgressView("Analyzing your data...")
-                            } else {
-                                ScrollView {
-                                    VStack{
-                                        Text(aiModel.response)
-                                            .padding()
-                                    }
-                                    .cardStyling()
-                                }
-                            }
-                        } else {
-                            insufficientDataView(
-                                icon: "trophy",
-                                title: "More Meets Needed",
-                                description: "Log at least 3 meets to unlock this feature. The more data you provide, the more accurate the analysis will be."
-                            )
-                        }
+                    } else {
+                        insufficientDataView(
+                            icon: "chart.bar.doc.horizontal",
+                            title: "More Data Needed",
+                            description: "Complete at least 2 weeks of training to unlock this feature. The more data you provide, the more accurate the analysis."
+                        )
                     }
                 }
             }

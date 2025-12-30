@@ -44,6 +44,7 @@ struct HistoryView: View {
                 }
             }
             .navigationTitle("History")
+            .toolbarTitleDisplayMode(.inlineLarge)
             .task {
                 await viewModel.fetchCompReports(user_id: clerk.user?.id ?? "")
                 await viewModel.fetchCheckins(user_id: clerk.user?.id ?? "")

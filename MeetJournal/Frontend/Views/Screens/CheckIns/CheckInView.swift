@@ -127,8 +127,8 @@ struct CheckInView: View {
                         colorScheme: colorScheme,
                         title: "Rate your soreness",
                         value: $checkInScore.soreness,
-                        minString: "Extreme",
-                        maxString: "None",
+                        minString: "None",
+                        maxString: "Extreme",
                         minValue: 1,
                         maxValue: 5
                     )

@@ -156,6 +156,7 @@ struct SettingsView: View {
                 }
             }
             .navigationTitle("Settings")
+            .toolbarTitleDisplayMode(.inlineLarge)
             .sheet(isPresented: $showCustomerCenter) {
                 CustomerCenterView()
             }

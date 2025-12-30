@@ -21,12 +21,22 @@ struct SliderSection: View {
     var maxValue: Int
     
     var colorByRating: Color {
-        if value <= 2 {
-            .red
-        } else if value == 3 {
-            blueEnergy
+        if title == "Rate your soreness" || title == "How hard was this session?" {
+            if value <= 2 {
+                .green
+            } else if value == 3 {
+                blueEnergy
+            } else {
+                .red
+            }
         } else {
-            .green
+            if value <= 2 {
+                .red
+            } else if value == 3 {
+                blueEnergy
+            } else {
+                .green
+            }
         }
     }
     

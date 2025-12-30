@@ -124,14 +124,14 @@ struct HistoryDetailsView: View {
     
     var pageTitle: String {
         if selection == "Meets" {
-            return comp.first?.meet ?? ""
+            return comp.first?.meet ?? "Loading..."
         } else if selection == "Workouts" {
-            return (session.first?.selected_intensity ?? "") + " " + (session.first?.selected_lift ?? "")
+            return (session.first?.selected_intensity ?? "Loading") + " " + (session.first?.selected_lift ?? "...")
         } else {
-            return (checkin.first?.selected_intensity ?? "") + " " + (checkin.first?.selected_lift ?? "")
+            return (checkin.first?.selected_intensity ?? "Loading") + " " + (checkin.first?.selected_lift ?? "...")
         }
     }
-    
+
     var body: some View {
         NavigationStack{
             ZStack{
@@ -163,16 +163,14 @@ struct HistoryDetailsView: View {
                 ToolbarItem{
                     Button(role: .destructive) {
                         Task {
-                            if let reportId {
-                                if selection == "Meets" {
-                                    await deleteModel.deleteCompReport(reportId: comp.first?.id ?? 0)
-                                } else if selection == "Workouts" {
-                                    await deleteModel.deleteSessionReport(reportId: session.first?.id ?? 0)
-                                } else {
-                                    await deleteModel.deleteCheckIn(checkInId: checkin.first?.id ?? 0)
-                                }
-                                dismiss()
+                            if selection == "Meets" {
+                                await deleteModel.deleteCompReport(reportId: comp.first?.id ?? 0)
+                            } else if selection == "Workouts" {
+                                await deleteModel.deleteSessionReport(reportId: session.first?.id ?? 0)
+                            } else {
+                                await deleteModel.deleteCheckIn(checkInId: checkin.first?.id ?? 0)
                             }
+                            dismiss()
                         }
                     } label: {
                         Image(systemName: "trash")
@@ -283,7 +281,7 @@ struct RatingDisplaySection: View {
     var value: String
     
     var colorByRating: Color {
-        if title == "How many lifts did you miss?" {
+        if title == "How many lifts did you miss?" || title == "How hard was this session?" || title == "Rate your soreness" {
             if Int(value) ?? 0 <= 1 {
                 .green
             } else if Int(value) ?? 0 == 2 {
