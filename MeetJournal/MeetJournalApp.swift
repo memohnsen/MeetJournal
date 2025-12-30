@@ -13,6 +13,7 @@ import RevenueCat
 struct MeetJournalApp: App {
     @State private var clerk = Clerk.shared
     @State private var customerManager = CustomerInfoManager()
+    @State private var showSplash = true
     var hasProAccess: Bool { customerManager.hasProAccess }
     
     let revenuecatKey = Bundle.main.object(forInfoDictionaryKey: "REVENUECAT_API_KEY") as! String
@@ -23,15 +24,23 @@ struct MeetJournalApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
-                .environment(\.clerk, clerk)
-                .task {
-                    let clerkKey = Bundle.main.object(forInfoDictionaryKey: "CLERK_PUBLISHABLE_KEY") as! String
-                    clerk.configure(publishableKey: clerkKey)
-                    try? await clerk.load()
-                    customerManager.setupDelegate()
-                    await customerManager.fetchCustomerInfo()
+            ZStack {
+                ContentView()
+                    .environment(\.clerk, clerk)
+                    .task {
+                        let clerkKey = Bundle.main.object(forInfoDictionaryKey: "CLERK_PUBLISHABLE_KEY") as! String
+                        clerk.configure(publishableKey: clerkKey)
+                        try? await clerk.load()
+                        customerManager.setupDelegate()
+                        await customerManager.fetchCustomerInfo()
+                    }
+                
+                if showSplash {
+                    SplashScreenView(isActive: $showSplash)
+                        .transition(.opacity)
+                        .zIndex(1)
                 }
+            }
         }
     }
 }

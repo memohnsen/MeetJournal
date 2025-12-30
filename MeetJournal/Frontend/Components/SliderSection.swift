@@ -29,6 +29,8 @@ struct SliderSection: View {
             } else {
                 .red
             }
+        } else if title == "How many years have you been training?" || title == "How many meets do you do per year?" {
+            blueEnergy
         } else {
             if value <= 2 {
                 .red
