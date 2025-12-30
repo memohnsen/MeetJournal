@@ -7,6 +7,7 @@
 
 import SwiftUI
 import RevenueCatUI
+import RevenueCat
 import Clerk
 
 struct SettingsView: View {
@@ -19,6 +20,37 @@ struct SettingsView: View {
     
     @State private var deleteViewModel = RemoveAllModel()
     @State private var alertShown: Bool = false
+    
+    @State private var userViewModel = UsersViewModel()
+    var users: [Users] { userViewModel.users }
+    
+    let device = UIDevice.current
+    
+    let recipient: String = "maddisen@meetcal.app"
+    let subject: String = "Forge - Performance Journal Feedback"
+    var emailBody: String { """
+        Hello, my name is \(users.first?.first_name ?? "") \(users.first?.last_name ?? "").
+        
+        My Clerk ID is: \(clerk.user?.id ?? "").
+        My RevenueCat ID is: \(Purchases.shared.appUserID)
+        My subscription status is: 
+        My device and iOS version are: \(device.name) \(device.model) \(device.systemName) \(device.systemVersion)
+        """
+    }
+    
+    var encodedSubject: String? {
+        subject.addingPercentEncoding(withAllowedCharacters: .urlHostAllowed)
+    }
+    var encodedBody: String? {
+        emailBody.addingPercentEncoding(withAllowedCharacters: .urlHostAllowed)
+    }
+
+    var mailtoUrl: URL? {
+        if let encodedSubject = encodedSubject, let encodedBody = encodedBody {
+            return URL(string: "mailto:\(recipient)?subject=\(encodedSubject)&body=\(encodedBody)")
+        }
+        return nil
+    }
     
     var appVersion: String? {
         return Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
@@ -115,19 +147,25 @@ struct SettingsView: View {
                         }
                         .cardStyling()
                         
-                        HStack{
-                            Text("Submit Feedback")
-                            Spacer()
-                            Image(systemName: "chevron.right")
+                        if let url = mailtoUrl {
+                            Link(destination: url) {
+                                HStack{
+                                    Text("Submit Feedback")
+                                    Spacer()
+                                    Image(systemName: "chevron.right")
+                                }
+                                .cardStyling()
+                            }
+                        } else {
+                            Text("Could not generate email link.")
                         }
-                        .cardStyling()
                         
-                        HStack{
-                            Text("Leave a Review")
-                            Spacer()
-                            Image(systemName: "chevron.right")
-                        }
-                        .cardStyling()
+//                        HStack{
+//                            Text("Leave a Review")
+//                            Spacer()
+//                            Image(systemName: "chevron.right")
+//                        }
+//                        .cardStyling()
                         
                         HStack{
                             Text("Open Source Code on Github")

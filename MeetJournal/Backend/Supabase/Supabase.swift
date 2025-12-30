@@ -12,7 +12,6 @@ import Clerk
 let supabaseURL = Bundle.main.object(forInfoDictionaryKey: "SUPABASE_URL") as! String
 let supabaseKey = Bundle.main.object(forInfoDictionaryKey: "SUPABASE_KEY") as! String
 
-// Create Supabase client with Clerk authentication
 let supabase: SupabaseClient = {
     let options = SupabaseClientOptions(
         auth: .init(

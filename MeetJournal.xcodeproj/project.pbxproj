@@ -13,7 +13,6 @@
 		714CD2032EFF215B00FE4D9A /* PostHog in Frameworks */ = {isa = PBXBuildFile; productRef = 714CD2022EFF215B00FE4D9A /* PostHog */; };
 		714CD37F2F004FCE00FE4D9A /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = 714CD37E2F004FCE00FE4D9A /* RevenueCat */; };
 		714CD3812F004FCE00FE4D9A /* RevenueCatUI in Frameworks */ = {isa = PBXBuildFile; productRef = 714CD3802F004FCE00FE4D9A /* RevenueCatUI */; };
-		719E07CD2EFDB84C00ACB70A /* Config.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 719E07CC2EFDB84C00ACB70A /* Config.xcconfig */; };
 		71C6AE4B2F00BDE90070952D /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 71C6AE4A2F00BDE90070952D /* WidgetKit.framework */; };
 		71C6AE4D2F00BDE90070952D /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 71C6AE4C2F00BDE90070952D /* SwiftUI.framework */; };
 		71C6AE582F00BDEB0070952D /* JournalWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 71C6AE482F00BDE90070952D /* JournalWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -255,7 +254,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				719E07CD2EFDB84C00ACB70A /* Config.xcconfig in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -353,6 +351,7 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -410,6 +409,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				VALIDATE_PRODUCT = YES;
 			};
@@ -435,7 +435,7 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = NO;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -477,7 +477,7 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = NO;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

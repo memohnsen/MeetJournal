@@ -140,45 +140,90 @@ struct HomeView: View {
                     await historyModel.fetchCheckins(user_id: clerk.user?.id ?? "")
                 }
                 
-                HStack {
-                    VStack(alignment: .leading) {
-                        Text("\(date.formatted(date: .complete, time: .omitted))")
-                            .foregroundStyle(.secondary)
+                if #available(iOS 26.0, * ) {
+                    HStack {
+                        VStack(alignment: .leading) {
+                            Text("\(date.formatted(date: .complete, time: .omitted))")
+                                .foregroundStyle(.secondary)
+                            
+                            if !users.isEmpty {
+                                Text("Ready to train, \(users.first?.first_name ?? "")?")
+                                    .font(.headline.bold())
+                            }
+                        }
                         
-                        if !users.isEmpty {
-                            Text("Ready to train, \(users.first?.first_name ?? "")?")
-                                .font(.headline.bold())
+                        Spacer()
+                        
+                        
+                        Button {
+                            userProfileShown = true
+                        } label: {
+                            if clerk.user == nil {
+                                Image(systemName: "person")
+                                    .resizable()
+                                    .scaledToFit()
+                                    .padding()
+                                    .frame(width: 50)
+                                    .foregroundStyle(colorScheme == .light ? .black : .white)
+                                    .overlay(
+                                        Circle()
+                                            .frame(width: 60)
+                                            .foregroundStyle(colorScheme == .light ? .gray.opacity(0.3) : .gray.opacity(0.2))
+                                    )
+                            } else {
+                                UserButton()
+                                    .frame(width: 50, height: 50)
+                            }
                         }
                     }
-                    
-                    Spacer()
-                    
-                    
-                    Button {
-                        userProfileShown = true
-                    } label: {
-                        if clerk.user == nil {
-                            Image(systemName: "person")
-                                .resizable()
-                                .scaledToFit()
-                                .padding()
-                                .frame(width: 50)
-                                .foregroundStyle(colorScheme == .light ? .black : .white)
-                                .overlay(
-                                    Circle()
-                                        .frame(width: 60)
-                                        .foregroundStyle(colorScheme == .light ? .gray.opacity(0.3) : .gray.opacity(0.2))
-                                )
-                        } else {
-                            UserButton()
-                                .frame(width: 50, height: 50)
+                    .padding([.horizontal, .bottom])
+                    .padding(.top, 70)
+                    .glassEffect(in: .rect(cornerRadius: 32))
+                    .padding(.top, -70)
+                } else {
+                    HStack {
+                        VStack(alignment: .leading) {
+                            Text("\(date.formatted(date: .complete, time: .omitted))")
+                                .foregroundStyle(.secondary)
+                            
+                            if !users.isEmpty {
+                                Text("Ready to train, \(users.first?.first_name ?? "")?")
+                                    .font(.headline.bold())
+                            }
+                        }
+                        
+                        Spacer()
+                        
+                        
+                        Button {
+                            userProfileShown = true
+                        } label: {
+                            if clerk.user == nil {
+                                Image(systemName: "person")
+                                    .resizable()
+                                    .scaledToFit()
+                                    .padding()
+                                    .frame(width: 50)
+                                    .foregroundStyle(colorScheme == .light ? .black : .white)
+                                    .overlay(
+                                        Circle()
+                                            .frame(width: 60)
+                                            .foregroundStyle(colorScheme == .light ? .gray.opacity(0.3) : .gray.opacity(0.2))
+                                    )
+                            } else {
+                                UserButton()
+                                    .frame(width: 50, height: 50)
+                            }
                         }
                     }
+                    .padding([.horizontal, .bottom])
+                    .padding(.top, 70)
+                    .background(
+                        RoundedRectangle(cornerRadius: 32)
+                            .fill(.ultraThinMaterial)
+                    )
+                    .padding(.top, -70)
                 }
-                .padding([.horizontal, .bottom])
-                .padding(.top, 70)
-                .glassEffect(in: .rect(cornerRadius: 32))
-                .padding(.top, -70)
             }
         }
         .task {
@@ -266,38 +311,65 @@ struct HomeView: View {
                         }
                     }
                     ToolbarItem(placement: .confirmationAction) {
-                        Button("Save", role: .confirm) {
-                            Task {
-                                let dateFormatter = DateFormatter()
-                                dateFormatter.dateFormat = "yyyy-MM-dd"
-                                let formattedDate = dateFormatter.string(from: newMeetDate)
+                        if #available(iOS 26.0, *) {
+                            Button("Save", role: .confirm) {
+                                Task {
+                                    let dateFormatter = DateFormatter()
+                                    dateFormatter.dateFormat = "yyyy-MM-dd"
+                                    let formattedDate = dateFormatter.string(from: newMeetDate)
 
-                                await userOnboardingViewModel.updateUserMeet(
-                                    userId: clerk.user?.id ?? "",
-                                    meetName: newMeetName,
-                                    meetDate: formattedDate
-                                )
+                                    await userOnboardingViewModel.updateUserMeet(
+                                        userId: clerk.user?.id ?? "",
+                                        meetName: newMeetName,
+                                        meetDate: formattedDate
+                                    )
 
-                                await viewModel.fetchUsers(user_id: clerk.user?.id ?? "")
-                                
-                                // Update AppStorage with new meet data
-                                notificationManager.storeMeetData(
-                                    meetDate: formattedDate,
-                                    meetName: newMeetName
-                                )
-                                
-                                // Reschedule notifications if enabled
-                                if notificationManager.isEnabled {
-                                    notificationManager.scheduleNotifications()
+                                    await viewModel.fetchUsers(user_id: clerk.user?.id ?? "")
+
+                                    notificationManager.storeMeetData(
+                                        meetDate: formattedDate,
+                                        meetName: newMeetName
+                                    )
+
+                                    if notificationManager.isEnabled {
+                                        notificationManager.scheduleNotifications()
+                                    }
+
+                                    editMeetSheetShown = false
                                 }
-                                
-                                editMeetSheetShown = false
+                            }
+                        } else {
+                            Button("Save") {
+                                Task {
+                                    let dateFormatter = DateFormatter()
+                                    dateFormatter.dateFormat = "yyyy-MM-dd"
+                                    let formattedDate = dateFormatter.string(from: newMeetDate)
+
+                                    await userOnboardingViewModel.updateUserMeet(
+                                        userId: clerk.user?.id ?? "",
+                                        meetName: newMeetName,
+                                        meetDate: formattedDate
+                                    )
+
+                                    await viewModel.fetchUsers(user_id: clerk.user?.id ?? "")
+
+                                    notificationManager.storeMeetData(
+                                        meetDate: formattedDate,
+                                        meetName: newMeetName
+                                    )
+
+                                    if notificationManager.isEnabled {
+                                        notificationManager.scheduleNotifications()
+                                    }
+
+                                    editMeetSheetShown = false
+                                }
                             }
                         }
                     }
                 }
+                .presentationDetents([.fraction(0.4)])
             }
-            .presentationDetents([.fraction(0.4)])
         }
     }
 }

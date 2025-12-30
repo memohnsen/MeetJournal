@@ -186,7 +186,11 @@ struct AIResults: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem {
-                    Button("Done", role: .confirm, action: { dismiss() })
+                    if #available(iOS 26.0, *) {
+                        Button("Done", role: .confirm, action: { dismiss() })
+                    } else {
+                        Button("Done", action: { dismiss() })
+                    }
                 }
             }
             .task {

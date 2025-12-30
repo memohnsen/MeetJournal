@@ -367,9 +367,16 @@ struct EditTrainingScheduleView: View {
                     }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Save", role: .confirm) {
-                        onSave(editableTrainingDays)
-                        dismiss()
+                    if #available(iOS 26.0, *) {
+                        Button("Save", role: .confirm) {
+                            onSave(editableTrainingDays)
+                            dismiss()
+                        }
+                    } else {
+                        Button("Save") {
+                            onSave(editableTrainingDays)
+                            dismiss()
+                        }
                     }
                 }
             }

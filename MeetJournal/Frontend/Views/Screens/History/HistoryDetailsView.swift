@@ -159,7 +159,9 @@ struct HistoryDetailsView: View {
                         Image(systemName: "square.and.arrow.up")
                     }
                 }
-                ToolbarSpacer()
+                if #available(iOS 26.0, *) {
+                    ToolbarSpacer()
+                }
                 ToolbarItem{
                     Button(role: .destructive) {
                         Task {
