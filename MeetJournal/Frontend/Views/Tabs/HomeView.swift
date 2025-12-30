@@ -21,12 +21,56 @@ struct HomeView: View {
     @State private var checkInScore = CheckInScore()
     @State private var userOnboardingViewModel = UserOnboardingViewModel()
     var isLoading: Bool { viewModel.isLoading }
-    
+
     @State private var userProfileShown: Bool = false
-    
+
     @Bindable var onboardingData: OnboardingData
-    
+
     let date: Date = Date.now
+
+    @State private var editMeetSheetShown: Bool = false
+    @State private var newMeetName: String = ""
+    @State private var newMeetDate: Date = Date()
+
+    var daysUntilMeet: Int {
+        guard let user = users.first else { return 0 }
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        guard let meetDate = dateFormatter.date(from: user.next_competition_date) else { return 0 }
+        let calendar = Calendar.current
+        let components = calendar.dateComponents([.day], from: Date(), to: meetDate)
+        return components.day ?? 0
+    }
+
+    var trainingDaysPerWeek: Int {
+        users.first?.training_days.count ?? 0
+    }
+
+    var sessionsLeft: Int {
+        let weeksRemaining = max(0, Double(daysUntilMeet) / 7.0)
+        let sessions = Int(ceil(weeksRemaining * Double(trainingDaysPerWeek)))
+        return sessions
+    }
+
+    var daysUntilMeetText: String {
+        if daysUntilMeet < 0 {
+            return "Completed"
+        } else if daysUntilMeet == 0 {
+            return "Today!"
+        } else {
+            return "\(daysUntilMeet) day\(daysUntilMeet == 1 ? "" : "s") left"
+        }
+    }
+
+    var sessionsLeftText: String {
+        if daysUntilMeet < 0 {
+            return "0"
+        } else if daysUntilMeet == 0 {
+            return "0"
+        } else {
+            return "\(sessionsLeft) session\(sessionsLeft == 1 ? "" : "s") left"
+        }
+    }
     
     var body: some View {
         NavigationStack {
@@ -35,6 +79,52 @@ struct HomeView: View {
                 
                 ScrollView {
                     VStack {
+                        VStack(alignment: .leading) {
+                            HStack {
+                                VStack(alignment: .leading) {
+                                    HStack {
+                                        Image(systemName: "pencil.circle")
+                                            .resizable()
+                                            .scaledToFit()
+                                            .frame(width: 15)
+                                            .foregroundStyle(.secondary)
+                                            .padding(.bottom, 3)
+
+                                        Text(users.first?.next_competition ?? "No Meet Coming Up")
+                                            .font(.headline.bold())
+                                            .padding(.bottom, 4)
+                                            .lineLimit(1)
+                                    }
+                                    Text(daysUntilMeetText)
+                                        .font(.headline.bold())
+                                        .foregroundStyle(daysUntilMeet < 0 ? .green : blueEnergy)
+                                        .padding(.bottom, 4)
+                                }
+                                Spacer()
+                                VStack(alignment: .trailing) {
+                                    Text(dateFormat(users.first?.next_competition_date ?? "") ?? "N/A")
+                                        .foregroundStyle(.secondary)
+                                        .padding(.bottom, 4)
+
+                                    Text(sessionsLeftText)
+                                        .foregroundStyle(.secondary)
+                                        .padding(.bottom, 4)
+                                }
+                            }
+                        }
+                        .cardStyling()
+                        .onTapGesture {
+                            newMeetName = users.first?.next_competition ?? ""
+                            if let dateString = users.first?.next_competition_date {
+                                let formatter = DateFormatter()
+                                formatter.dateFormat = "yyyy-MM-dd"
+                                if let date = formatter.date(from: dateString) {
+                                    newMeetDate = date
+                                }
+                            }
+                            editMeetSheetShown = true
+                        }
+                        
                         DailyCheckInSection(colorScheme: colorScheme, checkInScore: checkInScore)
                         
                         ReflectionSection()
@@ -89,7 +179,6 @@ struct HomeView: View {
             }
         }
         .task {
-            // Write user to DB if this is their first time logging in after onboarding
             if !hasWrittenUserToDB && clerk.user != nil && !onboardingData.firstName.isEmpty {
                 let dateFormatter = DateFormatter()
                 dateFormatter.dateFormat = "yyyy-MM-dd"
@@ -127,6 +216,47 @@ struct HomeView: View {
             } else {
                 AuthView()
             }
+        }
+        .sheet(isPresented: $editMeetSheetShown) {
+            NavigationStack {
+                Form {
+                    Section {
+                        TextField("Meet Name", text: $newMeetName)
+
+                        DatePicker("Meet Date", selection: $newMeetDate, displayedComponents: .date)
+                    } header: {
+                        Text("Update Next Meet")
+                    }
+                }
+                .navigationTitle("Edit Meet")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Cancel", role: .cancel) {
+                            editMeetSheetShown = false
+                        }
+                    }
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Save", role: .confirm) {
+                            Task {
+                                let dateFormatter = DateFormatter()
+                                dateFormatter.dateFormat = "yyyy-MM-dd"
+                                let formattedDate = dateFormatter.string(from: newMeetDate)
+
+                                await userOnboardingViewModel.updateUserMeet(
+                                    userId: clerk.user?.id ?? "",
+                                    meetName: newMeetName,
+                                    meetDate: formattedDate
+                                )
+
+                                await viewModel.fetchUsers(user_id: clerk.user?.id ?? "")
+                                editMeetSheetShown = false
+                            }
+                        }
+                    }
+                }
+            }
+            .presentationDetents([.fraction(0.4)])
         }
     }
 }
