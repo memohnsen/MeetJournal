@@ -58,6 +58,15 @@ struct SettingsView: View {
                 
                 ScrollView{
                     VStack(alignment: .leading) {
+                        NavigationLink(destination: NotificationSettingsView()) {
+                            HStack {
+                                Text("Notifications")
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                            }
+                        }
+                        .cardStyling()
+                        
                         Button {
                             isExporting = true
                             Task {
@@ -75,6 +84,24 @@ struct SettingsView: View {
                             }
                         }
                         .disabled(isExporting)
+                        .cardStyling()
+                        
+                        Button {
+                            isExporting = true
+                            Task {
+                                if let fileURL = await createCSVFile() {
+                                    csvFileURL = fileURL
+                                    showShareSheet = true
+                                }
+                                isExporting = false
+                            }
+                        } label: {
+                            HStack {
+                                Text("Auto-Send Results")
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                            }
+                        }
                         .cardStyling()
                         
                         Button{

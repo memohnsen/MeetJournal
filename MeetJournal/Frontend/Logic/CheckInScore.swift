@@ -34,7 +34,7 @@ class CheckInScore {
     var mentalScore: Int {
         let overall: Int = mentalStrength + confidence + sleep + stress
 
-        let maxScore = 15.0
+        let maxScore = 20.0
         let percent = (Double(overall) / maxScore) * 100.0
 
         let percentScore = Int(max(0.0, min(100.0, percent)).rounded())

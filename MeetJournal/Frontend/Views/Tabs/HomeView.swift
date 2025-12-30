@@ -12,6 +12,8 @@ import RevenueCatUI
 struct HomeView: View {
     @AppStorage("hasWrittenUserToDB") private var hasWrittenUserToDB: Bool = false
     @AppStorage("userSport") private var userSport: String = ""
+    @AppStorage("hasPromptedForNotifications") private var hasPromptedForNotifications: Bool = false
+    @AppStorage("trainingDaysStored") private var trainingDaysStored: Bool = false
     @Environment(\.colorScheme) var colorScheme
     @Environment(\.clerk) private var clerk
     @State private var viewModel = UsersViewModel()
@@ -23,6 +25,7 @@ struct HomeView: View {
     var isLoading: Bool { viewModel.isLoading }
 
     @State private var userProfileShown: Bool = false
+    @State private var notificationManager = NotificationManager.shared
 
     @Bindable var onboardingData: OnboardingData
 
@@ -208,6 +211,32 @@ struct HomeView: View {
                 userSport = sport
             }
             
+            // Store training days and meet data to AppStorage for notifications
+            if !trainingDaysStored, let user = viewModel.users.first {
+                notificationManager.storeTrainingDays(user.training_days)
+                notificationManager.storeMeetData(
+                    meetDate: user.next_competition_date,
+                    meetName: user.next_competition
+                )
+                trainingDaysStored = true
+                
+                // Request notification permission after onboarding
+                if !hasPromptedForNotifications {
+                    Task {
+                        let granted = await notificationManager.requestPermission()
+                        if granted {
+                            notificationManager.scheduleNotifications()
+                        }
+                        hasPromptedForNotifications = true
+                    }
+                }
+            }
+            
+            // Reschedule notifications on app launch if enabled
+            if notificationManager.isEnabled {
+                notificationManager.scheduleNotifications()
+            }
+            
             await historyModel.fetchCheckins(user_id: clerk.user?.id ?? "")
         }
         .sheet(isPresented: $userProfileShown) {
@@ -250,6 +279,18 @@ struct HomeView: View {
                                 )
 
                                 await viewModel.fetchUsers(user_id: clerk.user?.id ?? "")
+                                
+                                // Update AppStorage with new meet data
+                                notificationManager.storeMeetData(
+                                    meetDate: formattedDate,
+                                    meetName: newMeetName
+                                )
+                                
+                                // Reschedule notifications if enabled
+                                if notificationManager.isEnabled {
+                                    notificationManager.scheduleNotifications()
+                                }
+                                
                                 editMeetSheetShown = false
                             }
                         }
