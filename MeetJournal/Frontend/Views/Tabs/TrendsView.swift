@@ -131,10 +131,10 @@ struct AIResults: View {
             Response Format:
             - No emojis
             - Do not include any greetings, get straight to the data
-            - 300 words or less
+            - 250 words or less
             - No more than 4 sentences
-            - Write as plain text, with each section of data formatted with a hyphen to mark it as a bullet point
-            - Do not include any reccommendations or draw conclusions, only comment on trends
+            - Write as plain text, with each section of data formatted with an asterik to mark it as a bullet point
+            - Do not include any recommendations or draw conclusions, only comment on trends
             """
     }
     
@@ -177,8 +177,10 @@ struct AIResults: View {
                         } else {
                             ScrollView {
                                 VStack{
-                                    Text(aiModel.response)
-                                        .padding()
+                                    Text(aiModel.response.replacingOccurrences(of: "*", with: "\n"))
+                                        .padding([.horizontal, .bottom])
+                                        .padding(.top, -4)
+                                        .multilineTextAlignment(.center)
                                 }
                                 .cardStyling()
                             }

@@ -115,10 +115,6 @@ struct ResultsSection: View {
     
     var body: some View {
         VStack(spacing: 24) {
-            Text("Your Readiness")
-                .font(.title.bold())
-                .padding(.top, 8)
-            
             VStack(spacing: 12) {
                 ZStack {
                     Circle()
