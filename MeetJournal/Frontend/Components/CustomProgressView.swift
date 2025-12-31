@@ -10,9 +10,10 @@ import SwiftUI
 struct CustomProgressView: View {
     @Environment(\.colorScheme) var colorScheme
     @State private var isAnimating: Bool = false
+    var maxNum: Int
 
     var body: some View {
-        ForEach(0..<3, id: \.self) { number in
+        ForEach(0..<maxNum, id: \.self) { number in
             VStack {
                 RoundedRectangle(cornerRadius: 8)
                     .fill(colorScheme == .dark ? Color.white.opacity(isAnimating ? 0.3 : 0.1) : Color.gray.opacity(isAnimating ? 0.3 : 0.1))
@@ -34,5 +35,5 @@ struct CustomProgressView: View {
 }
 
 #Preview {
-    CustomProgressView()
+    CustomProgressView(maxNum: 3)
 }

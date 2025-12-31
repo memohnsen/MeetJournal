@@ -538,6 +538,13 @@ struct HistorySection: View {
                     .padding(.horizontal)
                 
                 Spacer()
+                
+                NavigationLink(destination: HistoryView()){
+                    Text("VIEW ALL")
+                        .foregroundStyle(.blue)
+                        .bold()
+                        .padding(.horizontal)
+                }
             }
             
             if !checkins.isEmpty {
@@ -571,7 +578,7 @@ struct HistorySection: View {
                     }
                 }
             } else {
-                CustomProgressView()
+                CustomProgressView(maxNum: 3)
             }
         }
         .padding([.top, .horizontal])

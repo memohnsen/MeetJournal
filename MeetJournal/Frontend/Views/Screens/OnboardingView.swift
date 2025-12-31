@@ -10,11 +10,9 @@ import Clerk
 import RevenueCatUI
 
 struct OnboardingView: View {
-    @State private var pageCounter: Int = 1
+    @State private var pageCounter: Int = 8
     @Bindable var onboardingData: OnboardingData
 
-    
-    
     var body: some View {
         if pageCounter == 1 {
             OnboardingPageSection(
@@ -79,10 +77,13 @@ struct OnboardingView: View {
             )
         } else if pageCounter == 7 {
             TrainingDaysSection(
+                pageCounter: $pageCounter,
                 onboardingData: onboardingData,
                 trainingDays: $onboardingData.trainingDays,
                 buttonText: "Lets get started!"
             )
+        } else if pageCounter == 8 {
+            CustomizingSection()
         }
     }
 }
@@ -296,8 +297,8 @@ struct SportingInfoSection: View {
 }
 
 struct TrainingDaysSection: View {
-    @AppStorage("hasSeenOnboarding") var hasSeenOnboarding: Bool = false
     @Environment(\.colorScheme) var colorScheme
+    @Binding var pageCounter: Int
     
     @State private var showingTimePicker: String? = nil
     
@@ -444,13 +445,100 @@ struct TrainingDaysSection: View {
                     .padding(.bottom, 30)
                     .disabled(!isDisabled)
                     .onTapGesture {
-                        AnalyticsManager.shared.trackOnboardingCompleted()
-                        hasSeenOnboarding = true
+                        pageCounter += 1
                     }
                 }
             }
             .navigationTitle("Building Your Profile")
             .navigationBarTitleDisplayMode(.inline)
+        }
+    }
+}
+
+struct CustomizingSection: View {
+    @Environment(\.colorScheme) var colorScheme
+    @AppStorage("hasSeenOnboarding") var hasSeenOnboarding: Bool = false
+    @State private var progress: CGFloat = 0.0
+    @State private var showCheckmark: Bool = false
+    
+    var body: some View {
+        NavigationStack{
+            ZStack{
+                BackgroundColor()
+                
+                VStack(spacing: 32) {
+                    VStack(spacing: 16) {
+                        Image(systemName: "sparkles")
+                            .font(.system(size: 60))
+                            .foregroundStyle(blueEnergy)
+                            .symbolEffect(.pulse, options: .repeating)
+                        
+                        Text("Customizing Your Experience")
+                            .font(.system(size: 28, weight: .bold))
+                            .multilineTextAlignment(.center)
+                        
+                        Text("We're setting up your personalized journal based on your preferences")
+                            .font(.system(size: 16))
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal)
+                    }
+                    
+                    VStack(spacing: 12) {
+                        GeometryReader { geometry in
+                            ZStack(alignment: .leading) {
+                                RoundedRectangle(cornerRadius: 12) 
+                                    .fill(colorScheme == .light ? Color.gray.opacity(0.15) : Color.gray.opacity(0.3))
+                                    .frame(height: 40)
+                                
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(
+                                        LinearGradient(
+                                            gradient: Gradient(colors: [blueEnergy, blueEnergy.opacity(0.8)]),
+                                            startPoint: .leading,
+                                            endPoint: .trailing
+                                        )
+                                    )
+                                    .frame(width: max(0, geometry.size.width * progress), height: 40)
+                                    .overlay(
+                                        HStack {
+                                            Spacer()
+                                            if progress > 0.1 {
+                                                Image(systemName: "checkmark.circle.fill")
+                                                    .foregroundStyle(.white)
+                                                    .font(.system(size: 16))
+                                                    .opacity(showCheckmark ? 1 : 0)
+                                                    .animation(.easeIn(duration: 0.3).delay(2.7), value: showCheckmark)
+                                            }
+                                        }
+                                        .padding(.trailing, 12)
+                                    )
+                            }
+                        }
+                        .frame(height: 40)
+                        
+                        HStack {
+                            Text("\(Int(progress * 100))%")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundStyle(blueEnergy)
+                            Spacer()
+                        }
+                    }
+                    .padding(.horizontal, 8)
+                }
+                .cardStyling()
+            }
+            .navigationTitle("Setting Up")
+            .navigationBarTitleDisplayMode(.inline)
+            .task {
+                try? await Task.sleep(nanoseconds: 100_000_000) 
+                withAnimation(.linear(duration: 3.0)) {
+                    progress = 1.0
+                }
+                showCheckmark = true
+                AnalyticsManager.shared.trackOnboardingCompleted()
+                hasSeenOnboarding = true
+            }
         }
     }
 }

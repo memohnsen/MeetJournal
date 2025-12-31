@@ -16,7 +16,7 @@ class OnboardingData {
     var yearsExperience: Int = 3
     var meetsPerYear: Int = 2
     var goal: String = ""
-    var biggestStruggle: String = "Confidence"
+    var biggestStruggle: String = ""
     var trainingDays: [String: String] = [:]
     var nextComp: String = ""
     var nextCompDate: Date = Date.now

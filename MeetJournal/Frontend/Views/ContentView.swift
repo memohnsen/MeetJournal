@@ -74,16 +74,16 @@ struct ContentView: View {
     
     private var mainTabView: some View {
         TabView(selection: $selectedTab) {
-            Tab("Home", systemImage: "house", value: "Home") {
+            Tab("", systemImage: "house", value: "Home") {
                 HomeView(onboardingData: onboardingData)
             }
-            Tab("History", systemImage: "clock.arrow.trianglehead.counterclockwise.rotate.90", value: "History") {
-                HistoryView()
+            Tab("", systemImage: "brain", value: "Exercises") {
+                MentalExercisesView()
             }
-            Tab("Trends", systemImage: "chart.bar", value: "Trends") {
+            Tab("", systemImage: "chart.bar", value: "Trends") {
                 TrendsView()
             }
-            Tab("Settings", systemImage: "gearshape", value: "Settings") {
+            Tab("", systemImage: "gearshape", value: "Settings") {
                 SettingsView()
             }
         }
