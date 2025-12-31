@@ -24,6 +24,8 @@ struct SettingsView: View {
     @State private var userViewModel = UsersViewModel()
     var users: [Users] { userViewModel.users }
     
+    @State private var showCoachEmailSheet: Bool = false
+    
     let device = UIDevice.current
     
     let recipient: String = "maddisen@meetcal.app"
@@ -111,7 +113,7 @@ struct SettingsView: View {
                         .cardStyling()
                         
                         Button {
-                            
+                            showCoachEmailSheet = true
                         } label: {
                             HStack {
                                 Text("Auto-Send Results")
@@ -220,6 +222,18 @@ struct SettingsView: View {
                     ShareSheet(items: [fileURL])
                 }
             }
+            .sheet(isPresented: $showCoachEmailSheet) {
+                CoachEmailSheet(
+                    coachEmail: users.first?.coach_email ?? "",
+                    onSave: { email in
+                        showCoachEmailSheet = false
+                    },
+                    onCancel: {
+                        showCoachEmailSheet = false
+                    }
+                )
+                .presentationDetents([.fraction(0.65)])
+            }
             .task {
                 await userViewModel.fetchUsers(user_id: clerk.user?.id ?? "")
                 AnalyticsManager.shared.trackScreenView("SettingsView")
@@ -229,6 +243,194 @@ struct SettingsView: View {
             } message: {
                 Text("All your data has been deleted from the database.")
             }
+        }
+    }
+}
+
+struct CoachEmailSheet: View {
+    @Environment(\.colorScheme) var colorScheme
+    @State private var emailText: String
+    @State private var showError: Bool = false
+    @State private var errorMessage: String = ""
+    
+    let onSave: (String) -> Void
+    let onCancel: () -> Void
+    
+    init(coachEmail: String, onSave: @escaping (String) -> Void, onCancel: @escaping () -> Void) {
+        _emailText = State(initialValue: coachEmail)
+        self.onSave = onSave
+        self.onCancel = onCancel
+    }
+    
+    private var textColor: Color {
+        colorScheme == .light ? .black : .white
+    }
+    
+    private var textColorSecondary: Color {
+        colorScheme == .light ? .black.opacity(0.8) : .white.opacity(0.8)
+    }
+    
+    private var fieldBackground: Color {
+        colorScheme == .light ? Color.white.opacity(0.6) : Color.black.opacity(0.2)
+    }
+    
+    private var noticeBackground: Color {
+        colorScheme == .light ? Color.orange.opacity(0.1) : Color.orange.opacity(0.2)
+    }
+    
+    private func isValidEmail(_ email: String) -> Bool {
+        let emailRegex = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,64}"
+        let emailPredicate = NSPredicate(format: "SELF MATCHES %@", emailRegex)
+        return emailPredicate.evaluate(with: email)
+    }
+    
+    private func handleSave() {
+        let trimmedEmail = emailText.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        if trimmedEmail.isEmpty {
+            onSave("")
+            return
+        }
+        
+        if !isValidEmail(trimmedEmail) {
+            showError = true
+            errorMessage = "Please enter a valid email address"
+            return
+        }
+        
+        onSave(trimmedEmail)
+    }
+    
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                BackgroundColor()
+                
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 24) {
+                        emailInputSection
+                        privacyNoticeSection
+                        Spacer()
+                    }
+                    .padding(.top)
+                }
+            }
+            .navigationTitle("Auto-Send Results")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel", role: .cancel) {
+                        showError = false
+                        onCancel()
+                    }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    if #available(iOS 26.0, *) {
+                        Button("Save", role: .confirm) {
+                            showError = false
+                            handleSave()
+                        }
+                        .fontWeight(.semibold)
+                    } else {
+                        Button("Save") {
+                            showError = false
+                            handleSave()
+                        }
+                        .fontWeight(.semibold)
+                    }
+                }
+            }
+        }
+    }
+    
+    private var emailInputSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Coach Email Address")
+                .font(.headline.bold())
+                .foregroundStyle(textColor)
+            
+            TextField("coach@example.com", text: $emailText)
+                .textContentType(.emailAddress)
+                .keyboardType(.emailAddress)
+                .autocapitalization(.none)
+                .autocorrectionDisabled()
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(fieldBackground)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(showError ? Color.red : Color.clear, lineWidth: 1)
+                )
+            
+            if showError {
+                Text(errorMessage)
+                    .font(.caption)
+                    .foregroundStyle(.red)
+            }
+        }
+        .padding(.horizontal)
+    }
+    
+    private var privacyNoticeSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundStyle(.orange)
+                Text("Privacy Notice")
+                    .font(.headline.bold())
+                    .foregroundStyle(textColor)
+            }
+            
+            Text("By entering a coach email address, you acknowledge and accept that:")
+                .font(.subheadline)
+                .foregroundStyle(textColorSecondary)
+            
+            privacyBulletPoints
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(noticeBackground)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(Color.orange.opacity(0.3), lineWidth: 1)
+                )
+        )
+        .padding(.horizontal)
+    }
+    
+    private var privacyBulletPoints: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            PrivacyBulletPoint(
+                text: "Your private performance data (check-ins, competition reports, and session reports) will be automatically shared with the email address you provide.",
+                textColor: textColorSecondary
+            )
+            
+            PrivacyBulletPoint(
+                text: "Data will be sent weekly every Sunday via email.",
+                textColor: textColorSecondary
+            )
+            
+            PrivacyBulletPoint(
+                text: "You are responsible for ensuring the email address is correct and that the recipient is authorized to receive your data.",
+                textColor: textColorSecondary
+            )
+        }
+    }
+}
+
+struct PrivacyBulletPoint: View {
+    let text: String
+    let textColor: Color
+    
+    var body: some View {
+        HStack(alignment: .top, spacing: 8) {
+            Text("•")
+            Text(text)
+                .font(.subheadline)
+                .foregroundStyle(textColor)
         }
     }
 }

@@ -20,6 +20,7 @@ struct Users: Codable, Identifiable, Hashable {
     var training_days: [String: String]
     var next_competition: String
     var next_competition_date: String
+    var coach_email: String?
 }
 
 struct Sport: Codable, Hashable {
