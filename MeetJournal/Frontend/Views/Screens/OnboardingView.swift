@@ -10,7 +10,7 @@ import Clerk
 import RevenueCatUI
 
 struct OnboardingView: View {
-    @State private var pageCounter: Int = 8
+    @State private var pageCounter: Int = 5
     @Bindable var onboardingData: OnboardingData
 
     var body: some View {
@@ -54,8 +54,17 @@ struct OnboardingView: View {
                 message: "Post-competition reflections help you process the wins and losses, building bulletproof confidence for your next meet.",
                 buttonText: "Let's Do It"
             )
+        } else if pageCounter == 5 {
+            PainPointDiscoverySection(
+                pageCounter: $pageCounter,
+                currentTrackingMethod: $onboardingData.currentTrackingMethod,
+                biggestFrustration: $onboardingData.biggestFrustration,
+                reflectionFrequency: $onboardingData.reflectionFrequency,
+                whatHoldingBack: $onboardingData.whatHoldingBack,
+                buttonText: "Continue"
+            )
         }
-        else if pageCounter == 5 {
+        else if pageCounter == 6 {
             UserInfoSection(
                 pageCounter: $pageCounter,
                 firstName: $onboardingData.firstName,
@@ -65,7 +74,7 @@ struct OnboardingView: View {
                 meetsPerYear: $onboardingData.meetsPerYear,
                 buttonText: "Next"
             )
-        } else if pageCounter == 6 {
+        } else if pageCounter == 7 {
             SportingInfoSection(
                 pageCounter: $pageCounter,
                 goal: $onboardingData.goal,
@@ -75,14 +84,14 @@ struct OnboardingView: View {
                 buttonText: "Next",
                 sport: $onboardingData.sport
             )
-        } else if pageCounter == 7 {
+        } else if pageCounter == 8 {
             TrainingDaysSection(
                 pageCounter: $pageCounter,
                 onboardingData: onboardingData,
                 trainingDays: $onboardingData.trainingDays,
                 buttonText: "Lets get started!"
             )
-        } else if pageCounter == 8 {
+        } else if pageCounter == 9 {
             CustomizingSection()
         }
     }
@@ -450,6 +459,104 @@ struct TrainingDaysSection: View {
                 }
             }
             .navigationTitle("Building Your Profile")
+            .navigationBarTitleDisplayMode(.inline)
+        }
+    }
+}
+
+struct PainPointDiscoverySection: View {
+    @Environment(\.colorScheme) var colorScheme
+    @Binding var pageCounter: Int
+    @Binding var currentTrackingMethod: String
+    @Binding var biggestFrustration: String
+    @Binding var reflectionFrequency: String
+    @Binding var whatHoldingBack: String
+    var buttonText: String
+    
+    let mentalBlockOptions: [String] = [
+        "I just push through it",
+        "Talk to my coach",
+        "Take a break",
+        "Journal or write about it",
+        "Use breathing techniques",
+        "I don't have a strategy"
+    ]
+    
+    let reflectionOptions: [String] = [
+        "Never",
+        "Rarely",
+        "Sometimes",
+        "Often",
+        "After every session"
+    ]
+    
+    var isDisabled: Bool {
+        if currentTrackingMethod.isEmpty || biggestFrustration.isEmpty || reflectionFrequency.isEmpty || whatHoldingBack.isEmpty {
+            return false
+        }
+        return true
+    }
+    
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                BackgroundColor()
+                
+                ScrollView {
+                    VStack(spacing: 16) {
+                        Text("These questions help us personalize your experience")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .padding(.bottom, 16)
+                        
+                        MultipleChoiceSection(
+                            colorScheme: colorScheme,
+                            title: "How do you currently work through mental blocks?",
+                            arrayOptions: mentalBlockOptions,
+                            selected: $currentTrackingMethod
+                        )
+                        
+                        TextFieldSection(
+                            field: $biggestFrustration,
+                            title: "What's been your biggest frustration with training lately?",
+                            colorScheme: colorScheme,
+                            keyword: "frustration"
+                        )
+                        
+                        MultipleChoiceSection(
+                            colorScheme: colorScheme,
+                            title: "How often do you reflect on your training sessions?",
+                            arrayOptions: reflectionOptions,
+                            selected: $reflectionFrequency
+                        )
+                        
+                        TextFieldSection(
+                            field: $whatHoldingBack,
+                            title: "What do you think is holding you back from your best performance?",
+                            colorScheme: colorScheme,
+                            keyword: "barrier"
+                        )
+                    }
+                    
+                    HStack {
+                        Text(buttonText)
+                    }
+                    .padding()
+                    .font(.system(size: 20))
+                    .frame(maxWidth: .infinity)
+                    .background(!isDisabled ? .gray : .blue)
+                    .foregroundStyle(.white)
+                    .bold()
+                    .clipShape(.rect(cornerRadius: 12))
+                    .padding(.horizontal)
+                    .padding(.bottom, 30)
+                    .disabled(!isDisabled)
+                    .onTapGesture {
+                        pageCounter += 1
+                    }
+                }
+            }
+            .navigationTitle("Understanding You")
             .navigationBarTitleDisplayMode(.inline)
         }
     }

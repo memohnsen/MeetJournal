@@ -34,14 +34,14 @@ struct CheckInView: View {
                     
                     MultipleChoiceSection(
                         colorScheme: colorScheme,
-                        title: "What's the main focus?",
+                        title: "What's the main movement for the session?",
                         arrayOptions: liftOptions,
                         selected: $selectedLift
                     )
                     
                     MultipleChoiceSection(
                         colorScheme: colorScheme,
-                        title: "What's the intensity?",
+                        title: "What's the intensity for the session?",
                         arrayOptions: intensityOptions,
                         selected: $selectedIntensity
                     )
@@ -55,18 +55,8 @@ struct CheckInView: View {
                     
                     SliderSection(
                         colorScheme: colorScheme,
-                        title: "How physically strong do you feel?",
+                        title: "How strong does your body feel?",
                         value: $checkInScore.physicalStrength,
-                        minString: "Weak",
-                        maxString: "Strong",
-                        minValue: 1,
-                        maxValue: 5
-                    )
-                    
-                    SliderSection(
-                        colorScheme: colorScheme,
-                        title: "How mentally strong do you feel?",
-                        value: $checkInScore.mentalStrength,
                         minString: "Weak",
                         maxString: "Strong",
                         minValue: 1,
@@ -85,6 +75,46 @@ struct CheckInView: View {
                     
                     SliderSection(
                         colorScheme: colorScheme,
+                        title: "How energized do you feel?",
+                        value: $checkInScore.energy,
+                        minString: "Low",
+                        maxString: "High",
+                        minValue: 1,
+                        maxValue: 5
+                    )
+                    
+                    SliderSection(
+                        colorScheme: colorScheme,
+                        title: "How sore does your body feel?",
+                        value: $checkInScore.soreness,
+                        minString: "None",
+                        maxString: "Extreme",
+                        minValue: 1,
+                        maxValue: 5
+                    )
+                    
+                    SliderSection(
+                        colorScheme: colorScheme,
+                        title: "How connected do you feel to your body?",
+                        value: $checkInScore.bodyConnection,
+                        minString: "Disconnected",
+                        maxString: "Very Connected",
+                        minValue: 1,
+                        maxValue: 5
+                    )
+                    
+                    SliderSection(
+                        colorScheme: colorScheme,
+                        title: "How strong does your mind feel?",
+                        value: $checkInScore.mentalStrength,
+                        minString: "Weak",
+                        maxString: "Strong",
+                        minValue: 1,
+                        maxValue: 5
+                    )
+                    
+                    SliderSection(
+                        colorScheme: colorScheme,
                         title: "How confident do you feel?",
                         value: $checkInScore.confidence,
                         minString: "Not At All",
@@ -95,27 +125,17 @@ struct CheckInView: View {
                     
                     SliderSection(
                         colorScheme: colorScheme,
-                        title: "Rate last night's sleep",
-                        value: $checkInScore.sleep,
-                        minString: "Poor",
-                        maxString: "Great",
+                        title: "How focused do you feel?",
+                        value: $checkInScore.focus,
+                        minString: "Distracted",
+                        maxString: "Very Focused",
                         minValue: 1,
                         maxValue: 5
                     )
                     
                     SliderSection(
                         colorScheme: colorScheme,
-                        title: "Rate your energy",
-                        value: $checkInScore.energy,
-                        minString: "Low",
-                        maxString: "High",
-                        minValue: 1,
-                        maxValue: 5
-                    )
-                    
-                    SliderSection(
-                        colorScheme: colorScheme,
-                        title: "Rate your stress",
+                        title: "How stressed do you feel?",
                         value: $checkInScore.stress,
                         minString: "Extreme",
                         maxString: "Relaxed",
@@ -125,12 +145,39 @@ struct CheckInView: View {
                     
                     SliderSection(
                         colorScheme: colorScheme,
-                        title: "Rate your soreness",
-                        value: $checkInScore.soreness,
-                        minString: "None",
-                        maxString: "Extreme",
+                        title: "How ready do you feel to train?",
+                        value: $checkInScore.readiness,
+                        minString: "Not Ready",
+                        maxString: "Very Ready",
                         minValue: 1,
                         maxValue: 5
+                    )
+                    
+                    SliderSection(
+                        colorScheme: colorScheme,
+                        title: "How excited do you feel about today's session?",
+                        value: $checkInScore.excitement,
+                        minString: "Not Excited",
+                        maxString: "Very Excited",
+                        minValue: 1,
+                        maxValue: 5
+                    )
+                    
+                    SliderSection(
+                        colorScheme: colorScheme,
+                        title: "Rate last night's sleep quality",
+                        value: $checkInScore.sleep,
+                        minString: "Poor",
+                        maxString: "Great",
+                        minValue: 1,
+                        maxValue: 5
+                    )
+                    
+                    TextFieldSection(
+                        field: $checkInScore.concerns,
+                        title: "What concerns or worries do you have going into today's session?",
+                        colorScheme: colorScheme,
+                        keyword: "concerns"
                     )
                     
                     Button {

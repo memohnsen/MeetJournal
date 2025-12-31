@@ -20,6 +20,10 @@ struct Users: Codable, Identifiable, Hashable {
     var training_days: [String: String]
     var next_competition: String
     var next_competition_date: String
+    var current_tracking_method: String
+    var biggest_frustration: String
+    var reflection_frequency: String
+    var what_holding_back: String
     var coach_email: String?
 }
 

@@ -23,6 +23,10 @@ struct WorkoutReflectionView: View {
     @State private var misses: String = ""
     @State private var cues: String = ""
     @State private var feeling: Int = 3
+    @State private var satisfaction: Int = 3
+    @State private var confidence: Int = 3
+    @State private var whatLearned: String = ""
+    @State private var whatWouldChange: String = ""
     
     @State private var selectedLift: String = ""
     @State private var selectedIntensity: String = ""
@@ -57,6 +61,7 @@ struct WorkoutReflectionView: View {
                 BackgroundColor()
                 
                 ScrollView {
+                    // Session Details
                     DatePickerSection(title: "Session Date:", selectedDate: $sessionDate)
                     
                     MultipleChoiceSection(colorScheme: colorScheme, title: "What time of day did you train?", arrayOptions: timesOfDay, selected: $timeOfDay)
@@ -64,14 +69,14 @@ struct WorkoutReflectionView: View {
                     if userSport == "Olympic Weightlifting" {
                         MultipleChoiceSection(
                             colorScheme: colorScheme,
-                            title: "What was the main focus?",
+                            title: "What was the main movement for the session?",
                             arrayOptions: liftOptionsWL,
                             selected: $selectedLift
                         )
                     } else {
                         MultipleChoiceSection(
                             colorScheme: colorScheme,
-                            title: "What was the main focus?",
+                            title: "What was the main movement for the session?",
                             arrayOptions: liftOptionsPL,
                             selected: $selectedLift
                         )
@@ -79,25 +84,33 @@ struct WorkoutReflectionView: View {
                     
                     MultipleChoiceSection(
                         colorScheme: colorScheme,
-                        title: "What's the intensity?",
+                        title: "What was the intensity for the session?",
                         arrayOptions: intensityOptions,
                         selected: $selectedIntensity
                     )
                     
-                    SliderSection(colorScheme: colorScheme, title: "How hard was this session?", value: $sessionRPE, minString: "Easy", maxString: "Almost Died", minValue: 1, maxValue: 5)
+                    SliderSection(colorScheme: colorScheme, title: "How hard did this session feel?", value: $sessionRPE, minString: "Easy", maxString: "Almost Died", minValue: 1, maxValue: 5)
                     
-                    SliderSection(colorScheme: colorScheme, title: "How was your movement quality?", value: $movementQuality, minString: "Poor", maxString: "Excellent", minValue: 1, maxValue: 5)
+                    SliderSection(colorScheme: colorScheme, title: "How did your movement quality feel?", value: $movementQuality, minString: "Poor", maxString: "Excellent", minValue: 1, maxValue: 5)
                     
-                    SliderSection(colorScheme: colorScheme, title: "How was your focus?", value: $focus, minString: "Distracted", maxString: "Locked In", minValue: 1, maxValue: 5)
+                    SliderSection(colorScheme: colorScheme, title: "How was your focus during the session?", value: $focus, minString: "Distracted", maxString: "Locked In", minValue: 1, maxValue: 5)
                     
                     MultipleChoiceSection(colorScheme: colorScheme, title: "How many lifts did you miss?", arrayOptions: missQuantity, selected: $misses)
                     
                     TextFieldSection(field: $cues, title: "What cues made a difference?", colorScheme: colorScheme, keyword: "cues")
                     
-                    SliderSection(colorScheme: colorScheme, title: "How is your body feeling?", value: $feeling, minString: "Beat Up", maxString: "Amazing", minValue: 1, maxValue: 5)
+                    SliderSection(colorScheme: colorScheme, title: "How does your body feel now?", value: $feeling, minString: "Beat Up", maxString: "Amazing", minValue: 1, maxValue: 5)
+                    
+                    SliderSection(colorScheme: colorScheme, title: "How satisfied do you feel with this session?", value: $satisfaction, minString: "Not Satisfied", maxString: "Very Satisfied", minValue: 1, maxValue: 5)
+                    
+                    SliderSection(colorScheme: colorScheme, title: "How confident do you feel after this session?", value: $confidence, minString: "Not Confident", maxString: "Very Confident", minValue: 1, maxValue: 5)
+                    
+                    TextFieldSection(field: $whatLearned, title: "Did you learn anything about yourself during this session?", colorScheme: colorScheme, keyword: "learning")
+                    
+                    TextFieldSection(field: $whatWouldChange, title: "Would you do anything differently next time?", colorScheme: colorScheme, keyword: "improvement")
                     
                     Button {
-                        let report: SessionReport = SessionReport(user_id: clerk.user?.id ?? "", session_date: sessionDate.formatted(.iso8601.year().month().day().dateSeparator(.dash)), time_of_day: timeOfDay, session_rpe: sessionRPE, movement_quality: movementQuality, focus: focus, misses: misses, cues: cues, feeling: feeling, selected_lift: selectedLift, selected_intensity: selectedIntensity, created_at: iso8601String)
+                        let report: SessionReport = SessionReport(user_id: clerk.user?.id ?? "", session_date: sessionDate.formatted(.iso8601.year().month().day().dateSeparator(.dash)), time_of_day: timeOfDay, session_rpe: sessionRPE, movement_quality: movementQuality, focus: focus, misses: misses, cues: cues, feeling: feeling, satisfaction: satisfaction, confidence: confidence, what_learned: whatLearned, what_would_change: whatWouldChange, selected_lift: selectedLift, selected_intensity: selectedIntensity, created_at: iso8601String)
                         
                         Task {
                             await viewModel.submitSessionReport(sessionReport: report)

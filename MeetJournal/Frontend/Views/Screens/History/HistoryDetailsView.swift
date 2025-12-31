@@ -51,6 +51,14 @@ struct HistoryDetailsView: View {
                 
                     Cues that helped: \(comp.first?.cues ?? "")
                 
+                    Satisfaction: \(comp.first?.satisfaction ?? 0)/5
+                    Confidence: \(comp.first?.confidence ?? 0)/5
+                    Pressure Handling: \(comp.first?.pressure_handling ?? 0)/5
+                
+                    What I learned about myself: \(comp.first?.what_learned ?? "")
+                
+                    What I'm most proud of: \(comp.first?.what_proud_of ?? "")
+                
                     What I need to focus on next meet: \(comp.first?.focus ?? "")
                 
                     Powered By MeetJournal
@@ -79,6 +87,14 @@ struct HistoryDetailsView: View {
                 
                     Cues that helped: \(comp.first?.cues ?? "")
                 
+                    Satisfaction: \(comp.first?.satisfaction ?? 0)/5
+                    Confidence: \(comp.first?.confidence ?? 0)/5
+                    Pressure Handling: \(comp.first?.pressure_handling ?? 0)/5
+                
+                    What I learned about myself: \(comp.first?.what_learned ?? "")
+                
+                    What I'm most proud of: \(comp.first?.what_proud_of ?? "")
+                
                     What I need to focus on next meet: \(comp.first?.focus ?? "")
                 
                     Powered By MeetJournal
@@ -97,6 +113,11 @@ struct HistoryDetailsView: View {
                 Helpful Cues: \(session.first?.cues ?? "")
             
                 My body is feeling: \(session.first?.feeling ?? 0)/5
+                Satisfaction: \(session.first?.satisfaction ?? 0)/5
+                Confidence: \(session.first?.confidence ?? 0)/5
+            
+                What I learned: \(session.first?.what_learned ?? "")
+                What I would do differently: \(session.first?.what_would_change ?? "")
             
                 Powered By MeetJournal
             """
@@ -116,8 +137,13 @@ struct HistoryDetailsView: View {
                 Energy Rating: \(checkin.first?.energy ?? 0)/5
                 Stress Rating: \(checkin.first?.stress ?? 0)/5
                 Soreness Rating: \(checkin.first?.soreness ?? 0)/5
+                Readiness: \(checkin.first?.readiness ?? 0)/5
+                Focus: \(checkin.first?.focus ?? 0)/5
+                Excitement: \(checkin.first?.excitement ?? 0)/5
+                Body Connection: \(checkin.first?.body_connection ?? 0)/5
             
                 Daily Goal: \(checkin.first?.goal ?? "")
+                Concerns: \(checkin.first?.concerns ?? "")
             
                 Powered By MeetJournal
             """
@@ -372,6 +398,16 @@ struct CompDisplaySection: View {
 
         TextDisplaySection(title: "What cues worked best for you?", value: "\(comp.first?.cues ?? "")")
         
+        RatingDisplaySection(title: "How satisfied do you feel with this meet?", value: "\(comp.first?.satisfaction ?? 0)")
+        
+        RatingDisplaySection(title: "How confident do you feel after this meet?", value: "\(comp.first?.confidence ?? 0)")
+        
+        RatingDisplaySection(title: "How did you handle pressure during the meet?", value: "\(comp.first?.pressure_handling ?? 0)")
+        
+        TextDisplaySection(title: "What did you learn about yourself during this meet?", value: "\(comp.first?.what_learned ?? "")")
+        
+        TextDisplaySection(title: "What are you most proud of from this meet?", value: "\(comp.first?.what_proud_of ?? "")")
+        
         TextDisplaySection(title: "What do you need to focus on for the next meet?", value: "\(comp.first?.focus ?? "")")
             .padding(.bottom, 30)
     }
@@ -383,17 +419,25 @@ struct SessionDisplaySection: View {
     var body: some View {
         TextDisplaySection(title: "Time of day you trained", value: "\(session.first?.time_of_day ?? "")")
         
-        RatingDisplaySection(title: "How hard was this session?", value: "\(session.first?.session_rpe ?? 0)")
+        RatingDisplaySection(title: "How hard did this session feel?", value: "\(session.first?.session_rpe ?? 0)")
         
-        RatingDisplaySection(title: "How was your movement quality?", value: "\(session.first?.movement_quality ?? 0)")
+        RatingDisplaySection(title: "How did your movement quality feel?", value: "\(session.first?.movement_quality ?? 0)")
 
-        RatingDisplaySection(title: "How was your focus?", value: "\(session.first?.focus ?? 0)")
+        RatingDisplaySection(title: "How was your focus during the session?", value: "\(session.first?.focus ?? 0)")
 
         RatingDisplaySection(title: "How many lifts did you miss?", value: "\(session.first?.misses ?? "")")
 
         TextDisplaySection(title: "What cues made a difference?", value: "\(session.first?.cues ?? "")")
 
-        RatingDisplaySection(title: "How is your body feeling?", value: "\(session.first?.feeling ?? 0)")
+        RatingDisplaySection(title: "How does your body feel now?", value: "\(session.first?.feeling ?? 0)")
+        
+        RatingDisplaySection(title: "How satisfied do you feel with this session?", value: "\(session.first?.satisfaction ?? 0)")
+        
+        RatingDisplaySection(title: "How confident do you feel after this session?", value: "\(session.first?.confidence ?? 0)")
+        
+        TextDisplaySection(title: "Did you learn anything about yourself during this session?", value: "\(session.first?.what_learned ?? "")")
+        
+        TextDisplaySection(title: "Would you do anything differently next time?", value: "\(session.first?.what_would_change ?? "")")
             .padding(.bottom, 30)
     }
 }
@@ -410,21 +454,31 @@ struct CheckInDisplaySection: View {
         
         TextDisplaySection(title: "What would make today feel like a successful session for you?", value: "\(checkin.first?.goal ?? "")")
 
-        RatingDisplaySection(title: "How physically strong do you feel?", value: "\(checkin.first?.physical_strength ?? 0)")
+        RatingDisplaySection(title: "How strong does your body feel?", value: "\(checkin.first?.physical_strength ?? 0)")
         
-        RatingDisplaySection(title: "How mentally strong do you feel?", value: "\(checkin.first?.mental_strength ?? 0)")
+        RatingDisplaySection(title: "How strong does your mind feel?", value: "\(checkin.first?.mental_strength ?? 0)")
         
         RatingDisplaySection(title: "How recovered do you feel?", value: "\(checkin.first?.recovered ?? 0)")
         
         RatingDisplaySection(title: "How confident do you feel?", value: "\(checkin.first?.confidence ?? 0)")
 
-        RatingDisplaySection(title: "Rate last night's sleep", value: "\(checkin.first?.sleep ?? 0)")
+        RatingDisplaySection(title: "Rate last night's sleep quality", value: "\(checkin.first?.sleep ?? 0)")
         
-        RatingDisplaySection(title: "Rate your energy", value: "\(checkin.first?.energy ?? 0)")
+        RatingDisplaySection(title: "How energized do you feel?", value: "\(checkin.first?.energy ?? 0)")
         
-        RatingDisplaySection(title: "Rate your stress", value: "\(checkin.first?.stress ?? 0)")
+        RatingDisplaySection(title: "How stressed do you feel?", value: "\(checkin.first?.stress ?? 0)")
         
-        RatingDisplaySection(title: "Rate your soreness", value: "\(checkin.first?.soreness ?? 0)")
+        RatingDisplaySection(title: "How sore does your body feel?", value: "\(checkin.first?.soreness ?? 0)")
+        
+        RatingDisplaySection(title: "How ready do you feel to train?", value: "\(checkin.first?.readiness ?? 0)")
+        
+        RatingDisplaySection(title: "How focused do you feel?", value: "\(checkin.first?.focus ?? 0)")
+        
+        RatingDisplaySection(title: "How excited do you feel about today's session?", value: "\(checkin.first?.excitement ?? 0)")
+        
+        RatingDisplaySection(title: "How connected do you feel to your body?", value: "\(checkin.first?.body_connection ?? 0)")
+        
+        TextDisplaySection(title: "What concerns or worries do you have going into today's session?", value: "\(checkin.first?.concerns ?? "")")
             .padding(.bottom, 30)
     }
 }

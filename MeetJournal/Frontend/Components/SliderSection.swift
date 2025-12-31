@@ -46,6 +46,8 @@ struct SliderSection: View {
         VStack(spacing: 20) {
             Text(title)
                 .font(.headline.bold())
+                .padding(.horizontal)
+                .multilineTextAlignment(.center)
             
             Text("\(value)")
                 .font(.system(size: 48, weight: .bold))

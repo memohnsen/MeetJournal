@@ -24,6 +24,11 @@ struct CompReport: Codable, Hashable {
     var good_from_training: String
     var cues: String
     var focus: String
+    var satisfaction: Int
+    var confidence: Int
+    var pressure_handling: Int
+    var what_learned: String
+    var what_proud_of: String
     var snatch1: String?
     var snatch2: String?
     var snatch3: String?

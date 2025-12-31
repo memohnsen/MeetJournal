@@ -20,4 +20,8 @@ class OnboardingData {
     var trainingDays: [String: String] = [:]
     var nextComp: String = ""
     var nextCompDate: Date = Date.now
+    var currentTrackingMethod: String = ""
+    var biggestFrustration: String = ""
+    var reflectionFrequency: String = ""
+    var whatHoldingBack: String = ""
 }

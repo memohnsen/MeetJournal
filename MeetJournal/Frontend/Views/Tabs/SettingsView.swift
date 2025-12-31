@@ -95,6 +95,7 @@ struct SettingsView: View {
                             }
                         }
                         .cardStyling()
+                        .padding(.bottom, -6)
                         
                         Button {
                             isExporting = true
@@ -114,6 +115,7 @@ struct SettingsView: View {
                         }
                         .disabled(isExporting)
                         .cardStyling()
+                        .padding(.bottom, -6)
                         
                         Button {
                             showCoachEmailSheet = true
@@ -125,6 +127,7 @@ struct SettingsView: View {
                             }
                         }
                         .cardStyling()
+                        .padding(.bottom, -6)
                         
                         Button{
                             showCustomerCenter = true
@@ -137,6 +140,7 @@ struct SettingsView: View {
                             }
                         }
                         .cardStyling()
+                        .padding(.bottom, -6)
                         
                         if let url = mailtoUrl {
                             Link(destination: url) {
@@ -146,6 +150,7 @@ struct SettingsView: View {
                                     Image(systemName: "chevron.right")
                                 }
                                 .cardStyling()
+                                .padding(.bottom, -6)
                             }
                         }
                         
@@ -163,6 +168,7 @@ struct SettingsView: View {
                                 Image(systemName: "chevron.right")
                             }
                             .cardStyling()
+                            .padding(.bottom, -6)
                         }
                         .onTapGesture {
                             AnalyticsManager.shared.trackGitHubLinkOpened()
@@ -252,7 +258,6 @@ struct SettingsView: View {
                 Text("Your coach email has been saved. Weekly reports will be sent automatically every Sunday.")
             }
             .alert("Are you sure you want to delete all your data?", isPresented: $alertShown) {
-                Button("Cancel") {}
                 Button("Delete", role: .destructive) {
                     Task {
                         await deleteViewModel.removeAllCheckIns(userId: clerk.user?.id ?? "")
@@ -260,6 +265,7 @@ struct SettingsView: View {
                         await deleteViewModel.removeAllWorkouts(userId: clerk.user?.id ?? "")
                         AnalyticsManager.shared.trackAllDataDeleted()
                     }
+                    alertDeletedShown = true
                 }
             } message: {
                 Text("There is no way to recover this.")

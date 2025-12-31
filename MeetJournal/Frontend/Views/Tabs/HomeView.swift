@@ -243,7 +243,11 @@ struct HomeView: View {
                     biggest_struggle: onboardingData.biggestStruggle,
                     training_days: onboardingData.trainingDays,
                     next_competition: onboardingData.nextComp,
-                    next_competition_date: formattedDate
+                    next_competition_date: formattedDate,
+                    current_tracking_method: onboardingData.currentTrackingMethod,
+                    biggest_frustration: onboardingData.biggestFrustration,
+                    reflection_frequency: onboardingData.reflectionFrequency,
+                    what_holding_back: onboardingData.whatHoldingBack
                 )
                 
                 await userOnboardingViewModel.submitUserProfile(user: newUser)

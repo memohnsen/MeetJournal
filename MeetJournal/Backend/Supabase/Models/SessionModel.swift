@@ -18,6 +18,10 @@ struct SessionReport: Codable, Hashable {
     var misses: String
     var cues: String
     var feeling: Int
+    var satisfaction: Int
+    var confidence: Int
+    var what_learned: String
+    var what_would_change: String
     var selected_lift: String
     var selected_intensity: String
     var created_at: String

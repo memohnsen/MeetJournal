@@ -33,7 +33,8 @@ struct MultipleChoiceSection: View {
         VStack{
             Text(title)
                 .font(.headline.bold())
-                .padding(.bottom)
+                .padding([.bottom, .horizontal])
+                .multilineTextAlignment(.center)
             
             ScrollView(.horizontal) {
                 HStack{

@@ -20,6 +20,11 @@ class CheckInScore {
     var stress: Int = 3
     var soreness: Int = 3
     var goal: String = ""
+    var readiness: Int = 3
+    var focus: Int = 3
+    var excitement: Int = 3
+    var bodyConnection: Int = 3
+    var concerns: String = ""
     
     var physicalScore: Int {
         let overall: Int = physicalStrength + recovered + energy + (5 - soreness)

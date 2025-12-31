@@ -22,6 +22,11 @@ struct DailyCheckIn: Codable, Hashable, Identifiable {
     var energy: Int
     var stress: Int
     var soreness: Int
+    var readiness: Int
+    var focus: Int
+    var excitement: Int
+    var body_connection: Int
+    var concerns: String
     var physical_score: Int
     var mental_score: Int
     var overall_score: Int
