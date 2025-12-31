@@ -1,10 +1,3 @@
-//
-//  AnalyticsManager.swift
-//  MeetJournal
-//
-//  Created by Maddisen Mohnsen on 12/30/25.
-//
-
 import Foundation
 import PostHog
 
@@ -13,12 +6,10 @@ class AnalyticsManager {
 
     private init() {}
 
-    // MARK: - Screen Views
     func trackScreenView(_ screenName: String, properties: [String: Any]? = nil) {
         PostHogSDK.shared.screen(screenName, properties: properties)
     }
 
-    // MARK: - User Authentication
     func trackUserSignedUp(method: String) {
         PostHogSDK.shared.capture("user_signed_up", properties: ["method": method])
     }
@@ -31,7 +22,6 @@ class AnalyticsManager {
         PostHogSDK.shared.capture("user_signed_out")
     }
 
-    // MARK: - Onboarding
     func trackOnboardingStarted() {
         PostHogSDK.shared.capture("onboarding_started")
     }
@@ -47,7 +37,6 @@ class AnalyticsManager {
         ])
     }
 
-    // MARK: - Check-Ins
     func trackCheckInStarted() {
         PostHogSDK.shared.capture("checkin_started")
     }
@@ -72,7 +61,6 @@ class AnalyticsManager {
         ])
     }
 
-    // MARK: - Session Reflections
     func trackSessionReflectionStarted() {
         PostHogSDK.shared.capture("session_reflection_started")
     }
@@ -97,7 +85,6 @@ class AnalyticsManager {
         ])
     }
 
-    // MARK: - Competition Reflections
     func trackCompReflectionStarted() {
         PostHogSDK.shared.capture("comp_reflection_started")
     }
@@ -122,7 +109,6 @@ class AnalyticsManager {
         ])
     }
 
-    // MARK: - History & Browse
     func trackHistoryFilterChanged(filter: String) {
         PostHogSDK.shared.capture("history_filter_changed", properties: [
             "filter": filter
@@ -150,7 +136,6 @@ class AnalyticsManager {
         ])
     }
 
-    // MARK: - Trends
     func trackTrendsFilterChanged(filter: String) {
         PostHogSDK.shared.capture("trends_filter_changed", properties: [
             "filter": filter
@@ -176,7 +161,6 @@ class AnalyticsManager {
         ])
     }
 
-    // MARK: - Tab Navigation
     func trackTabSwitched(fromTab: String, toTab: String) {
         PostHogSDK.shared.capture("tab_switched", properties: [
             "from_tab": fromTab,
@@ -184,7 +168,6 @@ class AnalyticsManager {
         ])
     }
 
-    // MARK: - Meet Management
     func trackMeetUpdated(meetName: String, meetDate: String) {
         PostHogSDK.shared.capture("meet_updated", properties: [
             "meet_name": meetName,
@@ -198,7 +181,6 @@ class AnalyticsManager {
         ])
     }
 
-    // MARK: - Notifications
     func trackNotificationPermissionRequested() {
         PostHogSDK.shared.capture("notification_permission_requested")
     }
@@ -227,7 +209,6 @@ class AnalyticsManager {
         ])
     }
 
-    // MARK: - Settings
     func trackSettingsViewed() {
         PostHogSDK.shared.capture("settings_viewed")
     }
@@ -254,14 +235,12 @@ class AnalyticsManager {
         PostHogSDK.shared.capture("all_data_deleted")
     }
 
-    // MARK: - App Lifecycle
     func trackAppOpened(fromNotification: Bool = false) {
         PostHogSDK.shared.capture("app_opened", properties: [
             "from_notification": fromNotification
         ])
     }
 
-    // MARK: - Monetization
     func trackSubscriptionStarted(tier: String) {
         PostHogSDK.shared.capture("subscription_started", properties: [
             "tier": tier
@@ -280,7 +259,6 @@ class AnalyticsManager {
         PostHogSDK.shared.capture("customer_center_viewed")
     }
 
-    // MARK: - Content Sharing
     func trackContentShared(type: String, method: String) {
         PostHogSDK.shared.capture("content_shared", properties: [
             "type": type,
@@ -288,7 +266,6 @@ class AnalyticsManager {
         ])
     }
 
-    // MARK: - User Properties
     func setUserProperties(_ properties: [String: Any]) {
         PostHogSDK.shared.capture("$set", properties: properties)
     }
@@ -299,5 +276,77 @@ class AnalyticsManager {
 
     func setNotificationEnabled(_ enabled: Bool) {
         setUserProperties(["notification_enabled": enabled])
+    }
+    
+    func trackOpenRouterAPICall(model: String, purpose: String, promptLength: Int, success: Bool, errorMessage: String? = nil) {
+        var properties: [String: Any] = [
+            "model": model,
+            "purpose": purpose,
+            "prompt_length": promptLength,
+            "success": success
+        ]
+        
+        if let error = errorMessage {
+            properties["error_message"] = error
+        }
+        
+        PostHogSDK.shared.capture("openrouter_api_call", properties: properties)
+    }
+    
+    func trackElevenLabsAPICall(voice: String, textLength: Int, audioDuration: Double?, success: Bool, errorMessage: String? = nil) {
+        var properties: [String: Any] = [
+            "voice": voice,
+            "text_length": textLength,
+            "success": success
+        ]
+        
+        if let duration = audioDuration {
+            properties["audio_duration"] = duration
+        }
+        
+        if let error = errorMessage {
+            properties["error_message"] = error
+        }
+        
+        PostHogSDK.shared.capture("elevenlabs_api_call", properties: properties)
+    }
+    
+    func trackVisualizationGenerated(movement: String, cuesLength: Int, voice: String, sport: String, cached: Bool, success: Bool) {
+        PostHogSDK.shared.capture("visualization_generated", properties: [
+            "movement": movement,
+            "cues_length": cuesLength,
+            "voice": voice,
+            "sport": sport,
+            "from_cache": cached,
+            "success": success
+        ])
+    }
+    
+    func trackVisualizationPlayed(movement: String, voice: String, playbackDuration: Double, completed: Bool) {
+        PostHogSDK.shared.capture("visualization_played", properties: [
+            "movement": movement,
+            "voice": voice,
+            "playback_duration": playbackDuration,
+            "completed": completed
+        ])
+    }
+    
+    func trackVisualizationScriptViewed(movement: String) {
+        PostHogSDK.shared.capture("visualization_script_viewed", properties: [
+            "movement": movement
+        ])
+    }
+    
+    func trackMentalExerciseStarted(exerciseType: String) {
+        PostHogSDK.shared.capture("mental_exercise_started", properties: [
+            "exercise_type": exerciseType
+        ])
+    }
+    
+    func trackMentalExerciseCompleted(exerciseType: String, duration: Double) {
+        PostHogSDK.shared.capture("mental_exercise_completed", properties: [
+            "exercise_type": exerciseType,
+            "duration": duration
+        ])
     }
 }

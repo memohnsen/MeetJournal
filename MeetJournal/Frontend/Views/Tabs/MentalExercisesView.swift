@@ -9,6 +9,7 @@ import SwiftUI
 
 struct MentalExercisesView: View {
     @State private var navigateToBoxBreathing: Bool = false
+    @State private var navigateToVisualization: Bool = false
     
     var body: some View {
         NavigationStack{
@@ -19,7 +20,7 @@ struct MentalExercisesView: View {
                     VStack(spacing: 0) {
                         ExerciseCardSection(
                             title: "Box Breathing",
-                            description: "Box breathing can help to improve focus, calm the nervous system, and reduce stress. Try this before a heavy attempt or after your session.",
+                            description: "A breathing exercise to improve focus, calm the nervous system, and reduce stress.",
                             buttonName: "Begin Breathing",
                             action: {
                                 navigateToBoxBreathing = true
@@ -27,11 +28,11 @@ struct MentalExercisesView: View {
                         )
                         
                         ExerciseCardSection(
-                            title: "Visualization Prompt",
-                            description: "Visualization can help to improve consistency and confidence, as well as calm nerves regarding certain lifts or weights.",
+                            title: "Visualization",
+                            description: "Guided meditation to improve consistency, improve confidence, and calm nerves by imagining every aspect of the lift.",
                             buttonName: "Start Visualizing",
                             action: {
-                                
+                                navigateToVisualization = true
                             }
                         )
                     }
@@ -43,6 +44,9 @@ struct MentalExercisesView: View {
             .toolbarTitleDisplayMode(.inlineLarge)
             .navigationDestination(isPresented: $navigateToBoxBreathing) {
                 BoxBreathingSetupView()
+            }
+            .navigationDestination(isPresented: $navigateToVisualization) {
+                VisualizationSetupView()
             }
         }
     }
