@@ -20,6 +20,7 @@ struct SettingsView: View {
     
     @State private var deleteViewModel = RemoveAllModel()
     @State private var alertShown: Bool = false
+    @State private var alertDeletedShown: Bool = false
     
     @State private var userViewModel = UsersViewModel()
     var users: [Users] { userViewModel.users }
@@ -27,7 +28,7 @@ struct SettingsView: View {
     @State private var showCoachEmailSheet: Bool = false
     @State private var coachEmailManager = CoachEmailManager()
     @State private var showCoachEmailSavedAlert: Bool = false
-    
+        
     let device = UIDevice.current
     
     let recipient: String = "maddisen@meetcal.app"
@@ -175,12 +176,6 @@ struct SettingsView: View {
                         
                         
                         Button {
-                            Task {
-                                await deleteViewModel.removeAllCheckIns(userId: clerk.user?.id ?? "")
-                                await deleteViewModel.removeAllMeets(userId: clerk.user?.id ?? "")
-                                await deleteViewModel.removeAllWorkouts(userId: clerk.user?.id ?? "")
-                                AnalyticsManager.shared.trackAllDataDeleted()
-                            }
                             alertShown = true
                         } label: {
                             HStack{
@@ -247,19 +242,32 @@ struct SettingsView: View {
                 )
                 .presentationDetents([.fraction(0.65)])
             }
+            .task {
+                await userViewModel.fetchUsers(user_id: clerk.user?.id ?? "")
+                AnalyticsManager.shared.trackScreenView("SettingsView")
+            }
             .alert("Coach Email Saved", isPresented: $showCoachEmailSavedAlert) {
                 Button("OK") {}
             } message: {
                 Text("Your coach email has been saved. Weekly reports will be sent automatically every Sunday.")
             }
-            .task {
-                await userViewModel.fetchUsers(user_id: clerk.user?.id ?? "")
-                AnalyticsManager.shared.trackScreenView("SettingsView")
+            .alert("Are you sure you want to delete all your data?", isPresented: $alertShown) {
+                Button("Cancel") {}
+                Button("Delete", role: .destructive) {
+                    Task {
+                        await deleteViewModel.removeAllCheckIns(userId: clerk.user?.id ?? "")
+                        await deleteViewModel.removeAllMeets(userId: clerk.user?.id ?? "")
+                        await deleteViewModel.removeAllWorkouts(userId: clerk.user?.id ?? "")
+                        AnalyticsManager.shared.trackAllDataDeleted()
+                    }
+                }
+            } message: {
+                Text("There is no way to recover this.")
             }
-            .alert("Data Deletion Successful", isPresented: $alertShown) {
+            .alert("Deletion Successfull", isPresented: $alertDeletedShown) {
                 Button("OK") {}
             } message: {
-                Text("All your data has been deleted from the database.")
+                Text("All your data has been deleted.")
             }
         }
     }
