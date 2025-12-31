@@ -11,6 +11,7 @@ import RevenueCat
 
 @main
 struct MeetJournalApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @State private var clerk = Clerk.shared
     @State private var customerManager = CustomerInfoManager()
     @State private var showSplash = true

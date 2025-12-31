@@ -191,9 +191,9 @@ struct SettingsView: View {
                         VStack {
                             HStack {
                                 Spacer()
-                                Link("Privacy Policy", destination: URL(string: "https://www.meetcal.app/privacy")!)
+                                Link("Privacy Policy", destination: URL(string: "https://www.meetcal.app/forge-privacy")!)
                                 Text("•")
-                                Link("Terms of Use", destination: URL(string: "https://www.meetcal.app/terms")!)
+                                Link("Terms of Use", destination: URL(string: "https://www.meetcal.app/forge-terms")!)
                                 Text("•")
                                 Link("User Agreement", destination: URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!)
                                 Spacer()

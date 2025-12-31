@@ -282,6 +282,15 @@ struct HomeView: View {
                 notificationManager.scheduleNotifications()
             }
             
+            // Update widget with meet data
+            if let user = users.first {
+                let sharedDefaults = UserDefaults(suiteName: "group.com.memohnsen.forge.JournalWidget")
+                sharedDefaults?.set(user.next_competition, forKey: "meetName")
+                sharedDefaults?.set(user.next_competition_date, forKey: "meetDate")
+                sharedDefaults?.set(daysUntilMeet, forKey: "daysUntilMeet")
+                sharedDefaults?.set(sessionsLeft, forKey: "sessionsLeft")
+            }
+            
             await historyModel.fetchCheckins(user_id: clerk.user?.id ?? "")
             AnalyticsManager.shared.trackScreenView("HomeView")
         }

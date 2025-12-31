@@ -9,69 +9,150 @@ import WidgetKit
 import SwiftUI
 
 struct Provider: TimelineProvider {
+    let kind: String = "JournalWidget"
+
     func placeholder(in context: Context) -> SimpleEntry {
-        SimpleEntry(date: Date(), emoji: "😀")
+        SimpleEntry(
+            date: Date(),
+            meetName: "State Championships",
+            meetDate: "2025-03-15",
+            daysUntilMeet: 45,
+            sessionsLeft: 18
+        )
     }
 
     func getSnapshot(in context: Context, completion: @escaping (SimpleEntry) -> ()) {
-        let entry = SimpleEntry(date: Date(), emoji: "😀")
+        let sharedDefaults = UserDefaults(suiteName: "group.com.memohnsen.forge.JournalWidget")
+        let entry = SimpleEntry(
+            date: Date(),
+            meetName: sharedDefaults?.string(forKey: "meetName") ?? "No Meet Coming Up",
+            meetDate: sharedDefaults?.string(forKey: "meetDate") ?? "",
+            daysUntilMeet: sharedDefaults?.integer(forKey: "daysUntilMeet") ?? 0,
+            sessionsLeft: sharedDefaults?.integer(forKey: "sessionsLeft") ?? 0
+        )
         completion(entry)
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<Entry>) -> ()) {
-        var entries: [SimpleEntry] = []
-
-        // Generate a timeline consisting of five entries an hour apart, starting from the current date.
-        let currentDate = Date()
-        for hourOffset in 0 ..< 5 {
-            let entryDate = Calendar.current.date(byAdding: .hour, value: hourOffset, to: currentDate)!
-            let entry = SimpleEntry(date: entryDate, emoji: "😀")
-            entries.append(entry)
-        }
-
-        let timeline = Timeline(entries: entries, policy: .atEnd)
+        let sharedDefaults = UserDefaults(suiteName: "group.com.memohnsen.forge.JournalWidget")
+        let entry = SimpleEntry(
+            date: Date(),
+            meetName: sharedDefaults?.string(forKey: "meetName") ?? "No Meet Coming Up",
+            meetDate: sharedDefaults?.string(forKey: "meetDate") ?? "",
+            daysUntilMeet: sharedDefaults?.integer(forKey: "daysUntilMeet") ?? 0,
+            sessionsLeft: sharedDefaults?.integer(forKey: "sessionsLeft") ?? 0
+        )
+        
+        let nextUpdate = Calendar.current.date(byAdding: .hour, value: 1, to: Date())!
+        let timeline = Timeline(entries: [entry], policy: .after(nextUpdate))
         completion(timeline)
-    }
-
-//    func relevances() async -> WidgetRelevances<Void> {
-//        // Generate a list containing the contexts this widget is relevant in.
-//    }
-}
-
-struct LargeTrendView: View {
-    var body: some View {
-        /*@START_MENU_TOKEN@*//*@PLACEHOLDER=Hello, world!@*/Text("Hello, world!")/*@END_MENU_TOKEN@*/
-    }
-}
-
-struct SmallCheckInView: View {
-    var body: some View {
-        /*@START_MENU_TOKEN@*//*@PLACEHOLDER=Hello, world!@*/Text("Hello, world!")/*@END_MENU_TOKEN@*/
-    }
-}
-
-struct SmallWorkoutView: View {
-    var body: some View {
-        /*@START_MENU_TOKEN@*//*@PLACEHOLDER=Hello, world!@*/Text("Hello, world!")/*@END_MENU_TOKEN@*/
     }
 }
 
 struct SimpleEntry: TimelineEntry {
     let date: Date
-    let emoji: String
+    let meetName: String
+    let meetDate: String
+    let daysUntilMeet: Int
+    let sessionsLeft: Int
 }
 
-struct JournalWidgetEntryView : View {
+func dateFormat(_ dateString: String) -> String? {
+    let inputFormatter = DateFormatter()
+    inputFormatter.dateFormat = "yyyy-MM-dd"
+    guard let date = inputFormatter.date(from: dateString) else { return nil }
+    
+    let outputFormatter = DateFormatter()
+    outputFormatter.dateFormat = "MMM d, yyyy"
+    return outputFormatter.string(from: date)
+}
+
+func daysUntilMeetText(_ days: Int) -> String {
+    if days < 0 {
+        return "Completed"
+    } else if days == 0 {
+        return "Today!"
+    } else {
+        return "\(days)"
+    }
+}
+
+struct SmallMeetWidget: View {
     var entry: Provider.Entry
-
+    
     var body: some View {
-        VStack {
-            Text("Time:")
-            Text(entry.date, style: .time)
-
-            Text("Emoji:")
-            Text(entry.emoji)
+        VStack(alignment: .center) {
+            Text("\(entry.sessionsLeft)")
+                .font(.system(size: 56))
+                .bold()
+                .foregroundStyle(entry.daysUntilMeet < 0 ? .green : .blue)
+            Text("Sessions Remaining")
+                .multilineTextAlignment(.center)
+                .foregroundStyle(.secondary)
+                .font(.subheadline)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+struct MediumMeetWidget: View {
+    var entry: Provider.Entry
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Image(systemName: "trophy.fill")
+                    .font(.title)
+                    .foregroundStyle(.orange)
+                
+                VStack(alignment: .leading) {
+                    Text("Upcoming Meet")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    
+                    Text(entry.meetName)
+                        .font(.headline.bold())
+                        .lineLimit(1)
+                    
+                    if let formattedDate = dateFormat(entry.meetDate) {
+                        Text(formattedDate)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                
+                Spacer()
+            }
+            .padding(.top)
+            
+
+            
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Days Left")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    
+                    Text(daysUntilMeetText(entry.daysUntilMeet))
+                        .font(.title2.bold())
+                        .foregroundStyle(entry.daysUntilMeet < 0 ? .green : .blue)
+                }
+                
+                Spacer()
+                
+                VStack(alignment: .trailing, spacing: 4) {
+                    Text("Sessions")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    
+                    Text("\(entry.sessionsLeft)")
+                        .font(.title2.bold())
+                        .foregroundStyle(.purple)
+                }
+            }
+            .padding(.bottom)
+        }
+        .padding()
     }
 }
 
@@ -80,18 +161,37 @@ struct JournalWidget: Widget {
 
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: Provider()) { entry in
-            JournalWidgetEntryView(entry: entry)
+            MeetWidgetEntryView(entry: entry)
                 .containerBackground(.fill.tertiary, for: .widget)
-
         }
-        .configurationDisplayName("My Widget")
-        .description("This is an example widget.")
+        .configurationDisplayName("Forge")
+        .description("Track your upcoming competition and training sessions")
+        .supportedFamilies([.systemSmall, .systemMedium])
+    }
+}
+
+struct MeetWidgetEntryView: View {
+    var entry: Provider.Entry
+    @Environment(\.widgetFamily) var family
+
+    var body: some View {
+        switch family {
+        case .systemMedium:
+            MediumMeetWidget(entry: entry)
+        default:
+            SmallMeetWidget(entry: entry)
+        }
     }
 }
 
 #Preview(as: .systemSmall) {
     JournalWidget()
 } timeline: {
-    SimpleEntry(date: .now, emoji: "😀")
-    SimpleEntry(date: .now, emoji: "🤩")
+    SimpleEntry(date: .now, meetName: "State Championships", meetDate: "2025-03-15", daysUntilMeet: 45, sessionsLeft: 18)
+}
+
+#Preview(as: .systemMedium) {
+    JournalWidget()
+} timeline: {
+    SimpleEntry(date: .now, meetName: "State Championships", meetDate: "2025-03-15", daysUntilMeet: 45, sessionsLeft: 18)
 }
