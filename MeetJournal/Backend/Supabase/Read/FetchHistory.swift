@@ -308,5 +308,88 @@ class HistoryModel {
         
         isLoading = false
     }
+    
+    // MARK: - Weekly CSV Methods (Past 7 Days)
+    
+    private func getDateSevenDaysAgo() -> String {
+        let calendar = Calendar.current
+        let sevenDaysAgo = calendar.date(byAdding: .day, value: -7, to: Date()) ?? Date()
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        return formatter.string(from: sevenDaysAgo)
+    }
+    
+    func fetchWeeklyCheckinsCSV(user_id: String) async -> String {
+        let sevenDaysAgo = getDateSevenDaysAgo()
+        
+        do {
+            let response = try await supabase
+                .from("journal_daily_checkins")
+                .select()
+                .eq("user_id", value: user_id)
+                .gte("check_in_date", value: sevenDaysAgo)
+                .order("check_in_date", ascending: false)
+                .csv()
+                .execute()
+            
+            if let csvString = String(data: response.data, encoding: .utf8) {
+                return csvString
+            }
+        } catch {
+            print("Error fetching weekly check-ins CSV: \(error.localizedDescription)")
+            print("Full error: \(error)")
+        }
+        
+        return ""
+    }
+    
+    func fetchWeeklyCompReportsCSV(user_id: String) async -> String {
+        let sevenDaysAgo = getDateSevenDaysAgo()
+        
+        do {
+            let response = try await supabase
+                .from("journal_comp_report")
+                .select()
+                .eq("user_id", value: user_id)
+                .gte("meet_date", value: sevenDaysAgo)
+                .order("meet_date", ascending: false)
+                .csv()
+                .execute()
+            
+            if let csvString = String(data: response.data, encoding: .utf8) {
+                return csvString
+            }
+        } catch {
+            print("Error fetching weekly comp reports CSV: \(error.localizedDescription)")
+            print("Full error: \(error)")
+        }
+        
+        return ""
+    }
+    
+    func fetchWeeklySessionReportCSV(user_id: String) async -> String {
+        let sevenDaysAgo = getDateSevenDaysAgo()
+        
+        do {
+            let response = try await supabase
+                .from("journal_session_report")
+                .select()
+                .eq("user_id", value: user_id)
+                .gte("session_date", value: sevenDaysAgo)
+                .order("session_date", ascending: false)
+                .csv()
+                .execute()
+            
+            if let csvString = String(data: response.data, encoding: .utf8) {
+                return csvString
+            }
+        } catch {
+            print("Error fetching weekly session reports CSV: \(error.localizedDescription)")
+            print("Full error: \(error)")
+        }
+        
+        return ""
+    }
 }
 

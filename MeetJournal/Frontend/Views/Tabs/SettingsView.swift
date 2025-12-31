@@ -25,6 +25,8 @@ struct SettingsView: View {
     var users: [Users] { userViewModel.users }
     
     @State private var showCoachEmailSheet: Bool = false
+    @State private var coachEmailManager = CoachEmailManager()
+    @State private var showCoachEmailSavedAlert: Bool = false
     
     let device = UIDevice.current
     
@@ -226,6 +228,17 @@ struct SettingsView: View {
                 CoachEmailSheet(
                     coachEmail: users.first?.coach_email ?? "",
                     onSave: { email in
+                        Task {
+                            if let userId = clerk.user?.id {
+                                await coachEmailManager.updateCoachEmail(
+                                    userId: userId,
+                                    email: email.isEmpty ? nil : email
+                                )
+                                // Refresh user data to get updated coach_email
+                                await userViewModel.fetchUsers(user_id: userId)
+                                showCoachEmailSavedAlert = true
+                            }
+                        }
                         showCoachEmailSheet = false
                     },
                     onCancel: {
@@ -233,6 +246,11 @@ struct SettingsView: View {
                     }
                 )
                 .presentationDetents([.fraction(0.65)])
+            }
+            .alert("Coach Email Saved", isPresented: $showCoachEmailSavedAlert) {
+                Button("OK") {}
+            } message: {
+                Text("Your coach email has been saved. Weekly reports will be sent automatically every Sunday.")
             }
             .task {
                 await userViewModel.fetchUsers(user_id: clerk.user?.id ?? "")
