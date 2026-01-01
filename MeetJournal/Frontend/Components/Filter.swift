@@ -9,7 +9,7 @@ import SwiftUI
 
 struct Filter: View {
     @Binding var selected: String
-    let options: [String] = ["Check-Ins", "Workouts", "Meets"]
+    var options: [String] = ["Check-Ins", "Workouts", "Meets"]
     
     func selectedButton(_ input: String) -> Color {
         if selected == input {
@@ -28,21 +28,24 @@ struct Filter: View {
     }
     
     var body: some View {
-        HStack{
-            ForEach(options, id: \.self) { option in
-                Button{
-                    selected = option
-                } label: {
-                    Text(option)
-                        .padding()
-                        .background(selectedButton(option))
-                        .clipShape(.capsule)
-                        .foregroundStyle(selectedButtonText(option))
-                        .bold()
+        ScrollView(.horizontal) {
+            VStack{
+                HStack{
+                    ForEach(options, id: \.self) { option in
+                        Button{
+                            selected = option
+                        } label: {
+                            Text(option)
+                                .padding()
+                                .background(selectedButton(option))
+                                .clipShape(.capsule)
+                                .foregroundStyle(selectedButtonText(option))
+                                .bold()
+                        }
+                    }
                 }
             }
-            Spacer()
+            .padding([.vertical, .leading])
         }
-        .padding([.vertical, .horizontal])
     }
 }

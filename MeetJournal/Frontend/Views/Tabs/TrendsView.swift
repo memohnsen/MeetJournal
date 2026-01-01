@@ -17,11 +17,27 @@ struct TrendsView: View {
     var meets: [CompReport] { viewModel.compReport }
     
     @State private var aiModel = OpenRouter()
+    @State private var ouraService = Oura()
     
     @State private var aiShown: Bool = false
+    @State private var ouraSleepData: [OuraSleep] = []
+    @State private var isLoadingOuraData: Bool = false
     
     @State private var selectedFilter: String = "Check-Ins"
     @State private var selectedTimeFrame: String = "Last 30 Days"
+    
+    var isOuraConnected: Bool {
+        guard let userId = clerk.user?.id else { return false }
+        return ouraService.getAccessToken(userId: userId) != nil
+    }
+    
+    var filterOptions: [String] {
+        var options = ["Check-Ins", "Workouts", "Meets"]
+        if isOuraConnected {
+            options.append("Oura")
+        }
+        return options
+    }
         
     var body: some View {
         NavigationStack{
@@ -29,9 +45,14 @@ struct TrendsView: View {
                 BackgroundColor()
                 
                 ScrollView{
-                    Filter(selected: $selectedFilter)
+                    Filter(selected: $selectedFilter, options: filterOptions)
                         .onChange(of: selectedFilter) { _, newValue in
                             AnalyticsManager.shared.trackTrendsFilterChanged(filter: newValue)
+                            if newValue == "Oura" {
+                                Task {
+                                    await fetchOuraData()
+                                }
+                            }
                         }
                     
                     VStack{
@@ -52,6 +73,20 @@ struct TrendsView: View {
                         CheckInGraphView(checkins: checkins, selectedTimeFrame: selectedTimeFrame)
                     } else if selectedFilter == "Workouts" {
                         WorkoutsGraphView(workouts: workouts, selectedTimeFrame: selectedTimeFrame)
+                    } else if selectedFilter == "Oura" {
+                        if isLoadingOuraData {
+                            ProgressView("Loading Oura data...")
+                                .padding()
+                        } else if ouraSleepData.isEmpty {
+                            Text("No Oura data available")
+                                .foregroundColor(.secondary)
+                                .padding()
+                        } else {
+                            OuraGraphView(
+                                sleepData: ouraSleepData,
+                                selectedTimeFrame: selectedTimeFrame
+                            )
+                        }
                     } else {
                         MeetsGraphView(meets: meets, selectedTimeFrame: selectedTimeFrame)
                     }
@@ -99,7 +134,59 @@ struct TrendsView: View {
                 await viewModel.fetchCheckins(user_id: clerk.user?.id ?? "")
                 await viewModel.fetchCompReports(user_id: clerk.user?.id ?? "")
                 await viewModel.fetchSessionReport(user_id: clerk.user?.id ?? "")
+                
+                if let userId = clerk.user?.id {
+                    ouraService.checkConnectionStatus(userId: userId)
+                    if isOuraConnected && selectedFilter == "Oura" {
+                        await fetchOuraData()
+                    }
+                }
             }
+            .onChange(of: selectedTimeFrame) { _, _ in
+                if selectedFilter == "Oura" && isOuraConnected {
+                    Task {
+                        await fetchOuraData()
+                    }
+                }
+            }
+        }
+    }
+    
+    func fetchOuraData() async {
+        guard let userId = clerk.user?.id else { return }
+        
+        isLoadingOuraData = true
+        defer { isLoadingOuraData = false }
+        
+        let calendar = Calendar.current
+        let now = Date()
+        let endDate = now
+        
+        let startDate: Date
+        switch selectedTimeFrame {
+        case "Last 30 Days":
+            startDate = calendar.date(byAdding: .day, value: -30, to: now) ?? now
+        case "Last 90 Days":
+            startDate = calendar.date(byAdding: .day, value: -90, to: now) ?? now
+        case "Last 6 Months":
+            startDate = calendar.date(byAdding: .month, value: -6, to: now) ?? now
+        case "Last 1 Year":
+            startDate = calendar.date(byAdding: .year, value: -1, to: now) ?? now
+        case "All Time":
+            startDate = Date.distantPast
+        default:
+            startDate = calendar.date(byAdding: .day, value: -30, to: now) ?? now
+        }
+        
+        do {
+            let sleepResult = try await ouraService.fetchDailySleep(userId: userId, startDate: startDate, endDate: endDate)
+            
+            ouraSleepData = sleepResult
+            
+            print("✅ Fetched Oura data: \(sleepResult.count) sleep records (includes HRV and readiness)")
+        } catch {
+            print("❌ Error fetching Oura data: \(error)")
+            ouraSleepData = []
         }
     }
 }
@@ -554,9 +641,9 @@ struct CheckInGraphView: View {
     var xAxisStride: Calendar.Component {
         switch selectedTimeFrame {
         case "Last 30 Days":
-            return .weekOfYear
+            return .month
         case "Last 90 Days":
-            return .weekOfYear
+            return .month
         case "Last 6 Months":
             return .month
         case "Last 1 Year":
@@ -564,22 +651,22 @@ struct CheckInGraphView: View {
         case "All Time":
             return .month
         default:
-            return .weekOfYear
+            return .month
         }
     }
     
     var xAxisFormat: Date.FormatStyle {
         switch selectedTimeFrame {
         case "Last 30 Days":
-            return .dateTime.day().month(.abbreviated)
+            return .dateTime.month(.abbreviated)
         case "Last 90 Days":
-            return .dateTime.day().month(.abbreviated)
+            return .dateTime.month(.abbreviated)
         case "Last 6 Months", "Last 1 Year":
             return .dateTime.month(.abbreviated)
         case "All Time":
             return .dateTime.month(.abbreviated).year()
         default:
-            return .dateTime.day().month(.abbreviated)
+            return .dateTime.month(.abbreviated)
         }
     }
     
@@ -1183,9 +1270,9 @@ struct WorkoutsGraphView: View {
     var xAxisStride: Calendar.Component {
         switch selectedTimeFrame {
         case "Last 30 Days":
-            return .weekOfYear
+            return .month
         case "Last 90 Days":
-            return .weekOfYear
+            return .month
         case "Last 6 Months":
             return .month
         case "Last 1 Year":
@@ -1193,22 +1280,22 @@ struct WorkoutsGraphView: View {
         case "All Time":
             return .month
         default:
-            return .weekOfYear
+            return .month
         }
     }
     
     var xAxisFormat: Date.FormatStyle {
         switch selectedTimeFrame {
         case "Last 30 Days":
-            return .dateTime.day().month(.abbreviated)
+            return .dateTime.month(.abbreviated)
         case "Last 90 Days":
-            return .dateTime.day().month(.abbreviated)
+            return .dateTime.month(.abbreviated)
         case "Last 6 Months", "Last 1 Year":
             return .dateTime.month(.abbreviated)
         case "All Time":
             return .dateTime.month(.abbreviated).year()
         default:
-            return .dateTime.day().month(.abbreviated)
+            return .dateTime.month(.abbreviated)
         }
     }
     
@@ -1945,9 +2032,9 @@ struct MeetsGraphView: View {
     var xAxisStride: Calendar.Component {
         switch selectedTimeFrame {
         case "Last 30 Days":
-            return .weekOfYear
+            return .month
         case "Last 90 Days":
-            return .weekOfYear
+            return .month
         case "Last 6 Months":
             return .month
         case "Last 1 Year":
@@ -1955,22 +2042,22 @@ struct MeetsGraphView: View {
         case "All Time":
             return .month
         default:
-            return .weekOfYear
+            return .month
         }
     }
     
     var xAxisFormat: Date.FormatStyle {
         switch selectedTimeFrame {
         case "Last 30 Days":
-            return .dateTime.day().month(.abbreviated)
+            return .dateTime.month(.abbreviated)
         case "Last 90 Days":
-            return .dateTime.day().month(.abbreviated)
+            return .dateTime.month(.abbreviated)
         case "Last 6 Months", "Last 1 Year":
             return .dateTime.month(.abbreviated)
         case "All Time":
             return .dateTime.month(.abbreviated).year()
         default:
-            return .dateTime.day().month(.abbreviated)
+            return .dateTime.month(.abbreviated)
         }
     }
     
@@ -2230,6 +2317,447 @@ struct MeetsGraphView: View {
             .cardStyling()
             .padding(.bottom, 30)
         }
+    }
+}
+
+struct OuraGraphView: View {
+    @Environment(\.colorScheme) var colorScheme
+    var sleepData: [OuraSleep]
+    var selectedTimeFrame: String
+    
+    struct AggregatedDataPoint: Identifiable {
+        let id = UUID()
+        let date: Date
+        let value: Double
+    }
+    
+    enum TrendDirection {
+        case up, down, flat
+    }
+    
+    func calculateTrend(from data: [AggregatedDataPoint]) -> TrendDirection {
+        guard data.count >= 2 else { return .flat }
+        let sortedData = data.sorted { $0.date < $1.date }
+        let first = sortedData.first!.value
+        let last = sortedData.last!.value
+        let threshold = 0.1 // Minimum change to be considered a trend
+        
+        if last > first + threshold {
+            return .up
+        } else if last < first - threshold {
+            return .down
+        } else {
+            return .flat
+        }
+    }
+    
+    @ViewBuilder
+    func trendIcon(for direction: TrendDirection) -> some View {
+        switch direction {
+        case .up:
+            Image(systemName: "arrow.up")
+                .foregroundColor(.green)
+                .font(.headline)
+        case .down:
+            Image(systemName: "arrow.down")
+                .foregroundColor(.red)
+                .font(.headline)
+        case .flat:
+            Image(systemName: "minus")
+                .foregroundColor(blueEnergy)
+                .font(.headline)
+        }
+    }
+    
+    @ViewBuilder
+    func trendIconInverted(for direction: TrendDirection) -> some View {
+        // For metrics where lower is better (like misses), invert the colors
+        switch direction {
+        case .up:
+            Image(systemName: "arrow.up")
+                .foregroundColor(.red) // Up is bad for misses
+                .font(.headline)
+        case .down:
+            Image(systemName: "arrow.down")
+                .foregroundColor(.green) // Down is good for misses
+                .font(.headline)
+        case .flat:
+            Image(systemName: "minus")
+                .foregroundColor(blueEnergy)
+                .font(.headline)
+        }
+    }
+    
+    // Helper function to filter and aggregate data based on time frame
+    func processData<T>(items: [T], dateKey: (T) -> String?, valueKey: (T) -> Double?) -> [AggregatedDataPoint] {
+        let calendar = Calendar.current
+        let now = Date()
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        let isoFormatter = ISO8601DateFormatter()
+        isoFormatter.formatOptions = [.withFullDate, .withDashSeparatorInDate]
+        
+        let cutoffDate: Date
+        switch selectedTimeFrame {
+        case "Last 30 Days":
+            cutoffDate = calendar.date(byAdding: .day, value: -30, to: now) ?? now
+        case "Last 90 Days":
+            cutoffDate = calendar.date(byAdding: .day, value: -90, to: now) ?? now
+        case "Last 6 Months":
+            cutoffDate = calendar.date(byAdding: .month, value: -6, to: now) ?? now
+        case "Last 1 Year":
+            cutoffDate = calendar.date(byAdding: .year, value: -1, to: now) ?? now
+        case "All Time":
+            cutoffDate = Date.distantPast
+        default:
+            cutoffDate = calendar.date(byAdding: .day, value: -30, to: now) ?? now
+        }
+        
+        let filteredItems = items.compactMap { item -> (Date, Double)? in
+            guard let dateString = dateKey(item),
+                  let value = valueKey(item) else {
+                return nil
+            }
+            
+            var date: Date?
+            if let parsedDate = dateFormatter.date(from: dateString) {
+                date = parsedDate
+            } else if let parsedDate = isoFormatter.date(from: dateString) {
+                date = parsedDate
+            }
+            
+            guard let validDate = date, validDate >= cutoffDate else {
+                return nil
+            }
+            
+            return (validDate, value)
+        }
+        
+        let shouldAggregate: Bool
+        let groupingComponent: Calendar.Component
+        
+        switch selectedTimeFrame {
+        case "Last 30 Days":
+            shouldAggregate = false
+            groupingComponent = .day
+        case "Last 90 Days":
+            shouldAggregate = true
+            groupingComponent = .weekOfYear
+        case "Last 6 Months", "Last 1 Year", "All Time":
+            shouldAggregate = true
+            groupingComponent = .month
+        default:
+            shouldAggregate = false
+            groupingComponent = .day
+        }
+        
+        if !shouldAggregate {
+            return filteredItems.map { AggregatedDataPoint(date: $0.0, value: $0.1) }
+                .sorted { $0.date < $1.date }
+        } else {
+            var groupedData: [DateComponents: [Double]] = [:]
+            
+            for (date, value) in filteredItems {
+                let components: DateComponents
+                if groupingComponent == .weekOfYear {
+                    components = calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: date)
+                } else {
+                    components = calendar.dateComponents([.year, .month], from: date)
+                }
+                
+                if groupedData[components] == nil {
+                    groupedData[components] = []
+                }
+                groupedData[components]?.append(value)
+            }
+            
+            return groupedData.compactMap { (components, values) in
+                let average = values.reduce(0, +) / Double(values.count)
+                
+                var representativeDate: Date?
+                if groupingComponent == .weekOfYear {
+                    representativeDate = calendar.date(from: components)
+                } else {
+                    var monthComponents = components
+                    monthComponents.day = 1
+                    representativeDate = calendar.date(from: monthComponents)
+                }
+                
+                if let date = representativeDate {
+                    return AggregatedDataPoint(date: date, value: average)
+                }
+                return nil
+            }.sorted { $0.date < $1.date }
+        }
+    }
+    
+    var sleepChartData: [AggregatedDataPoint] {
+        processData(
+            items: sleepData,
+            dateKey: { $0.day },
+            valueKey: { $0.sleepDurationHours }
+        )
+    }
+    
+    var hrvChartData: [AggregatedDataPoint] {
+        processData(
+            items: sleepData,
+            dateKey: { $0.day },
+            valueKey: { $0.hrv }
+        )
+    }
+    
+    var heartRateChartData: [AggregatedDataPoint] {
+        processData(
+            items: sleepData,
+            dateKey: { $0.day },
+            valueKey: { $0.averageHeartRate }
+        )
+    }
+    
+    var readinessChartData: [AggregatedDataPoint] {
+        processData(
+            items: sleepData,
+            dateKey: { $0.day },
+            valueKey: { Double($0.readinessScore ?? 0) }
+        )
+    }
+    
+    var xAxisStride: Calendar.Component {
+        switch selectedTimeFrame {
+        case "Last 30 Days":
+            return .month
+        case "Last 90 Days":
+            return .month
+        case "Last 6 Months", "Last 1 Year":
+            return .month
+        case "All Time":
+            return .month
+        default:
+            return .month
+        }
+    }
+    
+    var xAxisFormat: Date.FormatStyle {
+        switch selectedTimeFrame {
+        case "Last 30 Days":
+            return .dateTime.month(.abbreviated)
+        case "Last 90 Days":
+            return .dateTime.month(.abbreviated)
+        case "Last 6 Months", "Last 1 Year", "All Time":
+            return .dateTime.month().year()
+        default:
+            return .dateTime.month(.abbreviated)
+        }
+    }
+    
+    var needsDiagonalLabels: Bool {
+        switch selectedTimeFrame {
+        case "Last 6 Months", "Last 1 Year", "All Time":
+            return true
+        default:
+            return false
+        }
+    }
+    
+    var body: some View {
+        VStack(spacing: 20) {
+            VStack{
+                HStack {
+                    Text("Sleep Duration")
+                        .font(.headline.bold())
+                    
+                    trendIcon(for: calculateTrend(from: sleepChartData))
+                }
+                .padding(.bottom)
+                Chart {
+                    ForEach(sleepChartData) { dataPoint in
+                        LineMark(x: .value("Date", dataPoint.date), y: .value("Hours", dataPoint.value))
+                            .foregroundStyle(blueEnergy)
+                            .interpolationMethod(.catmullRom)
+                            .lineStyle(.init(lineWidth: 2))
+                            .symbol {
+                                Circle()
+                                    .fill(blueEnergy)
+                                    .frame(width: 12, height: 12)
+                            }
+                    }
+                }
+                .chartXAxis {
+                    AxisMarks(preset: .extended, values: .stride(by: xAxisStride)) { value in
+                        AxisValueLabel {
+                            if needsDiagonalLabels {
+                                if let date = value.as(Date.self) {
+                                    Text(date.formatted(xAxisFormat))
+                                        .font(.caption2)
+                                        .rotationEffect(.degrees(-45))
+                                        .offset(y: 10)
+                                        .padding(.vertical)
+                                }
+                            } else {
+                                if let date = value.as(Date.self) {
+                                    Text(date.formatted(xAxisFormat))
+                                        .font(.caption2)
+                                }
+                            }
+                        }
+                    }
+                }
+                .chartYAxis {
+                    AxisMarks(preset: .extended, position: .trailing, values: .stride(by: 2))
+                }
+                .chartYScale(domain: [4, 12])
+            }
+            .frame(height: needsDiagonalLabels ? 250 : 200)
+            .cardStyling()
+            
+            VStack{
+                HStack {
+                    Text("HRV (Heart Rate Variability)")
+                        .font(.headline.bold())
+                    
+                    trendIcon(for: calculateTrend(from: hrvChartData))
+                }
+                .padding(.bottom)
+                Chart {
+                    ForEach(hrvChartData) { dataPoint in
+                        LineMark(x: .value("Date", dataPoint.date), y: .value("HRV (ms)", dataPoint.value))
+                            .foregroundStyle(blueEnergy)
+                            .interpolationMethod(.catmullRom)
+                            .lineStyle(.init(lineWidth: 2))
+                            .symbol {
+                                Circle()
+                                    .fill(blueEnergy)
+                                    .frame(width: 12, height: 12)
+                            }
+                    }
+                }
+                .chartXAxis {
+                    AxisMarks(preset: .extended, values: .stride(by: xAxisStride)) { value in
+                        AxisValueLabel {
+                            if needsDiagonalLabels {
+                                if let date = value.as(Date.self) {
+                                    Text(date.formatted(xAxisFormat))
+                                        .font(.caption2)
+                                        .rotationEffect(.degrees(-45))
+                                        .offset(y: 10)
+                                        .padding(.vertical)
+                                }
+                            } else {
+                                if let date = value.as(Date.self) {
+                                    Text(date.formatted(xAxisFormat))
+                                        .font(.caption2)
+                                }
+                            }
+                        }
+                    }
+                }
+                .chartYAxis {
+                    AxisMarks(preset: .extended, position: .trailing)
+                }
+            }
+            .frame(height: needsDiagonalLabels ? 250 : 200)
+            .cardStyling()
+            
+            VStack{
+                HStack {
+                    Text("Average Heart Rate")
+                        .font(.headline.bold())
+                    
+                    trendIconInverted(for: calculateTrend(from: heartRateChartData))
+                }
+                .padding(.bottom)
+                Chart {
+                    ForEach(heartRateChartData) { dataPoint in
+                        LineMark(x: .value("Date", dataPoint.date), y: .value("BPM", dataPoint.value))
+                            .foregroundStyle(blueEnergy)
+                            .interpolationMethod(.catmullRom)
+                            .lineStyle(.init(lineWidth: 2))
+                            .symbol {
+                                Circle()
+                                    .fill(blueEnergy)
+                                    .frame(width: 12, height: 12)
+                            }
+                    }
+                }
+                .chartXAxis {
+                    AxisMarks(preset: .extended, values: .stride(by: xAxisStride)) { value in
+                        AxisValueLabel {
+                            if needsDiagonalLabels {
+                                if let date = value.as(Date.self) {
+                                    Text(date.formatted(xAxisFormat))
+                                        .font(.caption2)
+                                        .rotationEffect(.degrees(-45))
+                                        .offset(y: 10)
+                                        .padding(.vertical)
+                                }
+                            } else {
+                                if let date = value.as(Date.self) {
+                                    Text(date.formatted(xAxisFormat))
+                                        .font(.caption2)
+                                }
+                            }
+                        }
+                    }
+                }
+                .chartYAxis {
+                    AxisMarks(preset: .extended, position: .trailing, values: .stride(by: 5))
+                }
+                .chartYScale(domain: [30, 70])
+            }
+            .frame(height: needsDiagonalLabels ? 250 : 200)
+            .cardStyling()
+            
+            VStack{
+                HStack {
+                    Text("Readiness Score")
+                        .font(.headline.bold())
+                    
+                    trendIcon(for: calculateTrend(from: readinessChartData))
+                }
+                .padding(.bottom)
+                Chart {
+                    ForEach(readinessChartData) { dataPoint in
+                        LineMark(x: .value("Date", dataPoint.date), y: .value("Score", dataPoint.value))
+                            .foregroundStyle(blueEnergy)
+                            .interpolationMethod(.catmullRom)
+                            .lineStyle(.init(lineWidth: 2))
+                            .symbol {
+                                Circle()
+                                    .fill(blueEnergy)
+                                    .frame(width: 12, height: 12)
+                            }
+                    }
+                }
+                .chartXAxis {
+                    AxisMarks(preset: .extended, values: .stride(by: xAxisStride)) { value in
+                        AxisValueLabel {
+                            if needsDiagonalLabels {
+                                if let date = value.as(Date.self) {
+                                    Text(date.formatted(xAxisFormat))
+                                        .font(.caption2)
+                                        .rotationEffect(.degrees(-45))
+                                        .offset(y: 10)
+                                        .padding(.vertical)
+                                }
+                            } else {
+                                if let date = value.as(Date.self) {
+                                    Text(date.formatted(xAxisFormat))
+                                        .font(.caption2)
+                                }
+                            }
+                        }
+                    }
+                }
+                .chartYAxis {
+                    AxisMarks(preset: .extended, position: .trailing, values: .stride(by: 10))
+                }
+                .chartYScale(domain: [40, 100])
+            }
+            .frame(height: needsDiagonalLabels ? 250 : 200)
+            .cardStyling()
+        }
+        .padding(.bottom, 30)
     }
 }
 

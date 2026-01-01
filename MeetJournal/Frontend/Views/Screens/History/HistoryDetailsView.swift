@@ -15,6 +15,8 @@ struct HistoryDetailsView: View {
 
     @State private var viewModel = HistoryModel()
     @State private var deleteModel = DeleteOneModel()
+    @State private var ouraService = Oura()
+    @State private var ouraSleepData: OuraSleep? = nil
     var isLoading: Bool { viewModel.isLoading }
     var comp: [CompReport] { viewModel.comp }
     var session: [SessionReport] { viewModel.session }
@@ -24,6 +26,29 @@ struct HistoryDetailsView: View {
     var selection: String
     var date: String
     var reportId: Int?
+    
+    var isOuraConnected: Bool {
+        guard let userId = clerk.user?.id else { return false }
+        return ouraService.getAccessToken(userId: userId) != nil
+    }
+    
+    var ouraShareText: String {
+        guard let ouraData = ouraSleepData else { return "" }
+        var text = "\n"
+        if let sleepHours = ouraData.sleepDurationHours {
+            text += "Sleep Duration: \(String(format: "%.1f", sleepHours)) hrs\n"
+        }
+        if let hrv = ouraData.averageHrv {
+            text += "HRV: \(String(format: "%.0f", hrv)) ms\n"
+        }
+        if let readinessScore = ouraData.readinessScore {
+            text += "Readiness Score: \(readinessScore)\n"
+        }
+        if let avgHeartRate = ouraData.averageHeartRate {
+            text += "Average Heart Rate: \(String(format: "%.0f", avgHeartRate)) bpm\n"
+        }
+        return text.isEmpty ? "" : text
+    }
     
     var shareTextResult: String {
         if selection == "Meets" {
@@ -60,7 +85,7 @@ struct HistoryDetailsView: View {
                     What I'm most proud of: \(comp.first?.what_proud_of ?? "")
                 
                     What I need to focus on next meet: \(comp.first?.focus ?? "")
-                
+                    \(ouraShareText)
                     Powered By MeetJournal
                 """
             } else {
@@ -96,7 +121,7 @@ struct HistoryDetailsView: View {
                     What I'm most proud of: \(comp.first?.what_proud_of ?? "")
                 
                     What I need to focus on next meet: \(comp.first?.focus ?? "")
-                
+                    \(ouraShareText)
                     Powered By MeetJournal
                 """
             }
@@ -118,7 +143,7 @@ struct HistoryDetailsView: View {
             
                 What I learned: \(session.first?.what_learned ?? "")
                 What I would do differently: \(session.first?.what_would_change ?? "")
-            
+                \(ouraShareText)
                 Powered By MeetJournal
             """
         } else {
@@ -144,7 +169,7 @@ struct HistoryDetailsView: View {
             
                 Daily Goal: \(checkin.first?.goal ?? "")
                 Concerns: \(checkin.first?.concerns ?? "")
-            
+                \(ouraShareText)
                 Powered By MeetJournal
             """
         }
@@ -169,13 +194,16 @@ struct HistoryDetailsView: View {
                     ProgressView()
                 } else {
                     ScrollView{
-                        if selection == "Meets" {
-                            CompDisplaySection(comp: comp, userSport: userSport)
-                        } else if selection == "Workouts" {
-                            SessionDisplaySection(session: session)
-                        } else {
-                            CheckInDisplaySection(checkin: checkin)
+                        VStack{
+                            if selection == "Meets" {
+                                CompDisplaySection(comp: comp, userSport: userSport, ouraSleepData: ouraSleepData)
+                            } else if selection == "Workouts" {
+                                SessionDisplaySection(session: session, ouraSleepData: ouraSleepData)
+                            } else {
+                                CheckInDisplaySection(checkin: checkin, ouraSleepData: ouraSleepData)
+                            }
                         }
+                        .padding(.bottom, 30)
                     }
                 }
             }
@@ -213,6 +241,42 @@ struct HistoryDetailsView: View {
             }
             .task {
                 AnalyticsManager.shared.trackScreenView("HistoryDetailsView")
+
+                if isOuraConnected {
+                    let dateFormatter = DateFormatter()
+                    dateFormatter.dateFormat = "yyyy-MM-dd"
+                    if let targetDate = dateFormatter.date(from: date) {
+                        do {
+                            let calendar = Calendar.current
+                            let startDate = calendar.date(byAdding: .day, value: -2, to: targetDate) ?? targetDate
+                            let endDate = calendar.date(byAdding: .day, value: 1, to: targetDate) ?? targetDate
+                            
+                            let sleepData = try await ouraService.fetchDailySleep(
+                                userId: clerk.user?.id ?? "",
+                                startDate: startDate,
+                                endDate: endDate
+                            )
+                            
+                            ouraSleepData = sleepData.first { sleepRecord in
+                                sleepRecord.day == date
+                            }
+                            
+                            if ouraSleepData == nil {
+                                print("⚠️ No Oura data found for date: \(date) (searched \(sleepData.count) records)")
+                            } else {
+                                print("✅ Found Oura data for date: \(date)")
+                            }
+                        } catch {
+                            print("❌ Error fetching Oura data: \(error)")
+                            ouraSleepData = nil
+                        }
+                    } else {
+                        print("⚠️ Could not parse date: \(date)")
+                    }
+                } else {
+                    ouraSleepData = nil
+                }
+                
                 if selection == "Meets" {
                     await viewModel.fetchCompDetails(user_id: clerk.user?.id ?? "", title: title, date: date)
                 } else if selection == "Workouts" {
@@ -315,14 +379,24 @@ struct RatingDisplaySection: View {
     var value: String
     
     var colorByRating: Color {
-        if title == "How many lifts did you miss?" || title == "How hard was this session?" || title == "Rate your soreness" {
+        if title == "How many lifts did you miss?" {
             if Int(value) ?? 0 <= 1 {
                 .green
-            } else if Int(value) ?? 0 == 2 {
+            } else if Int(value) ?? 2 == 2 {
                 blueEnergy
             } else {
                 .red
             }
+        } else if title == "How hard did this session feel?" || title == "How sore does your body feel?" {
+            if Int(value) ?? 3 <= 2 {
+                .green
+            } else if Int(value) ?? 3 == 3 {
+                blueEnergy
+            } else {
+                .red
+            }
+        } else if title == "Sleep Duration" || title == "HRV" || title == "Readiness Score" || title == "Average Heart Rate" {
+            blueEnergy
         } else {
             if Int(value) ?? 3 <= 2 {
                 .red
@@ -340,7 +414,7 @@ struct RatingDisplaySection: View {
                 .font(.headline.bold())
                 .padding(.bottom, 2)
             
-            if title == "How many lifts did you miss?" || title == "Overall Readiness" || title == "Physical Readiness" || title == "Mental Readiness" {
+            if title == "How many lifts did you miss?" || title == "Overall Readiness" || title == "Physical Readiness" || title == "Mental Readiness" || title == "Sleep Duration" || title == "HRV" || title == "Readiness Score" || title == "Average Heart Rate" || title == "Total" || title == "Misses" {
                 Text("\(value)")
                     .font(.system(size: 48, weight: .bold))
                     .foregroundStyle(colorByRating)
@@ -373,11 +447,18 @@ struct TextDisplaySection: View {
 struct CompDisplaySection: View {
     var comp: [CompReport]
     var userSport: String
+    var ouraSleepData: OuraSleep?
     
     var body: some View {
         ResultsDisplaySection(comp: comp, userSport: userSport)
             .padding(.top)
         
+        if userSport == "Olympic Weightlifting" {
+            RatingDisplaySection(title: "Total", value: ("\((comp.first?.snatch_best ?? 0) + (comp.first?.cj_best ?? 0))kg"))
+        } else {
+            RatingDisplaySection(title: "Total", value:("\((comp.first?.squat_best ?? 0) + (comp.first?.bench_best ?? 0) + (comp.first?.deadlift_best ?? 0))kg"))
+        }
+                
         TextDisplaySection(title: "Bodyweight", value: "\(comp.first?.bodyweight ?? "")")
         
         RatingDisplaySection(title: "How would you rate your performance?", value: "\(comp.first?.performance_rating ?? 0)")
@@ -409,12 +490,30 @@ struct CompDisplaySection: View {
         TextDisplaySection(title: "What are you most proud of from this meet?", value: "\(comp.first?.what_proud_of ?? "")")
         
         TextDisplaySection(title: "What do you need to focus on for the next meet?", value: "\(comp.first?.focus ?? "")")
-            .padding(.bottom, 30)
+                    
+        if let ouraData = ouraSleepData {
+            if let sleepHours = ouraData.sleepDurationHours {
+                RatingDisplaySection(title: "Sleep Duration", value: String(format: "%.1f hrs", sleepHours))
+            }
+            
+            if let hrv = ouraData.averageHrv {
+                RatingDisplaySection(title: "HRV", value: String(format: "%.0f ms", hrv))
+            }
+            
+            if let readinessScore = ouraData.readinessScore {
+                RatingDisplaySection(title: "Readiness Score", value: "\(readinessScore)")
+            }
+            
+            if let avgHeartRate = ouraData.averageHeartRate {
+                RatingDisplaySection(title: "Average Heart Rate", value: String(format: "%.0f bpm", avgHeartRate))
+            }
+        }
     }
 }
 
 struct SessionDisplaySection: View {
     var session: [SessionReport]
+    var ouraSleepData: OuraSleep?
     
     var body: some View {
         TextDisplaySection(title: "Time of day you trained", value: "\(session.first?.time_of_day ?? "")")
@@ -438,14 +537,32 @@ struct SessionDisplaySection: View {
         TextDisplaySection(title: "Did you learn anything about yourself during this session?", value: "\(session.first?.what_learned ?? "")")
         
         TextDisplaySection(title: "Would you do anything differently next time?", value: "\(session.first?.what_would_change ?? "")")
-            .padding(.bottom, 30)
+            
+        if let ouraData = ouraSleepData {
+            if let sleepHours = ouraData.sleepDurationHours {
+                RatingDisplaySection(title: "Sleep Duration", value: String(format: "%.1f hrs", sleepHours))
+            }
+            
+            if let hrv = ouraData.averageHrv {
+                RatingDisplaySection(title: "HRV", value: String(format: "%.0f ms", hrv))
+            }
+            
+            if let readinessScore = ouraData.readinessScore {
+                RatingDisplaySection(title: "Readiness Score", value: "\(readinessScore)")
+            }
+            
+            if let avgHeartRate = ouraData.averageHeartRate {
+                RatingDisplaySection(title: "Average Heart Rate", value: String(format: "%.0f bpm", avgHeartRate))
+            }
+        }
     }
 }
 
 struct CheckInDisplaySection: View {
     var checkin: [DailyCheckIn]
+    var ouraSleepData: OuraSleep?
     
-    var body: some View {
+    var body: some View {        
         RatingDisplaySection(title: "Overall Readiness", value: "\(checkin.first?.overall_score ?? 0)%")
         
         RatingDisplaySection(title: "Physical Readiness", value: "\(checkin.first?.physical_score ?? 0)%")
@@ -479,7 +596,24 @@ struct CheckInDisplaySection: View {
         RatingDisplaySection(title: "How connected do you feel to your body?", value: "\(checkin.first?.body_connection ?? 0)")
         
         TextDisplaySection(title: "What concerns or worries do you have going into today's session?", value: "\(checkin.first?.concerns ?? "")")
-            .padding(.bottom, 30)
+            
+        if let ouraData = ouraSleepData {
+            if let sleepHours = ouraData.sleepDurationHours {
+                RatingDisplaySection(title: "Sleep Duration", value: String(format: "%.1f hrs", sleepHours))
+            }
+            
+            if let hrv = ouraData.averageHrv {
+                RatingDisplaySection(title: "HRV", value: String(format: "%.0f ms", hrv))
+            }
+            
+            if let readinessScore = ouraData.readinessScore {
+                RatingDisplaySection(title: "Readiness Score", value: "\(readinessScore)")
+            }
+            
+            if let avgHeartRate = ouraData.averageHeartRate {
+                RatingDisplaySection(title: "Average Heart Rate", value: String(format: "%.0f bpm", avgHeartRate))
+            }
+        }    
     }
 }
 

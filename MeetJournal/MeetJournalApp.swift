@@ -28,6 +28,10 @@ struct MeetJournalApp: App {
             ZStack {
                 ContentView()
                     .environment(\.clerk, clerk)
+                    .onOpenURL { url in
+                        if url.scheme == "forge" && url.host == "oauth" {
+                        }
+                    }
                     .task {
                         let clerkKey = Bundle.main.object(forInfoDictionaryKey: "CLERK_PUBLISHABLE_KEY") as! String
                         clerk.configure(publishableKey: clerkKey)

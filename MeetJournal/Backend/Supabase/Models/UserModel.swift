@@ -25,6 +25,7 @@ struct Users: Codable, Identifiable, Hashable {
     var reflection_frequency: String
     var what_holding_back: String
     var coach_email: String?
+    var created_at: String?
 }
 
 struct Sport: Codable, Hashable {

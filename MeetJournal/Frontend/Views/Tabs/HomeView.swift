@@ -231,6 +231,7 @@ struct HomeView: View {
                 let dateFormatter = DateFormatter()
                 dateFormatter.dateFormat = "yyyy-MM-dd"
                 let formattedDate = dateFormatter.string(from: onboardingData.nextCompDate)
+                let createdAtDate = dateFormatter.string(from: Date())
                 
                 let newUser = Users(
                     user_id: clerk.user?.id ?? "",
@@ -247,7 +248,8 @@ struct HomeView: View {
                     current_tracking_method: onboardingData.currentTrackingMethod,
                     biggest_frustration: onboardingData.biggestFrustration,
                     reflection_frequency: onboardingData.reflectionFrequency,
-                    what_holding_back: onboardingData.whatHoldingBack
+                    what_holding_back: onboardingData.whatHoldingBack,
+                    created_at: createdAtDate
                 )
                 
                 await userOnboardingViewModel.submitUserProfile(user: newUser)

@@ -23,6 +23,7 @@ class HistoryModel {
     var checkInsCSV: String = ""
     var compReportCSV: String = ""
     var sessionReportCSV: String = ""
+    var ouraDataCSV: String = ""
     
     func fetchCheckins(user_id: String) async {
         isLoading = true
@@ -390,6 +391,82 @@ class HistoryModel {
         }
         
         return ""
+    }
+
+    func fetchOuraDataCSV(userId: String, startDate: Date) async {
+        ouraDataCSV = ""
+        
+        let ouraService = Oura()
+        
+        guard ouraService.getAccessToken(userId: userId) != nil else {
+            print("User does not have Oura connected, skipping Oura data export")
+            return
+        }
+        
+        do {
+            let sleepData = try await ouraService.fetchDailySleep(
+                userId: userId,
+                startDate: startDate,
+                endDate: Date()
+            )
+            
+            let dateFormatter = DateFormatter()
+            dateFormatter.dateFormat = "yyyy-MM-dd"
+            dateFormatter.locale = Locale(identifier: "en_US_POSIX")
+            
+            let filteredData = sleepData.filter { sleepRecord in
+                if let recordDate = dateFormatter.date(from: sleepRecord.day) {
+                    return recordDate >= startDate
+                }
+                return false
+            }
+            
+            let sortedData = filteredData.sorted { first, second in
+                guard let firstDate = dateFormatter.date(from: first.day),
+                      let secondDate = dateFormatter.date(from: second.day) else {
+                    return false
+                }
+                return firstDate < secondDate
+            }
+            
+            var csvRows: [String] = []
+            
+            csvRows.append("day,sleep_duration_hours,hrv_ms,average_heart_rate_bpm,readiness_score")
+            
+            for record in sortedData {
+                let sleepHours = record.sleepDurationHours.map { String(format: "%.2f", $0) } ?? ""
+                let hrv = record.hrv.map { String(format: "%.1f", $0) } ?? ""
+                let heartRate = record.averageHeartRate.map { String(format: "%.0f", $0) } ?? ""
+                let readiness = record.readinessScore.map { String($0) } ?? ""
+                
+                let escapeCSV: (String) -> String = { value in
+                    if value.isEmpty {
+                        return ""
+                    }
+                    if value.contains(",") || value.contains("\"") {
+                        return "\"\(value.replacingOccurrences(of: "\"", with: "\"\""))\""
+                    }
+                    return value
+                }
+                
+                let row = [
+                    record.day,
+                    escapeCSV(sleepHours),
+                    escapeCSV(hrv),
+                    escapeCSV(heartRate),
+                    escapeCSV(readiness)
+                ].joined(separator: ",")
+                
+                csvRows.append(row)
+            }
+            
+            ouraDataCSV = csvRows.joined(separator: "\n")
+            
+        } catch {
+            print("Error fetching Oura data for CSV export: \(error.localizedDescription)")
+            print("Full error: \(error)")
+            ouraDataCSV = ""
+        }
     }
 }
 

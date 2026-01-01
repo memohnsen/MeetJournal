@@ -28,6 +28,7 @@ struct SettingsView: View {
     @State private var showCoachEmailSheet: Bool = false
     @State private var coachEmailManager = CoachEmailManager()
     @State private var showCoachEmailSavedAlert: Bool = false
+    @State private var ouraService = Oura()
         
     let device = UIDevice.current
     
@@ -56,9 +57,28 @@ struct SettingsView: View {
     func createCSVFile() async -> URL? {
         guard let userId = clerk.user?.id else { return nil }
         
+        await userViewModel.fetchUsers(user_id: userId)
+        
         await viewModel.fetchCheckinsCSV(user_id: userId)
         await viewModel.fetchCompReportsCSV(user_id: userId)
         await viewModel.fetchSessionReportCSV(user_id: userId)
+        
+        var ouraStartDate: Date? = nil
+        if let user = userViewModel.users.first, let createdAtString = user.created_at {
+            let dateFormatter = DateFormatter()
+            dateFormatter.dateFormat = "yyyy-MM-dd"
+            dateFormatter.locale = Locale(identifier: "en_US_POSIX")
+            ouraStartDate = dateFormatter.date(from: createdAtString)
+        }
+        
+        if ouraStartDate == nil {
+            let calendar = Calendar.current
+            ouraStartDate = calendar.date(byAdding: .year, value: -1, to: Date())
+        }
+        
+        if ouraService.getAccessToken(userId: userId) != nil, let startDate = ouraStartDate {
+            await viewModel.fetchOuraDataCSV(userId: userId, startDate: startDate)
+        }
         
         var combinedCSV = "=== DAILY CHECK-INS ===\n"
         combinedCSV += viewModel.checkInsCSV
@@ -67,9 +87,14 @@ struct SettingsView: View {
         combinedCSV += "\n\n=== SESSION REPORTS ===\n"
         combinedCSV += viewModel.sessionReportCSV
         
+        if !viewModel.ouraDataCSV.isEmpty {
+            combinedCSV += "\n\n=== OURA DATA ===\n"
+            combinedCSV += viewModel.ouraDataCSV
+        }
+        
         let tempDir = FileManager.default.temporaryDirectory
         let dateString = Date().formatted(date: .numeric, time: .omitted).replacingOccurrences(of: "/", with: "-")
-        let fileURL = tempDir.appendingPathComponent("MeetJournal_Export_\(dateString).csv")
+        let fileURL = tempDir.appendingPathComponent("Forge_Export_\(dateString).csv")
         
         do {
             try combinedCSV.write(to: fileURL, atomically: true, encoding: .utf8)
@@ -90,6 +115,16 @@ struct SettingsView: View {
                         NavigationLink(destination: NotificationSettingsView()) {
                             HStack {
                                 Text("Notifications")
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                            }
+                        }
+                        .cardStyling()
+                        .padding(.bottom, -6)
+                        
+                        NavigationLink(destination: ConnectedAppsView()) {
+                            HStack {
+                                Text("Connected Apps")
                                 Spacer()
                                 Image(systemName: "chevron.right")
                             }
@@ -449,20 +484,6 @@ struct CoachEmailSheet: View {
                 text: "You are responsible for ensuring the email address is correct and that the recipient is authorized to receive your data.",
                 textColor: textColorSecondary
             )
-        }
-    }
-}
-
-struct PrivacyBulletPoint: View {
-    let text: String
-    let textColor: Color
-    
-    var body: some View {
-        HStack(alignment: .top, spacing: 8) {
-            Text("•")
-            Text(text)
-                .font(.subheadline)
-                .foregroundStyle(textColor)
         }
     }
 }
