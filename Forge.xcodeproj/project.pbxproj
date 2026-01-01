@@ -43,7 +43,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		719E07932EFD868200ACB70A /* MeetJournal.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MeetJournal.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		719E07932EFD868200ACB70A /* Forge.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Forge.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		719E07CC2EFDB84C00ACB70A /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
 		71C6AE482F00BDE90070952D /* JournalWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = JournalWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		71C6AE4A2F00BDE90070952D /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
@@ -51,12 +51,12 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		719E07CF2EFDB8A300ACB70A /* Exceptions for "MeetJournal" folder in "MeetJournal" target */ = {
+		719E07CF2EFDB8A300ACB70A /* Exceptions for "MeetJournal" folder in "Forge" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
 			);
-			target = 719E07922EFD868200ACB70A /* MeetJournal */;
+			target = 719E07922EFD868200ACB70A /* Forge */;
 		};
 		71C6AE5C2F00BDEB0070952D /* Exceptions for "JournalWidget" folder in "JournalWidgetExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
@@ -78,7 +78,7 @@
 		719E07952EFD868200ACB70A /* MeetJournal */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				719E07CF2EFDB8A300ACB70A /* Exceptions for "MeetJournal" folder in "MeetJournal" target */,
+				719E07CF2EFDB8A300ACB70A /* Exceptions for "MeetJournal" folder in "Forge" target */,
 				71C6AE652F0323730070952D /* Exceptions for "MeetJournal" folder in "JournalWidgetExtension" target */,
 			);
 			path = MeetJournal;
@@ -134,7 +134,7 @@
 		719E07942EFD868200ACB70A /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				719E07932EFD868200ACB70A /* MeetJournal.app */,
+				719E07932EFD868200ACB70A /* Forge.app */,
 				71C6AE482F00BDE90070952D /* JournalWidgetExtension.appex */,
 			);
 			name = Products;
@@ -152,9 +152,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		719E07922EFD868200ACB70A /* MeetJournal */ = {
+		719E07922EFD868200ACB70A /* Forge */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 719E079E2EFD868300ACB70A /* Build configuration list for PBXNativeTarget "MeetJournal" */;
+			buildConfigurationList = 719E079E2EFD868300ACB70A /* Build configuration list for PBXNativeTarget "Forge" */;
 			buildPhases = (
 				719E078F2EFD868200ACB70A /* Sources */,
 				719E07902EFD868200ACB70A /* Frameworks */,
@@ -169,7 +169,7 @@
 			fileSystemSynchronizedGroups = (
 				719E07952EFD868200ACB70A /* MeetJournal */,
 			);
-			name = MeetJournal;
+			name = Forge;
 			packageProductDependencies = (
 				714CD1BB2EFDC22200FE4D9A /* Supabase */,
 				714CD1C62EFDD62500FE4D9A /* ConfettiSwiftUI */,
@@ -179,7 +179,7 @@
 				714CD3802F004FCE00FE4D9A /* RevenueCatUI */,
 			);
 			productName = MeetJournal;
-			productReference = 719E07932EFD868200ACB70A /* MeetJournal.app */;
+			productReference = 719E07932EFD868200ACB70A /* Forge.app */;
 			productType = "com.apple.product-type.application";
 		};
 		71C6AE472F00BDE90070952D /* JournalWidgetExtension */ = {
@@ -222,7 +222,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 719E078E2EFD868200ACB70A /* Build configuration list for PBXProject "MeetJournal" */;
+			buildConfigurationList = 719E078E2EFD868200ACB70A /* Build configuration list for PBXProject "Forge" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -243,7 +243,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				719E07922EFD868200ACB70A /* MeetJournal */,
+				719E07922EFD868200ACB70A /* Forge */,
 				71C6AE472F00BDE90070952D /* JournalWidgetExtension */,
 			);
 		};
@@ -582,7 +582,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		719E078E2EFD868200ACB70A /* Build configuration list for PBXProject "MeetJournal" */ = {
+		719E078E2EFD868200ACB70A /* Build configuration list for PBXProject "Forge" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				719E079C2EFD868300ACB70A /* Debug */,
@@ -591,7 +591,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		719E079E2EFD868300ACB70A /* Build configuration list for PBXNativeTarget "MeetJournal" */ = {
+		719E079E2EFD868300ACB70A /* Build configuration list for PBXNativeTarget "Forge" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				719E079F2EFD868300ACB70A /* Debug */,

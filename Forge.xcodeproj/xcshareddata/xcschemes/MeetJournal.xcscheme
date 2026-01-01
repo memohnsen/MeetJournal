@@ -16,9 +16,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "719E07922EFD868200ACB70A"
-               BuildableName = "MeetJournal.app"
-               BlueprintName = "MeetJournal"
-               ReferencedContainer = "container:MeetJournal.xcodeproj">
+               BuildableName = "Forge.app"
+               BlueprintName = "Forge"
+               ReferencedContainer = "container:Forge.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -45,9 +45,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "719E07922EFD868200ACB70A"
-            BuildableName = "MeetJournal.app"
-            BlueprintName = "MeetJournal"
-            ReferencedContainer = "container:MeetJournal.xcodeproj">
+            BuildableName = "Forge.app"
+            BlueprintName = "Forge"
+            ReferencedContainer = "container:Forge.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -62,9 +62,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "719E07922EFD868200ACB70A"
-            BuildableName = "MeetJournal.app"
-            BlueprintName = "MeetJournal"
-            ReferencedContainer = "container:MeetJournal.xcodeproj">
+            BuildableName = "Forge.app"
+            BlueprintName = "Forge"
+            ReferencedContainer = "container:Forge.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

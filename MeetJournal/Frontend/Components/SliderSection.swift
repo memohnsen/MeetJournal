@@ -21,7 +21,7 @@ struct SliderSection: View {
     var maxValue: Int
     
     var colorByRating: Color {
-        if title == "Rate your soreness" || title == "How hard was this session?" {
+        if title == "How sore does your body feel?" || title == "How hard was this session?" {
             if value <= 2 {
                 .green
             } else if value == 3 {
