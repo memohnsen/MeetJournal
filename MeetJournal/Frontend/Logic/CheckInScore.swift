@@ -27,9 +27,9 @@ class CheckInScore {
     var concerns: String = ""
     
     var physicalScore: Int {
-        let overall: Int = physicalStrength + recovered + energy + (5 - soreness)
+        let overall: Int = physicalStrength + recovered + energy + (5 - soreness) + readiness
 
-        let maxScore = 20.0
+        let maxScore = 25.0
         let percent = (Double(overall) / maxScore) * 100.0
 
         let percentScore = Int(max(0.0, min(100.0, percent)).rounded())
@@ -37,9 +37,9 @@ class CheckInScore {
     }
     
     var mentalScore: Int {
-        let overall: Int = mentalStrength + confidence + sleep + stress
+        let overall: Int = mentalStrength + confidence + sleep + stress + bodyConnection + focus + excitement
 
-        let maxScore = 20.0
+        let maxScore = 35.0
         let percent = (Double(overall) / maxScore) * 100.0
 
         let percentScore = Int(max(0.0, min(100.0, percent)).rounded())
@@ -47,9 +47,9 @@ class CheckInScore {
     }
     
     var overallScore: Int {
-        let overall: Int = physicalStrength + recovered + energy + (5 - soreness) + mentalStrength + confidence + sleep + stress
+        let overall: Int = physicalStrength + recovered + energy + (5 - soreness) + readiness + mentalStrength + confidence + sleep + stress + bodyConnection + focus + excitement
         
-        let maxScore = 35.0
+        let maxScore = 60.0
         let percent = (Double(overall) / maxScore) * 100.0
 
         let percentScore = Int(max(0.0, min(100.0, percent)).rounded())

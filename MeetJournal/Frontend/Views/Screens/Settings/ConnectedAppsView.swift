@@ -14,6 +14,7 @@ struct ConnectedAppsView: View {
     @State private var ouraService = Oura()
     @State private var showOuraConnectionAlert: Bool = false
     @State private var ouraConnectionMessage: String = ""
+    @State private var storeToken: Bool = false
     
     var body: some View {
         NavigationStack {
@@ -71,7 +72,7 @@ struct ConnectedAppsView: View {
                         
                         ConnectedAppRow(
                             name: "Apple Health",
-                            icon: "heart.fill",
+                            icon: "circle.fill",
                             isConnected: false,
                             isLoading: false,
                             isDisabled: true,
@@ -79,6 +80,10 @@ struct ConnectedAppsView: View {
                         )
                         
                         privacyNoticeSection
+                        
+                        Toggle("Store Data For Reports", isOn: $storeToken)
+                            .cardStyling()
+                            .padding(.top)
                     }
                     .padding(.top)
                     .padding(.bottom, 30)

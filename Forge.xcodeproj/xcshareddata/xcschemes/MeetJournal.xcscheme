@@ -73,6 +73,7 @@
    </AnalyzeAction>
    <ArchiveAction
       buildConfiguration = "Release"
+      customArchiveName = "Forge"
       revealArchiveInOrganizer = "YES">
    </ArchiveAction>
 </Scheme>

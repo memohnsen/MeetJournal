@@ -127,7 +127,7 @@ struct TrendsView: View {
                 }
             }
             .sheet(isPresented: $aiShown) {
-                AIResults(selectedFilter: $selectedFilter, checkins: checkins, workouts: workouts, meets: meets, aiModel: aiModel)
+                AIResults(selectedFilter: $selectedFilter, ouraSleepData: $ouraSleepData, checkins: checkins, workouts: workouts, meets: meets, aiModel: aiModel)
             }
             .task {
                 AnalyticsManager.shared.trackScreenView("TrendsView")
@@ -194,6 +194,7 @@ struct TrendsView: View {
 struct AIResults: View {
     @Environment(\.dismiss) var dismiss
     @Binding var selectedFilter: String
+    @Binding var ouraSleepData: [OuraSleep]
     var checkins: [DailyCheckIn]
     var workouts: [SessionReport]
     var meets: [CompReport]
@@ -214,12 +215,16 @@ struct AIResults: View {
             Data Type: Post-competition reflection data. 1 is always a poor value, 5 is always considered a good value, stress of 5 means relaxed, etc.
             
             Data: \(meets)
+            
+            Data Type: Oura Ring wearable device data.
+            
+            Data: \(ouraSleepData)
                         
             Response Format:
             - No emojis
             - Do not include any greetings, get straight to the data
             - 250 words or less
-            - No more than 4 sentences
+            - No more than 4 sentences per section
             - Write as plain text, with each section of data formatted with an asterik to mark it as a bullet point
             - Do not include any recommendations or draw conclusions, only comment on trends
             """
