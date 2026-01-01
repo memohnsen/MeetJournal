@@ -12,9 +12,11 @@ struct ConnectedAppsView: View {
     @Environment(\.clerk) private var clerk
     @Environment(\.colorScheme) var colorScheme
     @State private var ouraService = Oura()
+    @State private var tokenManager = OuraTokenManager()
     @State private var showOuraConnectionAlert: Bool = false
     @State private var ouraConnectionMessage: String = ""
     @State private var storeToken: Bool = false
+    @State private var isLoadingToggle: Bool = false
     
     var body: some View {
         NavigationStack {
@@ -35,6 +37,7 @@ struct ConnectedAppsView: View {
                                         if let userId = clerk.user?.id {
                                             do {
                                                 try await ouraService.revokeToken(userId: userId)
+                                                await tokenManager.updateOuraToken(userId: userId, refreshToken: nil)
                                                 ouraConnectionMessage = "Oura account disconnected successfully."
                                                 showOuraConnectionAlert = true
                                             } catch {
@@ -47,8 +50,14 @@ struct ConnectedAppsView: View {
                                         do {
                                             try await ouraService.authenticate()
                                             if let userId = clerk.user?.id {
-
                                                 await createWebhookSubscriptions(userId: userId)
+                                                
+                                                if storeToken {
+                                                    let keychain = OuraKeychain.shared
+                                                    if let refreshToken = keychain.getRefreshToken(userId: userId) {
+                                                        await tokenManager.updateOuraToken(userId: userId, refreshToken: refreshToken)
+                                                    }
+                                                }
                                             }
                                             ouraConnectionMessage = "Oura account connected successfully!"
                                             showOuraConnectionAlert = true
@@ -79,11 +88,27 @@ struct ConnectedAppsView: View {
                             onTap: {}
                         )
                         
-                        privacyNoticeSection
-                        
                         Toggle("Store Data For Reports", isOn: $storeToken)
                             .cardStyling()
                             .padding(.top)
+                            .onChange(of: storeToken) { oldValue, newValue in
+                                Task {
+                                    if let userId = clerk.user?.id {
+                                        await tokenManager.updateStoreTokenPreference(userId: userId, shouldStore: newValue)
+                                        
+                                        if newValue {
+                                            let keychain = OuraKeychain.shared
+                                            if let refreshToken = keychain.getRefreshToken(userId: userId) {
+                                                await tokenManager.updateOuraToken(userId: userId, refreshToken: refreshToken)
+                                            }
+                                        } else {
+                                            await tokenManager.updateOuraToken(userId: userId, refreshToken: nil)
+                                        }
+                                    }
+                                }
+                            }
+                        
+                        privacyNoticeSection
                     }
                     .padding(.top)
                     .padding(.bottom, 30)
@@ -91,9 +116,11 @@ struct ConnectedAppsView: View {
             }
             .navigationTitle("Connected Apps")
             .toolbarTitleDisplayMode(.inlineLarge)
+            .toolbarVisibility(.hidden, for: .tabBar)
             .task {
                 if let userId = clerk.user?.id {
                     ouraService.checkConnectionStatus(userId: userId)
+                    storeToken = await tokenManager.loadToggleState(userId: userId)
                 }
             }
             .alert("Oura Connection", isPresented: $showOuraConnectionAlert) {

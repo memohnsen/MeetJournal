@@ -29,7 +29,7 @@ struct ContentView: View {
                 AuthView()
             
             // Logged in + has subscription = show tabs
-            } else if !customerManager.hasProAccess {
+            } else if customerManager.hasProAccess {
                 mainTabView
             
             // Logged in + no subscription = show paywall

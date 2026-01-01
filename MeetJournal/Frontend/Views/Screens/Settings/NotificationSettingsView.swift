@@ -157,6 +157,7 @@ struct NotificationSettingsView: View {
             }
             .navigationTitle("Notifications")
             .toolbarTitleDisplayMode(.inlineLarge)
+            .toolbarVisibility(.hidden, for: .tabBar)
             .task {
                 AnalyticsManager.shared.trackNotificationSettingsViewed()
                 loadTrainingDays()

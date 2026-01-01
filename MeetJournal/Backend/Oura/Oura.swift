@@ -188,6 +188,9 @@ class Oura {
         try keychain.saveAccessToken(tokenResponse.accessToken, userId: userId)
         if let refreshToken = tokenResponse.refreshToken {
             try keychain.saveRefreshToken(refreshToken, userId: userId)
+            
+            let tokenManager = OuraTokenManager()
+            await tokenManager.syncRefreshTokenIfStoring(userId: userId)
         }
     }
     

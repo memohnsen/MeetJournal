@@ -191,7 +191,12 @@ struct HistoryDetailsView: View {
                 BackgroundColor()
                 
                 if isLoading {
-                    ProgressView()
+                    ScrollView {
+                        VStack {
+                            HistoryDetailsLoadingView()
+                        }
+                        .padding(.bottom, 30)
+                    }
                 } else {
                     ScrollView{
                         VStack{
@@ -614,6 +619,32 @@ struct CheckInDisplaySection: View {
                 RatingDisplaySection(title: "Average Heart Rate", value: String(format: "%.0f bpm", avgHeartRate))
             }
         }    
+    }
+}
+
+struct HistoryDetailsLoadingView: View {
+    @Environment(\.colorScheme) var colorScheme
+    @State private var isAnimating: Bool = false
+    
+    var body: some View {
+        ForEach(1...7, id: \.self) {_ in
+            VStack {
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(colorScheme == .dark ? Color.white.opacity(isAnimating ? 0.3 : 0.1) : Color.gray.opacity(isAnimating ? 0.3 : 0.1))
+                    .frame(width: 200, height: 20)
+                    .padding(.bottom, 2)
+                
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(colorScheme == .dark ? Color.white.opacity(isAnimating ? 0.3 : 0.1) : Color.gray.opacity(isAnimating ? 0.3 : 0.1))
+                    .frame(width: 250, height: 60)
+            }
+            .cardStyling()
+        }
+        .onAppear {
+            withAnimation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true)) {
+                isAnimating = true
+            }
+        }
     }
 }
 

@@ -25,6 +25,8 @@ struct Users: Codable, Identifiable, Hashable {
     var reflection_frequency: String
     var what_holding_back: String
     var coach_email: String?
+    var oura_refresh_token: String?
+    var store_oura_token: Bool?
     var created_at: String?
 }
 

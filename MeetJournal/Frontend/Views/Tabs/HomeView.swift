@@ -262,7 +262,13 @@ struct HomeView: View {
                 userSport = sport
             }
             
-            // Store training days and meet data to AppStorage for notifications
+            if let userId = clerk.user?.id,
+               let user = viewModel.users.first,
+               user.store_oura_token == true {
+                let tokenManager = OuraTokenManager()
+                await tokenManager.syncRefreshTokenIfStoring(userId: userId)
+            }
+            
             if !trainingDaysStored, let user = viewModel.users.first {
                 notificationManager.storeTrainingDays(user.training_days)
                 notificationManager.storeMeetData(
