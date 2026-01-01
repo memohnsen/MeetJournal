@@ -69,7 +69,6 @@ struct VisualizationSetupView: View {
                                         checkForCachedVersion()
                                     }
                             }
-                            .padding(.bottom, 20)
                             .cardStyling()
                             
                             VStack(alignment: .leading, spacing: 12) {
@@ -92,7 +91,6 @@ struct VisualizationSetupView: View {
                                         checkForCachedVersion()
                                     }
                             }
-                            .padding(.bottom, 20)
                             .cardStyling()
                             
                             VStack(alignment: .leading, spacing: 12) {
@@ -112,7 +110,6 @@ struct VisualizationSetupView: View {
                                     }
                                 }
                             }
-                            .padding(.bottom, 20)
                             .cardStyling()
                             
                             if hasCachedVersion {
@@ -181,6 +178,7 @@ struct VisualizationSetupView: View {
             }
             .navigationTitle("Visualization")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbarVisibility(.hidden, for: .tabBar)
             .alert("Error", isPresented: $showError) {
                 Button("OK", role: .cancel) {}
             } message: {

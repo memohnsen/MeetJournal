@@ -7,6 +7,14 @@ class OpenRouter {
     private var edgeFunctionURL: String {
         return "\(supabaseURL)/functions/v1/openrouter-proxy"
     }
+    
+    // google/gemini-2.5-flash       | $0.30 in | $2.5 out | poor analysis, not good at spotting trends, convulted
+    // google/gemini-3-flash-preview | $0.50 in | $3 out   | ues big words, but very good analysis, found trends successfully
+    // anthropic/claude-sonnet-4.5   | $3 in    | $15 out  | slowest, verbose, less big words
+    // xiaomi/mimo-v2-flash:free     | free     | free     | correlated scores to overall, bad analysis
+    // minimax/minimax-m2            | $0.20 in | $1 out   | cheap, poor at instructions
+    
+    // google/gemini-3-flash-preview | $0.50 in | $3 out   | outstanding at script gen
     private let model = "google/gemini-3-flash-preview"
     
     var response: String = ""

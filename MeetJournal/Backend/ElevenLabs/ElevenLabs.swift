@@ -1,4 +1,5 @@
 import Foundation
+import Clerk
 
 enum VoiceOption: String, CaseIterable, Identifiable {
     case matilda = "XrExE9yKIg1WjnnlVkGX"
@@ -26,8 +27,10 @@ enum VoiceOption: String, CaseIterable, Identifiable {
 
 @Observable
 class ElevenLabs {
-    private let apiKey = Bundle.main.object(forInfoDictionaryKey: "ELEVENLABS_API_KEY") as! String
-    private let baseURL = "https://api.elevenlabs.io/v1"
+    private let supabaseURL = Bundle.main.object(forInfoDictionaryKey: "SUPABASE_URL") as! String
+    private var edgeFunctionURL: String {
+        return "\(supabaseURL)/functions/v1/elevenlabs"
+    }
     
     var isLoading: Bool = false
     
@@ -43,7 +46,29 @@ class ElevenLabs {
         let textLength = text.count
         let startTime = Date()
         
-        guard let url = URL(string: "\(baseURL)/text-to-speech/\(voice.rawValue)") else {
+        guard let session = Clerk.shared.session else {
+            AnalyticsManager.shared.trackElevenLabsAPICall(
+                voice: voice.name,
+                textLength: textLength,
+                audioDuration: nil,
+                success: false,
+                errorMessage: "User not authenticated"
+            )
+            throw ElevenLabsError.authError
+        }
+        
+        guard let token = try await session.getToken() else {
+            AnalyticsManager.shared.trackElevenLabsAPICall(
+                voice: voice.name,
+                textLength: textLength,
+                audioDuration: nil,
+                success: false,
+                errorMessage: "Failed to get auth token"
+            )
+            throw ElevenLabsError.authError
+        }
+        
+        guard let url = URL(string: edgeFunctionURL) else {
             AnalyticsManager.shared.trackElevenLabsAPICall(
                 voice: voice.name,
                 textLength: textLength,
@@ -56,23 +81,28 @@ class ElevenLabs {
         
         let processedText = processSSMLBreaks(text)
         
-        let requestBody: [String: Any] = [
-            "text": processedText,
-            "model_id": "eleven_multilingual_v2",
-            "voice_settings": [
-                "stability": stability,
-                "similarity_boost": similarityBoost,
-                "style": 0.0,
-                "use_speaker_boost": true
+        // Construct the request body for the edge function
+        let edgeFunctionBody: [String: Any] = [
+            "endpoint": "/text-to-speech/\(voice.rawValue)",
+            "method": "POST",
+            "body": [
+                "text": processedText,
+                "model_id": "eleven_multilingual_v2",
+                "voice_settings": [
+                    "stability": stability,
+                    "similarity_boost": similarityBoost,
+                    "style": 0.0,
+                    "use_speaker_boost": true
+                ]
             ]
         ]
         
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue(apiKey, forHTTPHeaderField: "xi-api-key")
-        request.setValue("audio/mpeg", forHTTPHeaderField: "Accept")
-        request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
+        request.setValue("Bearer \(token.jwt)", forHTTPHeaderField: "Authorization")
+        
+        request.httpBody = try JSONSerialization.data(withJSONObject: edgeFunctionBody)
         
         do {
             let (data, response) = try await URLSession.shared.data(for: request)
@@ -165,6 +195,7 @@ class ElevenLabs {
 enum ElevenLabsError: LocalizedError {
     case invalidURL
     case invalidResponse
+    case authError
     case apiError(statusCode: Int, message: String)
     
     var errorDescription: String? {
@@ -173,6 +204,8 @@ enum ElevenLabsError: LocalizedError {
             return "Invalid API URL"
         case .invalidResponse:
             return "Invalid response from server"
+        case .authError:
+            return "Authentication failed"
         case .apiError(let statusCode, let message):
             return "API Error (\(statusCode)): \(message)"
         }

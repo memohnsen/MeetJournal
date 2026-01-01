@@ -145,6 +145,7 @@ struct BoxBreathingSetupView: View {
             }
             .navigationTitle("Box Breathing")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbarVisibility(.hidden, for: .tabBar)
         }
     }
 }
