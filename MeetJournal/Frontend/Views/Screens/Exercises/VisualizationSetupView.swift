@@ -44,7 +44,7 @@ struct VisualizationSetupView: View {
                                     .font(.title2.bold())
                                     .padding(.bottom, 4)
                                 
-                                Text("Describe your movement and the cues you want to focus on. A personalized guided visualization will be generated to help you mentally prepare.")
+                                Text("Describe your movement and the cues you want to focus on. A personalized guided visualization will be generated to help you mentally prepare. This could take up to 30s to generate, please don't leave the page after clicking generate.")
                                     .font(.body)
                                     .foregroundStyle(.secondary)
                                     .lineSpacing(4)

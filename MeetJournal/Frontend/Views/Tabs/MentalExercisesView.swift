@@ -10,6 +10,7 @@ import SwiftUI
 struct MentalExercisesView: View {
     @State private var navigateToBoxBreathing: Bool = false
     @State private var navigateToVisualization: Bool = false
+    @State private var navigateToObjectiveReview: Bool = false
     
     var body: some View {
         NavigationStack{
@@ -35,6 +36,15 @@ struct MentalExercisesView: View {
                                 navigateToVisualization = true
                             }
                         )
+                        
+                        ExerciseCardSection(
+                            title: "Objective Review",
+                            description: "Transform emotional feedback into objective coaching cues. Vent about a set, then get help reframing it to focus on actionable improvements.",
+                            buttonName: "Start Reframing",
+                            action: {
+                                navigateToObjectiveReview = true
+                            }
+                        )
                     }
                     .padding(.bottom, 30)
                     .padding(.top, 16)
@@ -47,6 +57,9 @@ struct MentalExercisesView: View {
             }
             .navigationDestination(isPresented: $navigateToVisualization) {
                 VisualizationSetupView()
+            }
+            .navigationDestination(isPresented: $navigateToObjectiveReview) {
+                ObjectiveReviewView()
             }
         }
     }

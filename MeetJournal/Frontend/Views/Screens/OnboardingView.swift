@@ -51,7 +51,7 @@ struct OnboardingView: View {
                 tagline: "Comp Mindset",
                 taglineColor: .purple,
                 title: "Analyze the day, own the outcome",
-                message: "Post-competition reflections help you process the wins and losses, building bulletproof confidence for your next meet.",
+                message: "Post-meet reflections help you process the wins and losses, building bulletproof confidence for your next meet.",
                 buttonText: "Let's Do It"
             )
         } else if pageCounter == 5 {

@@ -206,19 +206,6 @@ struct SettingsView: View {
 //                        }
 //                        .cardStyling()
                         
-                        Link(destination: URL(string: "https://github.com/memohnsen/MeetJournal")!) {
-                            HStack{
-                                Text("Open Source Code on Github")
-                                Spacer()
-                                Image(systemName: "chevron.right")
-                            }
-                            .cardStyling()
-                            .padding(.bottom, -6)
-                        }
-                        .onTapGesture {
-                            AnalyticsManager.shared.trackGitHubLinkOpened()
-                        }
-                        
                         Text("DANGER ZONE")
                             .foregroundStyle(.red.opacity(0.75))
                             .bold()
