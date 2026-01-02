@@ -40,7 +40,9 @@ struct MultipleChoiceSection: View {
                 HStack{
                     ForEach(arrayOptions, id: \.self) { option in
                         Button{
-                            selected = option
+                            withAnimation(.easeInOut(duration: 0.3)) {
+                                selected = option
+                            }
                         } label: {
                             Text(option)
                                 .padding()
@@ -51,6 +53,7 @@ struct MultipleChoiceSection: View {
                         }
                     }
                 }
+                .animation(.easeInOut(duration: 0.3), value: selected)
                 .padding([.bottom, .horizontal])
             }
         }
