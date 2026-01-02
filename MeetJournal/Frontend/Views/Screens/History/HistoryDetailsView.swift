@@ -261,6 +261,7 @@ struct HistoryDetailsView: View {
             }
             .navigationTitle(pageTitle)
             .navigationBarTitleDisplayMode(.inline)
+            .toolbarVisibility(.hidden, for: .tabBar)
             .toolbar {
                 ToolbarItem{
                     ShareLink(item: shareTextResult, subject: Text("Share Your Results")) {
