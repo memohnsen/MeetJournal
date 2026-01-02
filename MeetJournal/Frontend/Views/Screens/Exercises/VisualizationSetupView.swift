@@ -27,7 +27,11 @@ struct VisualizationSetupView: View {
             ZStack {
                 BackgroundColor()
                 
-                if isPlayerActive, let audioData = generatedAudioData {
+                if isGenerating {
+                    CreatingVisualizationView(
+                        status: visualizationService.isGeneratingScript ? "Generating Script..." : "Creating Audio..."
+                    )
+                } else if isPlayerActive, let audioData = generatedAudioData {
                     VisualizationPlayerView(
                         audioData: audioData,
                         script: generatedScript,
@@ -44,7 +48,7 @@ struct VisualizationSetupView: View {
                                     .font(.title2.bold())
                                     .padding(.bottom, 4)
                                 
-                                Text("Describe your movement and the cues you want to focus on. A personalized guided visualization will be generated to help you mentally prepare. This could take up to 30s to generate, please don't leave the page after clicking generate.")
+                                Text("Describe your movement and the cues you want to focus on. A personalized guided visualization will be generated to help you mentally prepare.")
                                     .font(.body)
                                     .foregroundStyle(.secondary)
                                     .lineSpacing(4)
@@ -150,15 +154,8 @@ struct VisualizationSetupView: View {
                                 }
                             } label: {
                                 HStack(spacing: 8) {
-                                    if isGenerating {
-                                        ProgressView()
-                                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                            .scaleEffect(0.8)
-                                        Text(visualizationService.isGeneratingScript ? "Generating Script..." : "Creating Audio...")
-                                    } else {
-                                        Image(systemName: "waveform")
-                                        Text(useCachedVersion ? "Play Saved Visualization" : "Generate Visualization")
-                                    }
+                                    Image(systemName: "waveform")
+                                    Text(useCachedVersion ? "Play Saved Visualization" : "Generate Visualization")
                                 }
                                 .font(.headline)
                                 .frame(maxWidth: .infinity)
@@ -168,7 +165,7 @@ struct VisualizationSetupView: View {
                                 .clipShape(.rect(cornerRadius: 12))
                                 .shadow(color: Color.black.opacity(0.15), radius: 6, x: 0, y: 3)
                             }
-                            .disabled(!canGenerate || isGenerating)
+                            .disabled(!canGenerate)
                             .padding(.horizontal)
                             .padding(.top, 8)
                             .padding(.bottom, 30)
@@ -254,6 +251,60 @@ struct VisualizationSetupView: View {
             isGenerating = false
             errorMessage = error.localizedDescription
             showError = true
+        }
+    }
+}
+
+struct CreatingVisualizationView: View {
+    let status: String
+    
+    var body: some View {
+        ZStack {
+            BackgroundColor()
+            
+            VStack(spacing: 24) {
+                Spacer()
+                
+                ProgressView()
+                    .progressViewStyle(CircularProgressViewStyle(tint: blueEnergy))
+                    .scaleEffect(1.5)
+                
+                VStack(spacing: 12) {
+                    Text("Creating Visualization")
+                        .font(.title2.bold())
+                    
+                    Text(status)
+                        .font(.headline)
+                        .foregroundStyle(.secondary)
+                }
+                
+                VStack(spacing: 8) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .font(.title3)
+                        .foregroundStyle(.orange)
+                    
+                    Text("Please do not leave this page")
+                        .font(.subheadline.bold())
+                    
+                    Text("The visualization is being generated. Leaving the page may interrupt the process.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 40)
+                }
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color.orange.opacity(0.1))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color.orange.opacity(0.3), lineWidth: 1)
+                )
+                .padding(.horizontal, 32)
+                
+                Spacer()
+            }
         }
     }
 }

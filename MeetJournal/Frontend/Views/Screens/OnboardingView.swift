@@ -398,8 +398,8 @@ struct TrainingDaysSection: View {
                                             .pickerStyle(.wheel)
                                             .padding()
                                             
-                                            Button("Done") {
-                                                showingTimePicker = nil
+                                            HStack{
+                                                Text("Done")
                                             }
                                             .padding()
                                             .frame(maxWidth: .infinity)
@@ -408,6 +408,9 @@ struct TrainingDaysSection: View {
                                             .bold()
                                             .clipShape(.rect(cornerRadius: 12))
                                             .padding()
+                                            .onTapGesture {
+                                                showingTimePicker = nil
+                                            }
                                         }
                                         .presentationDetents([.height(350)])
                                     }

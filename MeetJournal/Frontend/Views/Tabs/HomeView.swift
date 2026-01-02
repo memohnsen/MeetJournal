@@ -18,11 +18,12 @@ struct HomeView: View {
     @Environment(\.clerk) private var clerk
     @State private var viewModel = UsersViewModel()
     var users: [Users] { viewModel.users }
+    var isLoading: Bool { viewModel.isLoading }
     @State private var historyModel = HistoryModel()
     var checkins: [DailyCheckIn] { historyModel.checkIns }
+    var historyIsLoading: Bool { historyModel.isLoading }
     @State private var checkInScore = CheckInScore()
     @State private var userOnboardingViewModel = UserOnboardingViewModel()
-    var isLoading: Bool { viewModel.isLoading }
 
     @State private var userProfileShown: Bool = false
     @State private var notificationManager = NotificationManager.shared
@@ -132,7 +133,7 @@ struct HomeView: View {
                         
                         ReflectionSection()
                         
-                        HistorySection(checkins: checkins)
+                        HistorySection(checkins: checkins, isLoading: historyIsLoading)
                     }
                     .padding(.top, 100)
                 }
@@ -540,26 +541,48 @@ struct ReflectionSection: View {
 struct HistorySection: View {
     @Environment(\.colorScheme) var colorScheme
     var checkins: [DailyCheckIn]
+    var isLoading: Bool
 
     var body: some View {
-        VStack(alignment: .leading){
-            HStack {
-                Text("RECENT ACTIVITY")
-                    .foregroundStyle(.secondary)
-                    .bold()
-                    .padding(.horizontal)
-                
-                Spacer()
-                
-                NavigationLink(destination: HistoryView()){
-                    Text("VIEW ALL")
-                        .foregroundStyle(.blue)
+        if isLoading {
+            VStack(alignment: .leading){
+                HStack {
+                    Text("RECENT ACTIVITY")
+                        .foregroundStyle(.secondary)
                         .bold()
                         .padding(.horizontal)
+                    
+                    Spacer()
+                    
+                    NavigationLink(destination: HistoryView()){
+                        Text("VIEW ALL")
+                            .foregroundStyle(.blue)
+                            .bold()
+                            .padding(.horizontal)
+                    }
                 }
+                
+                CustomProgressView(maxNum: 3)
             }
-            
-            if !checkins.isEmpty {
+            .padding([.top, .horizontal])
+        } else if !checkins.isEmpty {
+            VStack(alignment: .leading){
+                HStack {
+                    Text("RECENT ACTIVITY")
+                        .foregroundStyle(.secondary)
+                        .bold()
+                        .padding(.horizontal)
+                    
+                    Spacer()
+                    
+                    NavigationLink(destination: HistoryView()){
+                        Text("VIEW ALL")
+                            .foregroundStyle(.blue)
+                            .bold()
+                            .padding(.horizontal)
+                    }
+                }
+                
                 ForEach(checkins.prefix(5), id: \.id) { checkin in
                     HStack {
                         NavigationLink(destination: HistoryDetailsView(title: checkin.selected_lift, searchTerm: checkin.selected_lift, selection: "Check-Ins", date: checkin.check_in_date)) {
@@ -589,11 +612,9 @@ struct HistorySection: View {
                         }
                     }
                 }
-            } else {
-                CustomProgressView(maxNum: 3)
             }
+            .padding([.top, .horizontal])
         }
-        .padding([.top, .horizontal])
     }
 }
 
