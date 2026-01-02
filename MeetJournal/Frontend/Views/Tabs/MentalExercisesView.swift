@@ -11,6 +11,7 @@ struct MentalExercisesView: View {
     @State private var navigateToBoxBreathing: Bool = false
     @State private var navigateToVisualization: Bool = false
     @State private var navigateToObjectiveReview: Bool = false
+    @State private var navigateToExternalAnchor: Bool = false
     
     var body: some View {
         NavigationStack{
@@ -45,6 +46,15 @@ struct MentalExercisesView: View {
                                 navigateToObjectiveReview = true
                             }
                         )
+                        
+                        ExerciseCardSection(
+                            title: "External Anchor",
+                            description: "A grounding exercise to pull your focus outward to the environment, reducing panic and getting you out of your head.",
+                            buttonName: "Begin Grounding",
+                            action: {
+                                navigateToExternalAnchor = true
+                            }
+                        )
                     }
                     .padding(.bottom, 30)
                     .padding(.top, 16)
@@ -60,6 +70,9 @@ struct MentalExercisesView: View {
             }
             .navigationDestination(isPresented: $navigateToObjectiveReview) {
                 ObjectiveReviewView()
+            }
+            .navigationDestination(isPresented: $navigateToExternalAnchor) {
+                ExternalAnchorView()
             }
         }
     }
