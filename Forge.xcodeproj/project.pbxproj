@@ -18,6 +18,20 @@
 		71C6AE582F00BDEB0070952D /* JournalWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 71C6AE482F00BDE90070952D /* JournalWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
+/* Begin PBXBuildRule section */
+		719F4F922F072CBB00FF33BA /* PBXBuildRule */ = {
+			isa = PBXBuildRule;
+			compilerSpec = com.apple.compilers.proxy.script;
+			fileType = pattern.proxy;
+			inputFiles = (
+			);
+			isEditable = 1;
+			outputFiles = (
+			);
+			script = "# Type a script or drag a script file from your workspace to insert its path.\n";
+		};
+/* End PBXBuildRule section */
+
 /* Begin PBXContainerItemProxy section */
 		71C6AE562F00BDEB0070952D /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -162,6 +176,7 @@
 				71C6AE5D2F00BDEB0070952D /* Embed Foundation Extensions */,
 			);
 			buildRules = (
+				719F4F922F072CBB00FF33BA /* PBXBuildRule */,
 			);
 			dependencies = (
 				71C6AE572F00BDEB0070952D /* PBXTargetDependency */,
@@ -430,6 +445,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = MeetJournal/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Forge;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.sports";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -460,6 +476,7 @@
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
+				WHOOP_CLIENT_ID = "6ec51363-34dd-4b30-b119-3fa0d6da4d28\n";
 			};
 			name = Debug;
 		};
@@ -478,6 +495,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = MeetJournal/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Forge;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.sports";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -508,6 +526,7 @@
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
+				WHOOP_CLIENT_ID = "6ec51363-34dd-4b30-b119-3fa0d6da4d28\n";
 			};
 			name = Release;
 		};

@@ -24,6 +24,7 @@ class HistoryModel {
     var compReportCSV: String = ""
     var sessionReportCSV: String = ""
     var ouraDataCSV: String = ""
+    var whoopDataCSV: String = ""
     
     func fetchCheckins(user_id: String) async {
         isLoading = true
@@ -466,6 +467,92 @@ class HistoryModel {
             print("Error fetching Oura data for CSV export: \(error.localizedDescription)")
             print("Full error: \(error)")
             ouraDataCSV = ""
+        }
+    }
+    
+    func fetchWhoopDataCSV(userId: String, startDate: Date) async {
+        whoopDataCSV = ""
+        
+        let whoopService = Whoop()
+        
+        guard whoopService.getAccessToken(userId: userId) != nil else {
+            print("User does not have WHOOP connected, skipping WHOOP data export")
+            return
+        }
+        
+        do {
+            let dailyData = try await whoopService.fetchDailyData(
+                userId: userId,
+                startDate: startDate,
+                endDate: Date()
+            )
+            
+            let dateFormatter = DateFormatter()
+            dateFormatter.dateFormat = "yyyy-MM-dd"
+            dateFormatter.locale = Locale(identifier: "en_US_POSIX")
+            
+            let filteredData = dailyData.filter { dailyRecord in
+                if let recordDate = dateFormatter.date(from: dailyRecord.date) {
+                    return recordDate >= startDate
+                }
+                return false
+            }
+            
+            let sortedData = filteredData.sorted { first, second in
+                guard let firstDate = dateFormatter.date(from: first.date),
+                      let secondDate = dateFormatter.date(from: second.date) else {
+                    return false
+                }
+                return firstDate < secondDate
+            }
+            
+            var csvRows: [String] = []
+            
+            csvRows.append("date,recovery_score,sleep_duration_hours,sleep_performance_percent,sleep_consistency_percent,sleep_efficiency_percent,strain_score,hrv_ms,resting_heart_rate_bpm,respiratory_rate")
+            
+            for record in sortedData {
+                let recoveryScore = record.recoveryScore.map { String($0) } ?? ""
+                let sleepHours = record.sleepDurationHours.map { String(format: "%.2f", $0) } ?? ""
+                let sleepPerformance = record.sleepPerformance.map { String($0) } ?? ""
+                let sleepConsistency = record.sleepConsistency.map { String($0) } ?? ""
+                let sleepEfficiency = record.sleepEfficiency.map { String($0) } ?? ""
+                let strainScore = record.strainScore.map { String(format: "%.2f", $0) } ?? ""
+                let hrv = record.hrvMs.map { String($0) } ?? ""
+                let restingHR = record.restingHeartRate.map { String($0) } ?? ""
+                let respiratoryRate = record.respiratoryRate.map { String(format: "%.2f", $0) } ?? ""
+                
+                let escapeCSV: (String) -> String = { value in
+                    if value.isEmpty {
+                        return ""
+                    }
+                    if value.contains(",") || value.contains("\"") {
+                        return "\"\(value.replacingOccurrences(of: "\"", with: "\"\""))\""
+                    }
+                    return value
+                }
+                
+                let row = [
+                    record.date,
+                    escapeCSV(recoveryScore),
+                    escapeCSV(sleepHours),
+                    escapeCSV(sleepPerformance),
+                    escapeCSV(sleepConsistency),
+                    escapeCSV(sleepEfficiency),
+                    escapeCSV(strainScore),
+                    escapeCSV(hrv),
+                    escapeCSV(restingHR),
+                    escapeCSV(respiratoryRate)
+                ].joined(separator: ",")
+                
+                csvRows.append(row)
+            }
+            
+            whoopDataCSV = csvRows.joined(separator: "\n")
+            
+        } catch {
+            print("Error fetching WHOOP data for CSV export: \(error.localizedDescription)")
+            print("Full error: \(error)")
+            whoopDataCSV = ""
         }
     }
 }

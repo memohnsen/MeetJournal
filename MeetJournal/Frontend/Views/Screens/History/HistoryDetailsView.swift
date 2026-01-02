@@ -17,6 +17,8 @@ struct HistoryDetailsView: View {
     @State private var deleteModel = DeleteOneModel()
     @State private var ouraService = Oura()
     @State private var ouraSleepData: OuraSleep? = nil
+    @State private var whoopService = Whoop()
+    @State private var whoopData: WhoopDailyData? = nil
     var isLoading: Bool { viewModel.isLoading }
     var comp: [CompReport] { viewModel.comp }
     var session: [SessionReport] { viewModel.session }
@@ -30,6 +32,11 @@ struct HistoryDetailsView: View {
     var isOuraConnected: Bool {
         guard let userId = clerk.user?.id else { return false }
         return ouraService.getAccessToken(userId: userId) != nil
+    }
+    
+    var isWhoopConnected: Bool {
+        guard let userId = clerk.user?.id else { return false }
+        return whoopService.getAccessToken(userId: userId) != nil
     }
     
     var ouraShareText: String {
@@ -46,6 +53,30 @@ struct HistoryDetailsView: View {
         }
         if let avgHeartRate = ouraData.averageHeartRate {
             text += "Average Heart Rate: \(String(format: "%.0f", avgHeartRate)) bpm\n"
+        }
+        return text.isEmpty ? "" : text
+    }
+    
+    var whoopShareText: String {
+        guard let whoopData = whoopData else { return "" }
+        var text = "\n"
+        if let recoveryScore = whoopData.recoveryScore {
+            text += "Recovery Score: \(recoveryScore)%\n"
+        }
+        if let sleepHours = whoopData.sleepDurationHours {
+            text += "Sleep Duration: \(String(format: "%.1f", sleepHours)) hrs\n"
+        }
+        if let sleepPerformance = whoopData.sleepPerformance {
+            text += "Sleep Performance: \(sleepPerformance)%\n"
+        }
+        if let strainScore = whoopData.strainScore {
+            text += "Strain Score: \(String(format: "%.1f", strainScore))\n"
+        }
+        if let hrv = whoopData.hrvMs {
+            text += "HRV: \(hrv) ms\n"
+        }
+        if let restingHeartRate = whoopData.restingHeartRate {
+            text += "Resting Heart Rate: \(restingHeartRate) bpm\n"
         }
         return text.isEmpty ? "" : text
     }
@@ -85,8 +116,12 @@ struct HistoryDetailsView: View {
                     What I'm most proud of: \(comp.first?.what_proud_of ?? "")
                 
                     What I need to focus on next meet: \(comp.first?.focus ?? "")
+
                     \(ouraShareText)
-                    Powered By MeetJournal
+                    
+                    \(whoopShareText)
+                    
+                    Powered By Forge - Performance Journal
                 """
             } else {
                 return """
@@ -121,8 +156,12 @@ struct HistoryDetailsView: View {
                     What I'm most proud of: \(comp.first?.what_proud_of ?? "")
                 
                     What I need to focus on next meet: \(comp.first?.focus ?? "")
+
                     \(ouraShareText)
-                    Powered By MeetJournal
+
+                    \(whoopShareText)
+
+                    Powered By Forge - Performance Journal
                 """
             }
         } else if selection == "Workouts" {
@@ -143,8 +182,12 @@ struct HistoryDetailsView: View {
             
                 What I learned: \(session.first?.what_learned ?? "")
                 What I would do differently: \(session.first?.what_would_change ?? "")
+
                 \(ouraShareText)
-                Powered By MeetJournal
+                
+                \(whoopShareText)
+                
+                Powered By Forge - Performance Journal
             """
         } else {
             return """
@@ -169,8 +212,12 @@ struct HistoryDetailsView: View {
             
                 Daily Goal: \(checkin.first?.goal ?? "")
                 Concerns: \(checkin.first?.concerns ?? "")
+
                 \(ouraShareText)
-                Powered By MeetJournal
+                
+                \(whoopShareText)
+                
+                Powered By Forge - Performance Journal
             """
         }
     }
@@ -201,11 +248,11 @@ struct HistoryDetailsView: View {
                     ScrollView{
                         VStack{
                             if selection == "Meets" {
-                                CompDisplaySection(comp: comp, userSport: userSport, ouraSleepData: ouraSleepData)
+                                CompDisplaySection(comp: comp, userSport: userSport, ouraSleepData: ouraSleepData, whoopData: whoopData)
                             } else if selection == "Workouts" {
-                                SessionDisplaySection(session: session, ouraSleepData: ouraSleepData)
+                                SessionDisplaySection(session: session, ouraSleepData: ouraSleepData, whoopData: whoopData)
                             } else {
-                                CheckInDisplaySection(checkin: checkin, ouraSleepData: ouraSleepData)
+                                CheckInDisplaySection(checkin: checkin, ouraSleepData: ouraSleepData, whoopData: whoopData)
                             }
                         }
                         .padding(.bottom, 30)
@@ -280,6 +327,103 @@ struct HistoryDetailsView: View {
                     }
                 } else {
                     ouraSleepData = nil
+                }
+                
+                print("🔍 [HistoryDetailsView] Checking WHOOP connection status")
+                if isWhoopConnected {
+                    print("✅ [HistoryDetailsView] WHOOP is connected, fetching data")
+                    let dateFormatter = DateFormatter()
+                    dateFormatter.dateFormat = "yyyy-MM-dd"
+                    if let targetDate = dateFormatter.date(from: date) {
+                        do {
+                            print("📅 [HistoryDetailsView] Target date: \(date)")
+                            let calendar = Calendar.current
+                            let startDate = calendar.date(byAdding: .day, value: -2, to: targetDate) ?? targetDate
+                            let endDate = calendar.date(byAdding: .day, value: 1, to: targetDate) ?? targetDate
+                            
+                            print("📅 [HistoryDetailsView] Fetching WHOOP data from \(startDate) to \(endDate)")
+                            
+                            async let recoveryData = whoopService.fetchRecovery(
+                                userId: clerk.user?.id ?? "",
+                                startDate: startDate,
+                                endDate: endDate
+                            )
+                            
+                            async let sleepData = whoopService.fetchSleep(
+                                userId: clerk.user?.id ?? "",
+                                startDate: startDate,
+                                endDate: endDate
+                            )
+                            
+                            async let cycleData = whoopService.fetchCycle(
+                                userId: clerk.user?.id ?? "",
+                                startDate: startDate,
+                                endDate: endDate
+                            )
+                            
+                            let (recoveries, sleeps, cycles) = try await (recoveryData, sleepData, cycleData)
+                            
+                            print("📊 [HistoryDetailsView] Fetched \(recoveries.count) recovery records, \(sleeps.count) sleep records, \(cycles.count) cycle records")
+                            
+                            let dateOnlyFormatter = DateFormatter()
+                            dateOnlyFormatter.dateFormat = "yyyy-MM-dd"
+                            
+                            let targetDateString = dateOnlyFormatter.string(from: targetDate)
+                            print("🔍 [HistoryDetailsView] Looking for data matching date: \(targetDateString)")
+                            
+                            let matchingRecovery = recoveries.first { recovery in
+                                let isoFormatter = ISO8601DateFormatter()
+                                isoFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+                                if let recoveryDate = isoFormatter.date(from: recovery.start) {
+                                    let recoveryDateString = dateOnlyFormatter.string(from: recoveryDate)
+                                    return recoveryDateString == targetDateString
+                                }
+                                return false
+                            }
+                            
+                            let matchingSleep = sleeps.first { sleep in
+                                let isoFormatter = ISO8601DateFormatter()
+                                isoFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+                                if let sleepDate = isoFormatter.date(from: sleep.start) {
+                                    let sleepDateString = dateOnlyFormatter.string(from: sleepDate)
+                                    return sleepDateString == targetDateString
+                                }
+                                return false
+                            }
+                            
+                            let matchingCycle = cycles.first { cycle in
+                                let isoFormatter = ISO8601DateFormatter()
+                                isoFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+                                if let cycleDate = isoFormatter.date(from: cycle.start) {
+                                    let cycleDateString = dateOnlyFormatter.string(from: cycleDate)
+                                    return cycleDateString == targetDateString
+                                }
+                                return false
+                            }
+                            
+                            if matchingRecovery != nil || matchingSleep != nil || matchingCycle != nil {
+                                whoopData = WhoopDailyData(
+                                    recovery: matchingRecovery,
+                                    sleep: matchingSleep,
+                                    cycle: matchingCycle
+                                )
+                                print("✅ [HistoryDetailsView] Found WHOOP data for date: \(date)")
+                            } else {
+                                print("⚠️ [HistoryDetailsView] No WHOOP data found for date: \(date)")
+                                whoopData = nil
+                            }
+                        } catch {
+                            print("❌ [HistoryDetailsView] Error fetching WHOOP data: \(error)")
+                            print("❌ [HistoryDetailsView] Error details: \(error.localizedDescription)")
+                            whoopData = nil
+                        }
+                    } else {
+                        print("⚠️ [HistoryDetailsView] Could not parse date: \(date)")
+                        whoopData = nil
+                    }
+                } else {
+                    print("ℹ️ [HistoryDetailsView] WHOOP is not connected")
+                    whoopData = nil
                 }
                 
                 if selection == "Meets" {
@@ -453,6 +597,7 @@ struct CompDisplaySection: View {
     var comp: [CompReport]
     var userSport: String
     var ouraSleepData: OuraSleep?
+    var whoopData: WhoopDailyData?
     
     var body: some View {
         ResultsDisplaySection(comp: comp, userSport: userSport)
@@ -513,12 +658,39 @@ struct CompDisplaySection: View {
                 RatingDisplaySection(title: "Average Heart Rate", value: String(format: "%.0f bpm", avgHeartRate))
             }
         }
+        
+        if let whoopData = whoopData {
+            if let recoveryScore = whoopData.recoveryScore {
+                RatingDisplaySection(title: "Recovery Score", value: "\(recoveryScore)%")
+            }
+            
+            if let sleepHours = whoopData.sleepDurationHours {
+                RatingDisplaySection(title: "Sleep Duration", value: String(format: "%.1f hrs", sleepHours))
+            }
+            
+            if let sleepPerformance = whoopData.sleepPerformance {
+                RatingDisplaySection(title: "Sleep Performance", value: "\(sleepPerformance)%")
+            }
+            
+            if let strainScore = whoopData.strainScore {
+                RatingDisplaySection(title: "Strain Score", value: String(format: "%.1f", strainScore))
+            }
+            
+            if let hrv = whoopData.hrvMs {
+                RatingDisplaySection(title: "HRV", value: "\(hrv) ms")
+            }
+            
+            if let restingHeartRate = whoopData.restingHeartRate {
+                RatingDisplaySection(title: "Resting Heart Rate", value: "\(restingHeartRate) bpm")
+            }
+        }
     }
 }
 
 struct SessionDisplaySection: View {
     var session: [SessionReport]
     var ouraSleepData: OuraSleep?
+    var whoopData: WhoopDailyData?
     
     var body: some View {
         TextDisplaySection(title: "Time of day you trained", value: "\(session.first?.time_of_day ?? "")")
@@ -560,12 +732,39 @@ struct SessionDisplaySection: View {
                 RatingDisplaySection(title: "Average Heart Rate", value: String(format: "%.0f bpm", avgHeartRate))
             }
         }
+        
+        if let whoopData = whoopData {
+            if let recoveryScore = whoopData.recoveryScore {
+                RatingDisplaySection(title: "Recovery Score", value: "\(recoveryScore)%")
+            }
+            
+            if let sleepHours = whoopData.sleepDurationHours {
+                RatingDisplaySection(title: "Sleep Duration", value: String(format: "%.1f hrs", sleepHours))
+            }
+            
+            if let sleepPerformance = whoopData.sleepPerformance {
+                RatingDisplaySection(title: "Sleep Performance", value: "\(sleepPerformance)%")
+            }
+            
+            if let strainScore = whoopData.strainScore {
+                RatingDisplaySection(title: "Strain Score", value: String(format: "%.1f", strainScore))
+            }
+            
+            if let hrv = whoopData.hrvMs {
+                RatingDisplaySection(title: "HRV", value: "\(hrv) ms")
+            }
+            
+            if let restingHeartRate = whoopData.restingHeartRate {
+                RatingDisplaySection(title: "Resting Heart Rate", value: "\(restingHeartRate) bpm")
+            }
+        }
     }
 }
 
 struct CheckInDisplaySection: View {
     var checkin: [DailyCheckIn]
     var ouraSleepData: OuraSleep?
+    var whoopData: WhoopDailyData?
     
     var body: some View {        
         RatingDisplaySection(title: "Overall Readiness", value: "\(checkin.first?.overall_score ?? 0)%")
@@ -617,6 +816,32 @@ struct CheckInDisplaySection: View {
             
             if let avgHeartRate = ouraData.averageHeartRate {
                 RatingDisplaySection(title: "Average Heart Rate", value: String(format: "%.0f bpm", avgHeartRate))
+            }
+        }
+        
+        if let whoopData = whoopData {
+            if let recoveryScore = whoopData.recoveryScore {
+                RatingDisplaySection(title: "Recovery Score", value: "\(recoveryScore)%")
+            }
+            
+            if let sleepHours = whoopData.sleepDurationHours {
+                RatingDisplaySection(title: "Sleep Duration", value: String(format: "%.1f hrs", sleepHours))
+            }
+            
+            if let sleepPerformance = whoopData.sleepPerformance {
+                RatingDisplaySection(title: "Sleep Performance", value: "\(sleepPerformance)%")
+            }
+            
+            if let strainScore = whoopData.strainScore {
+                RatingDisplaySection(title: "Strain Score", value: String(format: "%.1f", strainScore))
+            }
+            
+            if let hrv = whoopData.hrvMs {
+                RatingDisplaySection(title: "HRV", value: "\(hrv) ms")
+            }
+            
+            if let restingHeartRate = whoopData.restingHeartRate {
+                RatingDisplaySection(title: "Resting Heart Rate", value: "\(restingHeartRate) bpm")
             }
         }    
     }

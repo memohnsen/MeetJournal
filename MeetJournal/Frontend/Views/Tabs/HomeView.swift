@@ -264,7 +264,7 @@ struct HomeView: View {
             
             if let userId = clerk.user?.id,
                let user = viewModel.users.first,
-               user.store_oura_token == true {
+               user.store_token == true {
                 let tokenManager = OuraTokenManager()
                 await tokenManager.syncRefreshTokenIfStoring(userId: userId)
             }

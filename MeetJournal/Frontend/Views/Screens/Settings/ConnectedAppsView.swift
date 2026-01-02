@@ -12,9 +12,13 @@ struct ConnectedAppsView: View {
     @Environment(\.clerk) private var clerk
     @Environment(\.colorScheme) var colorScheme
     @State private var ouraService = Oura()
-    @State private var tokenManager = OuraTokenManager()
+    @State private var ouraTokenManager = OuraTokenManager()
+    @State private var whoopService = Whoop()
+    @State private var whoopTokenManager = WhoopTokenManager()
     @State private var showOuraConnectionAlert: Bool = false
     @State private var ouraConnectionMessage: String = ""
+    @State private var showWhoopConnectionAlert: Bool = false
+    @State private var whoopConnectionMessage: String = ""
     @State private var storeToken: Bool = false
     @State private var isLoadingToggle: Bool = false
     
@@ -37,7 +41,7 @@ struct ConnectedAppsView: View {
                                         if let userId = clerk.user?.id {
                                             do {
                                                 try await ouraService.revokeToken(userId: userId)
-                                                await tokenManager.updateOuraToken(userId: userId, refreshToken: nil)
+                                                await ouraTokenManager.updateOuraToken(userId: userId, refreshToken: nil)
                                                 ouraConnectionMessage = "Oura account disconnected successfully."
                                                 showOuraConnectionAlert = true
                                             } catch {
@@ -55,7 +59,7 @@ struct ConnectedAppsView: View {
                                                 if storeToken {
                                                     let keychain = OuraKeychain.shared
                                                     if let refreshToken = keychain.getRefreshToken(userId: userId) {
-                                                        await tokenManager.updateOuraToken(userId: userId, refreshToken: refreshToken)
+                                                        await ouraTokenManager.updateOuraToken(userId: userId, refreshToken: refreshToken)
                                                     }
                                                 }
                                             }
@@ -73,19 +77,80 @@ struct ConnectedAppsView: View {
                         ConnectedAppRow(
                             name: "Whoop",
                             icon: "circle.fill",
-                            isConnected: false,
-                            isLoading: false,
-                            isDisabled: true,
-                            onTap: {}
-                        )
-                        
-                        ConnectedAppRow(
-                            name: "Apple Health",
-                            icon: "circle.fill",
-                            isConnected: false,
-                            isLoading: false,
-                            isDisabled: true,
-                            onTap: {}
+                            isConnected: whoopService.isAuthenticated,
+                            isLoading: whoopService.isLoading,
+                            onTap: {
+                                Task {
+                                    print("🔔 [ConnectedAppsView] WHOOP connection tapped")
+                                    if whoopService.isAuthenticated {
+                                        // Disconnect
+                                        print("🔔 [ConnectedAppsView] Disconnecting WHOOP")
+                                        if let userId = clerk.user?.id {
+                                            do {
+                                                try await whoopService.revokeToken(userId: userId)
+                                                await whoopTokenManager.updateWhoopToken(userId: userId, refreshToken: nil)
+                                                whoopConnectionMessage = "WHOOP account disconnected successfully."
+                                                showWhoopConnectionAlert = true
+                                                print("✅ [ConnectedAppsView] WHOOP disconnected successfully")
+                                            } catch {
+                                                whoopConnectionMessage = "Failed to disconnect WHOOP account: \(error.localizedDescription)"
+                                                showWhoopConnectionAlert = true
+                                                print("❌ [ConnectedAppsView] WHOOP disconnect failed: \(error.localizedDescription)")
+                                            }
+                                        }
+                                    } else {
+                                        // Connect
+                                        print("🔔 [ConnectedAppsView] Connecting WHOOP")
+                                        do {
+                                            try await whoopService.authenticate()
+                                            if let userId = clerk.user?.id {
+                                                // Note: WHOOP webhooks are configured in the WHOOP Developer Dashboard,
+                                                // not via API. See: https://developer.whoop.com/docs/developing/webhooks/                                                
+                                                try await Task.sleep(nanoseconds: 100_000_000) 
+                                                
+                                                if storeToken {
+                                                    print("💾 [ConnectedAppsView] storeToken is true, saving WHOOP refresh token")
+                                                    let keychain = WhoopKeychain.shared
+                                                    
+                                                    var refreshToken: String? = nil
+                                                    for attempt in 1...3 {
+                                                        refreshToken = keychain.getRefreshToken(userId: userId)
+                                                        if refreshToken != nil {
+                                                            print("✅ [ConnectedAppsView] Found refresh token in keychain on attempt \(attempt)")
+                                                            break
+                                                        }
+                                                        if attempt < 3 {
+                                                            print("⚠️ [ConnectedAppsView] Refresh token not found, retrying... (attempt \(attempt))")
+                                                            try await Task.sleep(nanoseconds: 100_000_000)
+                                                        }
+                                                    }
+                                                    
+                                                    if let refreshToken = refreshToken {
+                                                        print("💾 [ConnectedAppsView] Saving refresh token to database (length: \(refreshToken.count))")
+                                                        await whoopTokenManager.updateWhoopToken(userId: userId, refreshToken: refreshToken)
+                                                        print("✅ [ConnectedAppsView] WHOOP refresh token saved to database")
+                                                    } else {
+                                                        print("⚠️ [ConnectedAppsView] No WHOOP refresh token found in keychain after multiple attempts")
+                                                        print("⚠️ [ConnectedAppsView] This might indicate:")
+                                                        print("⚠️ [ConnectedAppsView] 1. WHOOP didn't return a refresh token in the token exchange")
+                                                        print("⚠️ [ConnectedAppsView] 2. The refresh token wasn't saved to keychain properly")
+                                                        print("⚠️ [ConnectedAppsView] 3. WHOOP requires 'offline' scope for refresh tokens (not available in their scope list)")
+                                                    }
+                                                } else {
+                                                    print("ℹ️ [ConnectedAppsView] storeToken is false, not saving WHOOP refresh token")
+                                                }
+                                            }
+                                            whoopConnectionMessage = "WHOOP account connected successfully!"
+                                            showWhoopConnectionAlert = true
+                                            print("✅ [ConnectedAppsView] WHOOP connected successfully")
+                                        } catch {
+                                            whoopConnectionMessage = "Failed to connect WHOOP account: \(error.localizedDescription)"
+                                            showWhoopConnectionAlert = true
+                                            print("❌ [ConnectedAppsView] WHOOP connection failed: \(error.localizedDescription)")
+                                        }
+                                    }
+                                }
+                            }
                         )
                         
                         Toggle("Store Data For Reports", isOn: $storeToken)
@@ -93,16 +158,31 @@ struct ConnectedAppsView: View {
                             .padding(.top)
                             .onChange(of: storeToken) { oldValue, newValue in
                                 Task {
+                                    print("🔄 [ConnectedAppsView] Store token toggle changed: \(newValue)")
                                     if let userId = clerk.user?.id {
-                                        await tokenManager.updateStoreTokenPreference(userId: userId, shouldStore: newValue)
+                                        await ouraTokenManager.updateStoreTokenPreference(userId: userId, shouldStore: newValue)
                                         
                                         if newValue {
-                                            let keychain = OuraKeychain.shared
-                                            if let refreshToken = keychain.getRefreshToken(userId: userId) {
-                                                await tokenManager.updateOuraToken(userId: userId, refreshToken: refreshToken)
+                                            print("💾 [ConnectedAppsView] Saving tokens for both services")
+                                            let ouraKeychain = OuraKeychain.shared
+                                            if let ouraRefreshToken = ouraKeychain.getRefreshToken(userId: userId) {
+                                                await ouraTokenManager.updateOuraToken(userId: userId, refreshToken: ouraRefreshToken)
+                                                print("✅ [ConnectedAppsView] Oura refresh token saved")
+                                            } else {
+                                                print("ℹ️ [ConnectedAppsView] No Oura refresh token to save")
+                                            }
+                                            
+                                            let whoopKeychain = WhoopKeychain.shared
+                                            if let whoopRefreshToken = whoopKeychain.getRefreshToken(userId: userId) {
+                                                await whoopTokenManager.updateWhoopToken(userId: userId, refreshToken: whoopRefreshToken)
+                                                print("✅ [ConnectedAppsView] WHOOP refresh token saved")
+                                            } else {
+                                                print("ℹ️ [ConnectedAppsView] No WHOOP refresh token to save")
                                             }
                                         } else {
-                                            await tokenManager.updateOuraToken(userId: userId, refreshToken: nil)
+                                            print("🗑️ [ConnectedAppsView] Clearing tokens for both services")
+                                            await ouraTokenManager.updateOuraToken(userId: userId, refreshToken: nil)
+                                            await whoopTokenManager.updateWhoopToken(userId: userId, refreshToken: nil)
                                         }
                                     }
                                 }
@@ -118,15 +198,24 @@ struct ConnectedAppsView: View {
             .toolbarTitleDisplayMode(.inlineLarge)
             .toolbarVisibility(.hidden, for: .tabBar)
             .task {
+                print("🚀 [ConnectedAppsView] View appeared, checking connection status")
                 if let userId = clerk.user?.id {
+                    print("👤 [ConnectedAppsView] User ID: \(userId)")
                     ouraService.checkConnectionStatus(userId: userId)
-                    storeToken = await tokenManager.loadToggleState(userId: userId)
+                    whoopService.checkConnectionStatus(userId: userId)
+                    storeToken = await ouraTokenManager.loadToggleState(userId: userId)
+                    print("💾 [ConnectedAppsView] Store token state: \(storeToken)")
                 }
             }
             .alert("Oura Connection", isPresented: $showOuraConnectionAlert) {
                 Button("OK") {}
             } message: {
                 Text(ouraConnectionMessage)
+            }
+            .alert("WHOOP Connection", isPresented: $showWhoopConnectionAlert) {
+                Button("OK") {}
+            } message: {
+                Text(whoopConnectionMessage)
             }
         }
     }
@@ -137,10 +226,8 @@ struct ConnectedAppsView: View {
         }
         
         let webhookURL = "\(supabaseURL)/functions/v1/oura-webhook"
-        // Use a consistent verification token (should match what's in Supabase env or generate one)
         let verificationToken = "oura-webhook-verification-token"
         
-        // According to Oura docs, we need separate subscriptions for each event_type × data_type combination
         let eventTypes = ["create", "update", "delete"]
         let dataTypes: [OuraDataType] = [.sleep, .activity, .readiness]
         
@@ -173,9 +260,9 @@ struct ConnectedAppsView: View {
             }
         }
         
-        print("📊 Webhook subscriptions: \(successCount) ready, \(failureCount) failed")
+        print("📊 [ConnectedAppsView] Oura webhook subscriptions: \(successCount) ready, \(failureCount) failed")
     }
-    
+
     private var textColor: Color {
         colorScheme == .light ? .black : .white
     }
@@ -230,7 +317,7 @@ struct ConnectedAppsView: View {
             )
             
             PrivacyBulletPoint(
-                text: "As such, the Export Data button will include your Oura data from the date of your login to the app. However, the Auto-Send Weekly Results will NOT include this data unless you turn on the toggle allowing us to store your data.",
+                text: "As such, the Export Data button will include your Oura and WHOOP data from the date of your login to the app. However, the Auto-Send Weekly Results will NOT include this data unless you turn on the toggle allowing us to store your data.",
                 textColor: textColorSecondary
             )
         }

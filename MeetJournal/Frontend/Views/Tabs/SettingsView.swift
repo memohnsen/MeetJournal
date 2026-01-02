@@ -29,6 +29,7 @@ struct SettingsView: View {
     @State private var coachEmailManager = CoachEmailManager()
     @State private var showCoachEmailSavedAlert: Bool = false
     @State private var ouraService = Oura()
+    @State private var whoopService = Whoop()
         
     let device = UIDevice.current
     
@@ -63,21 +64,25 @@ struct SettingsView: View {
         await viewModel.fetchCompReportsCSV(user_id: userId)
         await viewModel.fetchSessionReportCSV(user_id: userId)
         
-        var ouraStartDate: Date? = nil
+        var startDate: Date? = nil
         if let user = userViewModel.users.first, let createdAtString = user.created_at {
             let dateFormatter = DateFormatter()
             dateFormatter.dateFormat = "yyyy-MM-dd"
             dateFormatter.locale = Locale(identifier: "en_US_POSIX")
-            ouraStartDate = dateFormatter.date(from: createdAtString)
+            startDate = dateFormatter.date(from: createdAtString)
         }
         
-        if ouraStartDate == nil {
+        if startDate == nil {
             let calendar = Calendar.current
-            ouraStartDate = calendar.date(byAdding: .year, value: -1, to: Date())
+            startDate = calendar.date(byAdding: .year, value: -1, to: Date())
         }
         
-        if ouraService.getAccessToken(userId: userId) != nil, let startDate = ouraStartDate {
-            await viewModel.fetchOuraDataCSV(userId: userId, startDate: startDate)
+        if ouraService.getAccessToken(userId: userId) != nil, let ouraStartDate = startDate {
+            await viewModel.fetchOuraDataCSV(userId: userId, startDate: ouraStartDate)
+        }
+        
+        if whoopService.getAccessToken(userId: userId) != nil, let whoopStartDate = startDate {
+            await viewModel.fetchWhoopDataCSV(userId: userId, startDate: whoopStartDate)
         }
         
         var combinedCSV = "=== DAILY CHECK-INS ===\n"
@@ -90,6 +95,11 @@ struct SettingsView: View {
         if !viewModel.ouraDataCSV.isEmpty {
             combinedCSV += "\n\n=== OURA DATA ===\n"
             combinedCSV += viewModel.ouraDataCSV
+        }
+        
+        if !viewModel.whoopDataCSV.isEmpty {
+            combinedCSV += "\n\n=== WHOOP DATA ===\n"
+            combinedCSV += viewModel.whoopDataCSV
         }
         
         let tempDir = FileManager.default.temporaryDirectory
@@ -281,7 +291,7 @@ struct SettingsView: View {
                         showCoachEmailSheet = false
                     }
                 )
-                .presentationDetents([.fraction(0.65)])
+                .presentationDetents([.fraction(0.7)])
             }
             .task {
                 await userViewModel.fetchUsers(user_id: clerk.user?.id ?? "")
@@ -471,12 +481,12 @@ struct CoachEmailSheet: View {
     private var privacyBulletPoints: some View {
         VStack(alignment: .leading, spacing: 8) {
             PrivacyBulletPoint(
-                text: "Your private performance data (check-ins, competition reports, and session reports) will be automatically shared with the email address you provide.",
+                text: "Your private performance data (check-ins, competition reports, and session reports) and wearable data (Oura/Whoop if you have agreed to store this) will be automatically shared with the email address you provide.",
                 textColor: textColorSecondary
             )
             
             PrivacyBulletPoint(
-                text: "Data will be sent weekly every Sunday via email.",
+                text: "Data will be sent weekly on Sunday morning via email.",
                 textColor: textColorSecondary
             )
             
