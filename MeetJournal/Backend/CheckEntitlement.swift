@@ -13,8 +13,17 @@ class CustomerInfoManager: NSObject, PurchasesDelegate {
     var customerInfo: CustomerInfo?
     var isLoading = false
     var errorMessage: String?
-    var hasProAccess = false
+    var hasProAccess = false {
+        didSet {
+            UserDefaults.standard.set(hasProAccess, forKey: "cachedHasProAccess")
+        }
+    }
     private var isDelegateSet = false
+    
+    override init() {
+        super.init()
+        hasProAccess = UserDefaults.standard.bool(forKey: "cachedHasProAccess")
+    }
 
     func setupDelegate() {
         guard !isDelegateSet else { return }

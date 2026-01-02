@@ -36,10 +36,8 @@ struct ContentView: View {
             } else {
                 Color.clear
                     .onAppear {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
-                            if !customerManager.hasProAccess {
-                                showPaywall = true
-                            }
+                        if !customerManager.hasProAccess {
+                            showPaywall = true
                         }
                     }
             }
@@ -68,6 +66,15 @@ struct ContentView: View {
         .onChange(of: customerManager.hasProAccess) { _, newValue in
             if newValue {
                 showPaywall = false
+            }
+        }
+        .onChange(of: clerk.user?.id) { oldValue, newValue in
+            if newValue == nil && oldValue != nil {
+                UserDefaults.standard.removeObject(forKey: "cachedHasProAccess")
+            } else if newValue != nil && newValue != oldValue {
+                Task {
+                    await customerManager.fetchCustomerInfo()
+                }
             }
         }
     }
