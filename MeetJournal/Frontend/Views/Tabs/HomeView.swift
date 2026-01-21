@@ -129,7 +129,12 @@ struct HomeView: View {
                             editMeetSheetShown = true
                         }
                         
-                        DailyCheckInSection(colorScheme: colorScheme, checkInScore: checkInScore)
+                        DailyCheckInSection(
+                            colorScheme: colorScheme,
+                            checkInScore: checkInScore,
+                            checkins: checkins,
+                            trainingDays: users.first?.training_days ?? [:]
+                        )
                         
                         ReflectionSection()
                         
@@ -400,6 +405,15 @@ struct HomeView: View {
 struct DailyCheckInSection: View {
     var colorScheme: ColorScheme
     @Bindable var checkInScore: CheckInScore
+    var checkins: [DailyCheckIn]
+    var trainingDays: [String: String]
+
+    var currentStreak: Int {
+        CheckInStreakCalculator.currentStreak(
+            checkins: checkins,
+            trainingDays: trainingDays
+        )
+    }
     
     var body: some View {
         VStack{
@@ -416,6 +430,12 @@ struct DailyCheckInSection: View {
                     Text("Daily Check-In")
                         .font(.system(size: 24))
                         .bold()
+                    
+                    if !trainingDays.isEmpty {
+                        Text("\(currentStreak)-day streak")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
                 }
                 
                 Spacer()
